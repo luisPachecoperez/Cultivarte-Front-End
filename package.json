@@ -8,6 +8,16 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
   "private": true,
   "dependencies": {
     "@angular/common": "^19.2.0",
@@ -15,8 +25,8 @@
     "@angular/core": "^19.2.0",
     "@angular/forms": "^19.2.0",
     "@angular/platform-browser": "^19.2.0",
-    "@angular/platform-browser-dynamic": "^19.2.0",
     "@angular/router": "^19.2.0",
+    "agent-base": "^7.1.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -25,13 +35,19 @@
     "@angular-devkit/build-angular": "^19.2.12",
     "@angular/cli": "^19.2.12",
     "@angular/compiler-cli": "^19.2.0",
+    "@fullcalendar/angular": "^6.1.18",
+    "@fullcalendar/core": "^6.1.18",
+    "@fullcalendar/daygrid": "^6.1.18",
+    "@fullcalendar/interaction": "^6.1.18",
+    "@fullcalendar/list": "^6.1.18",
+    "@fullcalendar/timegrid": "^6.1.18",
     "@types/jasmine": "~5.1.0",
-    "jasmine-core": "~5.6.0",
+    "jasmine-core": "~5.7.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.7.2"
+    "typescript": "~5.8.2"
   }
 }

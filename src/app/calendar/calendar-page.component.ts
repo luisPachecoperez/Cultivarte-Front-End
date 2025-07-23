@@ -7,16 +7,17 @@ import interactionPlugin from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
-import { INITIAL_EVENTS, createEventId } from './event-utils.js';
+import { EventsComponent } from "../eventos/components/events.component";
+// import { INITIAL_EVENTS, createEventId } from './event-utils.js';
 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, FullCalendarModule, CommonModule],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  imports: [RouterOutlet, FullCalendarModule, CommonModule, EventsComponent],
+  templateUrl: './calendar-page.component.html',
+  styleUrl: './calendar-page.component.css'
 })
-export class AppComponent {
+export class CalendarPageComponent {
   title = 'Amis-Front-End';
   calendarVisible = signal(true);
   calendarOptions = signal<CalendarOptions>({
@@ -32,7 +33,7 @@ export class AppComponent {
       right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
     },
     initialView: 'dayGridMonth',
-    initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
+    // initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
     weekends: true,
     editable: true,
     selectable: true,
@@ -69,15 +70,15 @@ export class AppComponent {
 
     calendarApi.unselect(); // clear date selection
 
-    if (title) {
-      calendarApi.addEvent({
-        id: createEventId(),
-        title,
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
-        allDay: selectInfo.allDay
-      });
-    }
+    // if (title) {
+    //   calendarApi.addEvent({
+    //     id: createEventId(),
+    //     title,
+    //     start: selectInfo.startStr,
+    //     end: selectInfo.endStr,
+    //     allDay: selectInfo.allDay
+    //   });
+    // }
   }
 
   handleEventClick(clickInfo: EventClickArg) {

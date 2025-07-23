@@ -1,0 +1,320 @@
+<!-- Modal del formulario -->
+<div class="modal" [class.show]="showForm" *ngIf="showForm">
+  <div class="modal-content">
+    <h5>{{ evento.tipoEdicion==='sesion' ? "Editar Sesión" : "Crear/Editar Evento" }}</h5>
+    <!-- Botones -->
+    <div class="pagination-controls-crud">
+      <button type="submit" class="crud btn green" (click)="guardarEvento()">
+        Guardar
+      </button>
+      <button type="button" class="crud btn red" (click)="closeForm()">
+        Cancelar
+      </button>
+    </div>
+    <form (ngSubmit)="guardarEvento()">
+      <div
+        class="form-group"
+        style="
+          background-color: transparent;
+          display: flex;
+          flex-direction: column;
+        "
+      >
+        <label for="idNombreEvento">Nombre del Evento:</label>
+        <div class="autocomplete-container" *ngIf="!isDisabled">
+          <input
+            style="
+              background-color: transparent !important;
+              margin: 0px !important;
+              padding: 0px 5px 0px 5px;
+              width: 25%;
+              border-radius: 5px;
+              height: 30px;
+              border: 1px rgb(214, 214, 214) solid;
+            "
+            matInput
+            [formControl]="nombreEventoControl"
+            [matAutocomplete]="autoNombreEvento"
+            id="idNombreEvento"
+            name="idNombreEvento"
+            required
+          />
+          <mat-autocomplete
+            #autoNombreEvento="matAutocomplete"
+            [displayWith]="displayNombreEvento"
+            (optionSelected)="onNombreEventoSelected($event)"
+
+          >
+            <mat-option
+              *ngFor="let nombreEvento of filteredNombresEventos | async"
+              [value]="nombreEvento"
+            >
+              {{ nombreEvento.valor }}
+            </mat-option>
+          </mat-autocomplete>
+        </div>
+        <div *ngIf="isDisabled"><span class="span">{{evento.nombreSesion}}</span></div>
+      </div>
+      <div
+        style="
+          background-color: transparent;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          width: 100%;
+        "
+      >
+
+        <!-- Eje Temático -->
+        <div class="form-group" style="background-color: transparent">
+          <label for="idEjeTematico">Eje Temático:</label>
+          <div class="autocomplete-container" *ngIf="!isDisabled">
+            <input
+              style="
+                background-color: transparent !important;
+                margin: 0px !important;
+                padding: 0px 5px 0px 5px;
+                width: 180px;
+                border-radius: 5px;
+                height: 30px;
+                border: 1px rgb(214, 214, 214) solid;
+              "
+              matInput
+              [formControl]="ejeTematicoControl"
+              [matAutocomplete]="autoEjeTematico"
+              id="idEjeTematico"
+              name="idEjeTematico"
+              required
+            />
+            <mat-autocomplete
+              #autoEjeTematico="matAutocomplete"
+              [displayWith]="displayEjeTematico"
+              (optionSelected)="onEjeTematicoSelected($event)"
+            >
+              <mat-option
+                *ngFor="let ejeTematico of filteredEjesTematicos | async"
+                [value]="ejeTematico"
+              >
+                {{ ejeTematico.valor }}
+              </mat-option>
+            </mat-autocomplete>
+          </div>
+          <div *ngIf="isDisabled"><span class="span">{{evento.ejeTematico}}</span></div>
+
+        </div>
+
+        <!-- Tipo de evento -->
+        <div class="form-group" style="background-color: transparent">
+          <label for="idTipoEvento">Tipo de evento:</label>
+          <div class="autocomplete-container" *ngIf="!isDisabled">
+            <input
+              style="
+                background-color: transparent !important;
+                margin: 0px !important;
+                padding: 0px 5px 0px 5px;
+                width: 180px;
+                border-radius: 5px;
+                height: 30px;
+                border: 1px rgb(214, 214, 214) solid;
+              "
+              matInput
+              [formControl]="tipoEventoControl"
+              [matAutocomplete]="autoTipoEvento"
+              id="idTipoEvento"
+              name="idTipoEvento"
+              required
+            />
+            <mat-autocomplete
+              #autoTipoEvento="matAutocomplete"
+              [displayWith]="displayTipoEvento"
+              (optionSelected)="onTipoEventoSelected($event)"
+            >
+              <mat-option
+                *ngFor="let tipoEvento of filteredTipoEventos | async"
+                [value]="tipoEvento"
+              >
+                {{ tipoEvento.valor }}
+              </mat-option>
+            </mat-autocomplete>
+          </div>
+          <div *ngIf="isDisabled"><span class="span">{{evento.tipoEvento}}</span></div>
+
+        </div>
+        <!-- Ubicación -->
+        <div class="form-group" style="background-color: transparent">
+          <label for="idUbicacion">Ubicación:</label>
+          <div class="autocomplete-container" *ngIf="!isDisabled">
+            <input
+              style="
+                background-color: transparent !important;
+                margin: 0px !important;
+                padding: 0px 5px 0px 5px;
+                width: 180px;
+                border-radius: 5px;
+                height: 30px;
+                border: 1px rgb(214, 214, 214) solid;
+              "
+              matInput
+              [formControl]="ubicacionControl"
+              [matAutocomplete]="autoUbicacion"
+              id="idUbicacion"
+              name="idUbicacion"
+              required
+            />
+            <mat-autocomplete
+              #autoUbicacion="matAutocomplete"
+              [displayWith]="displayUbicacion"
+              (optionSelected)="onUbicacionSelected($event)"
+            >
+              <mat-option
+                *ngFor="let ubicacion of filteredUbicaciones | async"
+                [value]="ubicacion"
+              >
+                {{ ubicacion.valor }}
+              </mat-option>
+            </mat-autocomplete>
+          </div>
+          <div *ngIf="isDisabled"><span class="span">{{evento.ubicacion}}</span></div>
+
+        </div>
+      </div>
+
+      <!-- Descripcion del Grupo -->
+      <div class="form-group">
+        <label for="descripcionGrupo">Descripcion del Grupo:</label>
+        <input
+          type="text"
+          id="descripcionGrupo"
+          [(ngModel)]="evento.descripcionGrupo"
+          name="descripcionGrupo"
+          required [disabled]="isDisabled"
+        />
+      </div>
+
+      <!-- Fecha y Hora -->
+      <div style="display: flex; flex-direction: row; gap: 15px">
+        <div
+          class="form-group"
+          style="
+            background-color: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+          "
+        >
+          <label for="noAtencion" style="margin: 0; order: 1"
+            >No atención</label
+          >
+          <input
+            type="checkbox"
+            [disabled]="isDisabled"
+            id="noAtencion"
+            [(ngModel)]="evento.noAtencion"
+            name="noAtencion"
+            style="
+              position: static;
+              width: 18px;
+              height: 18px;
+              margin: 0;
+              order: 2;
+            "
+          />
+        </div>
+        <div class="form-group" *ngIf="evento.noAtencion">
+          <label for="desdeNoAtencion">No atencion desde:</label>
+          <input
+            type="datetime-local"
+            [disabled]="isDisabled"
+            id="desdeNoAtencion"
+            [(ngModel)]="evento.desdeNoAtencion"
+            name="desdeNoAtencion"
+            required
+          />
+        </div>
+        <div
+          class="form-group"
+          style="background-color: transparent; align-items: center"
+          *ngIf="evento.noAtencion"
+        >
+          <label for="hastaNoAtencion">No atencion Hasta:</label>
+          <input
+            type="datetime-local"
+            [disabled]="isDisabled"
+            id="hastaNoAtencion"
+            [(ngModel)]="evento.hastaNoAtencion"
+            name="hastaNoAtencion"
+            required
+          />
+        </div>
+        <div
+          class="form-group"
+          style="
+            background-color: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+          "
+        >
+          <label for="esInstitucional" style="margin: 0; order: 1"
+            >Es institucional</label
+          >
+          <input
+            type="checkbox"
+            [disabled]="isDisabled"
+            id="esInstitucional"
+            [(ngModel)]="evento.esInstitucional"
+            name="esInstitucional"
+            style="
+              position: static;
+              width: 18px;
+              height: 18px;
+              margin: 0;
+              order: 2;
+            "
+          />
+        </div>
+      </div>
+    </form>
+
+    <!-- Tabla de sesiones -->
+    <mat-tab-group
+      mat-stretch-tabs="false"
+      mat-align-tabs="start"
+      *ngIf="evento.tipoEdicion === 'evento'"
+    >
+      <!-- Pestaña Valores -->
+      <mat-tab label="Sesiones">
+        <app-grid-eventos-sesiones
+          #detEventosSesionesComponent
+          [maestraId]="evento.idSesion ?? 0"
+          [modoVisualizacion]="calendarMode"
+          [fechaSeleccionada]="selectedDate"
+          (eventosSesionesEmitidos)="recibirEventosSesiones($event)"
+          class="detalles"
+        ></app-grid-eventos-sesiones>
+      </mat-tab>
+    </mat-tab-group>
+    <!--Fin tabla de sesiones-->
+
+    <!--Inicio tabla de asistentes-->
+    <mat-tab-group
+      mat-stretch-tabs="false"
+      mat-align-tabs="start"
+      *ngIf="evento.tipoEdicion === 'sesion'"
+    >
+      <mat-tab label="Participantes del evento">
+        <app-grid-eventos-sesiones-participantes
+          #detEventosSesionesParticipantesComponent
+          [maestraId]="evento.idSesion ?? 0"
+          (eventosSesionesParticipantesEmitidos)="
+            recibirEventosSesionesParticipantes($event)
+          "
+          class="detalles"
+        ></app-grid-eventos-sesiones-participantes>
+      </mat-tab>
+    </mat-tab-group>
+    <!--Fin tabla de asistentes-->
+  </div>
+</div>
