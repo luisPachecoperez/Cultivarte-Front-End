@@ -8,12 +8,12 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import { EventsComponent } from "../eventos/components/events.component";
-// import { INITIAL_EVENTS, createEventId } from './event-utils.js';
+import { INITIAL_EVENTS, createEventId } from './event-utils';
 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, FullCalendarModule, CommonModule, EventsComponent],
+  imports: [FullCalendarModule, CommonModule, EventsComponent],
   templateUrl: './calendar-page.component.html',
   styleUrl: './calendar-page.component.css'
 })
@@ -33,7 +33,7 @@ export class CalendarPageComponent {
       right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
     },
     initialView: 'dayGridMonth',
-    // initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
+    initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
     weekends: true,
     editable: true,
     selectable: true,
@@ -65,20 +65,20 @@ export class CalendarPageComponent {
   }
 
   handleDateSelect(selectInfo: DateSelectArg) {
-    const title = prompt('Please enter a new title for your event');
+    const title = prompt('Please enter a new title for your evento');
     const calendarApi = selectInfo.view.calendar;
 
     calendarApi.unselect(); // clear date selection
 
-    // if (title) {
-    //   calendarApi.addEvent({
-    //     id: createEventId(),
-    //     title,
-    //     start: selectInfo.startStr,
-    //     end: selectInfo.endStr,
-    //     allDay: selectInfo.allDay
-    //   });
-    // }
+    if (title) {
+      calendarApi.addEvent({
+        id: createEventId(),
+        title,
+        start: selectInfo.startStr,
+        end: selectInfo.endStr,
+        allDay: selectInfo.allDay
+      });
+    }
   }
 
   handleEventClick(clickInfo: EventClickArg) {
