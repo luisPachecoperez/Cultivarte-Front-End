@@ -4,6 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { EventComponent } from '../eventos/components/event.component';
 import { FullCalendarModule } from '@fullcalendar/angular';
+import esLocale from '@fullcalendar/core/locales/es';
 
 @Component({
   selector: 'app-calendar',
@@ -20,7 +21,8 @@ export class CalendarComponent {
     initialView: 'dayGridMonth',
     plugins: [dayGridPlugin, interactionPlugin],
     dateClick: this.onDateClick.bind(this),
-    events: this.eventosCalendario
+    events: this.eventosCalendario,
+    locale: esLocale
   };
 
   onDateClick(arg: any) {
