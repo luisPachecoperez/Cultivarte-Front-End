@@ -5,6 +5,7 @@ import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import * as bootstrap from 'bootstrap';
+import esLocale from '@fullcalendar/core/locales/es';
 
 @Component({
   selector: 'app-calendar',
@@ -20,8 +21,16 @@ export class CalendarComponent {
     plugins: [dayGridPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
     events: [],
-    dateClick: this.handleDateClick.bind(this) // 👈 manejar clics
+    locale: esLocale,
+    dateClick: this.handleDateClick.bind(this), // 👈 manejar clics
+    eventTimeFormat: {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      meridiem: 'short' // 👈 Esto activa 'a' / 'p' en vez de 'AM'/'PM' en algunos entornos
+    }
   };
+
 
   handleDateClick(arg: any) {
     console.log('Fecha seleccionada:', arg.dateStr);
