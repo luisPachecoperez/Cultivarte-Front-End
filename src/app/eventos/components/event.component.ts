@@ -1,8 +1,11 @@
 import {
   Component,
   EventEmitter,
+  Input,
   OnInit,
+  OnChanges,
   Output,
+  SimpleChanges,
   inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -24,8 +27,9 @@ import * as bootstrap from 'bootstrap';
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.css']
 })
-export class EventComponent implements OnInit {
+export class EventComponent implements OnInit, OnChanges {
   @Output() eventoGuardado = new EventEmitter<any>();
+  @Input() fechaPreseleccionada: string | null = null; // 👈 nueva entrada
 
   eventoForm!: FormGroup;
 
@@ -43,7 +47,7 @@ export class EventComponent implements OnInit {
       aliado: [''],
       nombreSesion: ['', [Validators.required, this.uppercaseMaxLengthValidator(30)]],
       descripcionGrupo: [''],
-      fecha: ['', Validators.required],
+      fecha: [Validators.required],
       horaInicio: ['', Validators.required],
       horaFin: ['', Validators.required],
       repeticion: ['']
@@ -56,7 +60,14 @@ export class EventComponent implements OnInit {
       }
     });
   }
-
+ // ✅ Detectar cambios en @Input y actualizar formulario
+ ngOnChanges(changes: SimpleChanges): void {
+  if (changes['fechaPreseleccionada'] && this.fechaPreseleccionada) {
+    this.eventoForm?.patchValue({
+      fecha: this.fechaPreseleccionada
+    });
+  }
+}
   guardarEvento(): void {
     if (this.eventoForm.invalid) {
       this.eventoForm.markAllAsTouched();

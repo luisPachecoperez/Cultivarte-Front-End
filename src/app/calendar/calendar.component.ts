@@ -14,6 +14,7 @@ import * as bootstrap from 'bootstrap';
 })
 export class CalendarComponent {
   eventosCalendario: any[] = [];
+  fechaSeleccionada: string | null = null;
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin],
@@ -24,6 +25,7 @@ export class CalendarComponent {
 
   handleDateClick(arg: any) {
     console.log('Fecha seleccionada:', arg.dateStr);
+    this.fechaSeleccionada = arg.dateStr;
     // Abrir el modal directamente usando su ID
     const modalElement = document.getElementById('eventoModal');
     if (modalElement) {

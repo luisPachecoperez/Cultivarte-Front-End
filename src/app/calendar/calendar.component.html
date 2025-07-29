@@ -1,2 +1,5 @@
 <full-calendar [options]="calendarOptions"></full-calendar>
-<app-event (eventoGuardado)="agregarEvento($event)"></app-event>
+<app-event
+  [fechaPreseleccionada]="fechaSeleccionada"
+  (eventoGuardado)="agregarEvento($event)">
+</app-event>
