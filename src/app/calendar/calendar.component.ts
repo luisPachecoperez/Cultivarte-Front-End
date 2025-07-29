@@ -1,37 +1,51 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { CalendarOptions } from '@fullcalendar/core';
+import { EventComponent } from "../eventos/components/event.component";
+import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { EventComponent } from '../eventos/components/event.component';
-import { FullCalendarModule } from '@fullcalendar/angular';
-import esLocale from '@fullcalendar/core/locales/es';
+import * as bootstrap from 'bootstrap';
 
 @Component({
   selector: 'app-calendar',
+  standalone: true,
   templateUrl: './calendar.component.html',
   imports: [EventComponent, FullCalendarModule],
 })
 export class CalendarComponent {
-  // @ViewChild('eventoModal') eventoModal!: EventComponent;
-  @ViewChild('eventoForm', { static: true }) eventComponent!: EventComponent;
-
   eventosCalendario: any[] = [];
 
   calendarOptions: CalendarOptions = {
-    initialView: 'dayGridMonth',
     plugins: [dayGridPlugin, interactionPlugin],
-    dateClick: this.onDateClick.bind(this),
-    events: this.eventosCalendario,
-    locale: esLocale
+    initialView: 'dayGridMonth',
+    events: [],
+    dateClick: this.handleDateClick.bind(this) // 👈 manejar clics
   };
 
-  onDateClick(arg: any) {
-    this.eventComponent.abrirModal(arg.dateStr);
+  handleDateClick(arg: any) {
+    console.log('Fecha seleccionada:', arg.dateStr);
+    // Abrir el modal directamente usando su ID
+    const modalElement = document.getElementById('eventoModal');
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
+    }
   }
 
-  agregarEvento(evento: any) {
-    this.eventosCalendario.push(evento);
-    // Reasigna events para que FullCalendar detecte el cambio
+  agregarEvento(nuevoEvento: any): void {
+    console.log('📌 Evento recibido del hijo:', nuevoEvento);
+
+    const eventoFormateado = {
+      title: nuevoEvento.nombreSesion,
+      start: `${nuevoEvento.fecha}T${nuevoEvento.horaInicio}`,
+      end: `${nuevoEvento.fecha}T${nuevoEvento.horaFin}`,
+      extendedProps: { ...nuevoEvento }
+    };
+
+    // Actualizar array de eventos
+    this.eventosCalendario.push(eventoFormateado);
+
+    // Reemplazar events para que Angular lo detecte
     this.calendarOptions = {
       ...this.calendarOptions,
       events: [...this.eventosCalendario]

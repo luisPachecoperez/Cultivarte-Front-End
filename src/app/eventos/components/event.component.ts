@@ -1,67 +1,97 @@
-import { Component, ElementRef, ViewChild,EventEmitter, Output, inject } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
+import {
+  Component,
+  EventEmitter,
+  OnInit,
+  Output,
+  inject
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  AbstractControl,
+  ValidatorFn,
+  ValidationErrors
+} from '@angular/forms';
+import * as bootstrap from 'bootstrap';
 
 @Component({
   selector: 'app-event',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './events.component.html',
-  imports: [FormsModule, CommonModule],
+  styleUrls: ['./events.component.css']
 })
-export class EventComponent {
-
-  private fb = inject(FormBuilder);
-  @ViewChild('eventoModal') modalRef!: ElementRef;
-
+export class EventComponent implements OnInit {
   @Output() eventoGuardado = new EventEmitter<any>();
 
-  evento: any = {
-    institucional: null,
-    tipoEvento: '',
-    responsable: '',
-    aliado: '',
-    nombreSesion: '',
-    descripcionGrupo: '',
-    fecha: '',
-    horaInicio: '',
-    horaFin: '',
-    repeticion: ''
-  };
+  eventoForm!: FormGroup;
 
-  tiposEvento: string[] = ['Conferencia', 'Taller', 'Seminario', 'Reunión'];
-  responsables: string[] = ['Juan', 'María', 'Pedro'];
-  aliados: string[] = ['Aliado A', 'Aliado B', 'Aliado C'];
+  tiposEvento = ['Taller', 'Conferencia', 'Seminario'];
+  responsables = ['Juan', 'Ana', 'Carlos'];
+  aliados = ['Aliado A', 'Aliado B', 'Aliado C'];
 
-  // myForm:FormGroup = this.fb.group({
-  //   nombreSesion:['',[Validators.required, Validators.]],
-  // })
+  private fb = inject(FormBuilder);
 
-  abrirModal(fecha: string) {
-    this.evento.fecha = fecha;
-    const modal = new (window as any).bootstrap.Modal(this.modalRef.nativeElement);
-    modal.show();
+  ngOnInit(): void {
+    this.eventoForm = this.fb.group({
+      institucional: [false, Validators.required],
+      tipoEvento: ['', Validators.required],
+      responsable: ['', Validators.required],
+      aliado: [''],
+      nombreSesion: ['', [Validators.required, this.uppercaseMaxLengthValidator(30)]],
+      descripcionGrupo: [''],
+      fecha: ['', Validators.required],
+      horaInicio: ['', Validators.required],
+      horaFin: ['', Validators.required],
+      repeticion: ['']
+    });
+
+    this.eventoForm.get('nombreSesion')?.valueChanges.subscribe(value => {
+      const upper = value?.toUpperCase() || '';
+      if (value !== upper) {
+        this.eventoForm.get('nombreSesion')?.setValue(upper, { emitEvent: false });
+      }
+    });
   }
-  setFecha(fecha: string) {
-    this.evento.fecha = fecha;
-  }
-  guardarEvento() {
-    const start = `${this.evento.fecha}T${this.evento.horaInicio}`;
-    const end = `${this.evento.fecha}T${this.evento.horaFin}`;
-    const nuevoEvento = {
-      title: this.evento.nombreSesion,
-      start,
-      end
-    };
 
-    this.eventoGuardado.emit(nuevoEvento);
-
-    // Cierra el modal
-    const modal = document.getElementById('eventoModal');
-    if (modal) {
-      (window as any).bootstrap.Modal.getOrCreateInstance(modal).hide();
+  guardarEvento(): void {
+    if (this.eventoForm.invalid) {
+      this.eventoForm.markAllAsTouched();
+      return;
     }
 
-    // Limpia el formulario
-    this.evento = {};
+    this.eventoGuardado.emit(this.eventoForm.value);
+
+    const modalElement = document.getElementById('eventoModal');
+    if (modalElement) {
+      const instance = bootstrap.Modal.getInstance(modalElement)
+        || new bootstrap.Modal(modalElement);
+      instance.hide();
+    }
+
+    this.eventoForm.reset();
+  }
+
+  private uppercaseMaxLengthValidator(maxLength: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (typeof value !== 'string') return null;
+
+      const isUppercase = value === value.toUpperCase();
+      const isWithinLimit = value.length <= maxLength;
+
+      return !isUppercase || !isWithinLimit
+        ? {
+            uppercaseMaxLength: {
+              requiredUppercase: true,
+              requiredMaxLength: maxLength,
+              actualLength: value.length
+            }
+          }
+        : null;
+    };
   }
 }
