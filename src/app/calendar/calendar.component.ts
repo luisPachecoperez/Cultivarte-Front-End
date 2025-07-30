@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CalendarOptions } from '@fullcalendar/core';
-import { EventComponent } from "../eventos/components/event.component";
+import { EventComponent } from "../eventos/components/event-form.component/event.component";
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
