@@ -67,12 +67,14 @@ export class EventComponent implements OnInit, OnChanges {
   }
   // ✅ Detectar cambios en @Input y actualizar formulario
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['fechaPreseleccionada'] && this.fechaPreseleccionada) {
-      this.eventoForm?.patchValue({
-        fecha: this.fechaPreseleccionada
-      });
+    if (changes['fechaPreseleccionada'] && this.fechaPreseleccionada && !this.eventoParaEditar) {
+      // Nueva creación: reset y precargar fecha
+      this.eventoForm?.reset();
+      this.eventoForm?.patchValue({ fecha: this.fechaPreseleccionada });
     }
+
     if (changes['eventoParaEditar'] && this.eventoParaEditar) {
+      // Edición: precargar datos
       this.eventoForm?.patchValue({
         institucional: this.eventoParaEditar.institucional,
         tipoEvento: this.eventoParaEditar.tipoEvento,
@@ -87,6 +89,7 @@ export class EventComponent implements OnInit, OnChanges {
       });
     }
   }
+
   guardarEvento(): void {
     if (this.eventoForm.invalid) {
       this.eventoForm.markAllAsTouched();

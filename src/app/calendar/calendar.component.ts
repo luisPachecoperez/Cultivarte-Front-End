@@ -53,6 +53,7 @@ export class CalendarComponent {
   handleDateClick(arg: any) {
     console.log('Fecha seleccionada:', arg.dateStr);
     this.fechaSeleccionada = arg.dateStr;
+    this.eventoEditando = null; //
     // Abrir el modal directamente usando su ID
     const modalElement = document.getElementById('eventoModal');
     if (modalElement) {
