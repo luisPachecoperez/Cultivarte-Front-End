@@ -12,6 +12,7 @@ import esLocale from '@fullcalendar/core/locales/es';
   standalone: true,
   templateUrl: './calendar.component.html',
   imports: [EventComponent, FullCalendarModule],
+  styleUrls: ['./calendar.component.css'],
 })
 export class CalendarComponent {
   eventosCalendario: any[] = [];
@@ -28,9 +29,9 @@ export class CalendarComponent {
       minute: '2-digit',
       hour12: true,
       meridiem: 'short' // 👈 Esto activa 'a' / 'p' en vez de 'AM'/'PM' en algunos entornos
-    }
+    },
   };
-
+  calendarComponent: any;
 
   handleDateClick(arg: any) {
     console.log('Fecha seleccionada:', arg.dateStr);
