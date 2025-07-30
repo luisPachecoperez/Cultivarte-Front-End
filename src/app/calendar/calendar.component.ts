@@ -17,6 +17,7 @@ import esLocale from '@fullcalendar/core/locales/es';
 export class CalendarComponent {
   eventosCalendario: any[] = [];
   fechaSeleccionada: string | null = null;
+  eventoEditando: any = null;
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin],
@@ -24,6 +25,7 @@ export class CalendarComponent {
     events: [],
     locale: esLocale,
     dateClick: this.handleDateClick.bind(this), // 👈 manejar clics
+    eventClick: this.handleEventClick.bind(this),
     eventTimeFormat: {
       hour: 'numeric',
       minute: '2-digit',
@@ -32,6 +34,21 @@ export class CalendarComponent {
     },
   };
   calendarComponent: any;
+
+  // 👇 clic sobre evento existente
+  handleEventClick(arg: any): void {
+    this.eventoEditando = {
+      ...arg.event.extendedProps,
+      id: arg.event.id
+    };
+
+    // Guardar el ID del modal seleccionado para futura acción
+    const modalAcciones = document.getElementById('modalAcciones');
+    if (modalAcciones) {
+      const modal = new bootstrap.Modal(modalAcciones);
+      modal.show();
+    }
+  }
 
   handleDateClick(arg: any) {
     console.log('Fecha seleccionada:', arg.dateStr);
@@ -44,23 +61,48 @@ export class CalendarComponent {
     }
   }
 
-  agregarEvento(nuevoEvento: any): void {
-    console.log('📌 Evento recibido del hijo:', nuevoEvento);
+  //trasladar
+  abrirEdicion(): void {
+    // Cerrar modal de acciones
+    const modalAcciones = bootstrap.Modal.getInstance(document.getElementById('modalAcciones')!)!;
+    modalAcciones.hide();
+
+    // Abrir modal de edición
+    const modalFormulario = document.getElementById('eventoModal');
+    if (modalFormulario) {
+      const modal = new bootstrap.Modal(modalFormulario);
+      modal.show();
+    }
+  }
+
+  agregarOActualizarEvento(evento: any): void {
+    const eventoExistente = this.eventosCalendario.find(e => e.id === evento.id);
 
     const eventoFormateado = {
-      title: nuevoEvento.nombreSesion,
-      start: `${nuevoEvento.fecha}T${nuevoEvento.horaInicio}`,
-      end: `${nuevoEvento.fecha}T${nuevoEvento.horaFin}`,
-      extendedProps: { ...nuevoEvento }
+      id: evento.id ?? new Date().getTime().toString(), // nuevo ID si no existe
+      title: evento.nombreSesion,
+      start: `${evento.fecha}T${evento.horaInicio}`,
+      end: `${evento.fecha}T${evento.horaFin}`,
+      extendedProps: { ...evento }
     };
 
-    // Actualizar array de eventos
-    this.eventosCalendario.push(eventoFormateado);
+    if (eventoExistente) {
+      // actualizar
+      const index = this.eventosCalendario.findIndex(e => e.id === evento.id);
+      this.eventosCalendario[index] = eventoFormateado;
+    } else {
+      // nuevo
+      this.eventosCalendario.push(eventoFormateado);
+    }
 
-    // Reemplazar events para que Angular lo detecte
     this.calendarOptions = {
       ...this.calendarOptions,
       events: [...this.eventosCalendario]
     };
+
+    // reset
+    this.eventoEditando = null;
+    this.fechaSeleccionada = null;
   }
+
 }

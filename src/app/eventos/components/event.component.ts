@@ -30,8 +30,13 @@ import * as bootstrap from 'bootstrap';
 export class EventComponent implements OnInit, OnChanges {
   @Output() eventoGuardado = new EventEmitter<any>();
   @Input() fechaPreseleccionada: string | null = null; // 👈 nueva entrada
+  @Input() eventoParaEditar: any = null;
 
   eventoForm!: FormGroup;
+
+  get estaEditando(): boolean {
+    return !!this.eventoParaEditar;
+  }
 
   tiposEvento = ['Taller', 'Conferencia', 'Seminario'];
   responsables = ['Juan', 'Ana', 'Carlos'];
@@ -60,22 +65,44 @@ export class EventComponent implements OnInit, OnChanges {
       }
     });
   }
- // ✅ Detectar cambios en @Input y actualizar formulario
- ngOnChanges(changes: SimpleChanges): void {
-  if (changes['fechaPreseleccionada'] && this.fechaPreseleccionada) {
-    this.eventoForm?.patchValue({
-      fecha: this.fechaPreseleccionada
-    });
+  // ✅ Detectar cambios en @Input y actualizar formulario
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['fechaPreseleccionada'] && this.fechaPreseleccionada) {
+      this.eventoForm?.patchValue({
+        fecha: this.fechaPreseleccionada
+      });
+    }
+    if (changes['eventoParaEditar'] && this.eventoParaEditar) {
+      this.eventoForm?.patchValue({
+        institucional: this.eventoParaEditar.institucional,
+        tipoEvento: this.eventoParaEditar.tipoEvento,
+        responsable: this.eventoParaEditar.responsable,
+        aliado: this.eventoParaEditar.aliado,
+        nombreSesion: this.eventoParaEditar.nombreSesion,
+        descripcionGrupo: this.eventoParaEditar.descripcionGrupo,
+        fecha: this.eventoParaEditar.fecha,
+        horaInicio: this.eventoParaEditar.horaInicio,
+        horaFin: this.eventoParaEditar.horaFin,
+        repeticion: this.eventoParaEditar.repeticion,
+      });
+    }
   }
-}
   guardarEvento(): void {
     if (this.eventoForm.invalid) {
       this.eventoForm.markAllAsTouched();
       return;
     }
 
-    this.eventoGuardado.emit(this.eventoForm.value);
+    const datos = this.eventoForm.value;
 
+    // 👇 Si se está editando un evento, conservar su ID
+    if (this.eventoParaEditar?.id) {
+      datos.id = this.eventoParaEditar.id;
+    }
+
+    this.eventoGuardado.emit(datos);
+
+    // Cierra el modal manualmente con Bootstrap
     const modalElement = document.getElementById('eventoModal');
     if (modalElement) {
       const instance = bootstrap.Modal.getInstance(modalElement)
@@ -83,8 +110,10 @@ export class EventComponent implements OnInit, OnChanges {
       instance.hide();
     }
 
+    // Limpia el formulario
     this.eventoForm.reset();
   }
+
 
   private uppercaseMaxLengthValidator(maxLength: number): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
@@ -96,12 +125,12 @@ export class EventComponent implements OnInit, OnChanges {
 
       return !isUppercase || !isWithinLimit
         ? {
-            uppercaseMaxLength: {
-              requiredUppercase: true,
-              requiredMaxLength: maxLength,
-              actualLength: value.length
-            }
+          uppercaseMaxLength: {
+            requiredUppercase: true,
+            requiredMaxLength: maxLength,
+            actualLength: value.length
           }
+        }
         : null;
     };
   }
