@@ -142,27 +142,59 @@ export class EventComponent implements OnInit, OnChanges {
       return;
     }
 
-    const datos = this.eventoForm.value;
+    const evento = this.eventoForm.value;
+    const eventosAGuardar = [];
 
-    // 👇 Si se está editando un evento, conservar su ID
-    if (this.eventoParaEditar?.id) {
-      datos.id = this.eventoParaEditar.id;
+    const fechaBase = new Date(evento.fecha);
+    const finDelMes = new Date(fechaBase.getFullYear(), fechaBase.getMonth() + 1, 0); // último día del mes
+
+    if (evento.repeticion === 'no') {
+      eventosAGuardar.push(evento);
+    } else if (evento.repeticion === 'diario') {
+      const actual = new Date(fechaBase);
+      while (actual <= finDelMes) {
+        eventosAGuardar.push({
+          ...evento,
+          fecha: actual.toISOString().split('T')[0]
+        });
+        actual.setDate(actual.getDate() + 1);
+      }
+    } else if (evento.repeticion === 'semanal') {
+      const actual = new Date(fechaBase);
+      while (actual <= finDelMes) {
+        eventosAGuardar.push({
+          ...evento,
+          fecha: actual.toISOString().split('T')[0]
+        });
+        actual.setDate(actual.getDate() + 7);
+      }
+    } else if (evento.repeticion === 'mensual') {
+      const actual = new Date(fechaBase);
+      const mesesFuturos = 3; // cambia si quieres más meses
+
+      for (let i = 0; i < mesesFuturos; i++) {
+        const fechaNueva = new Date(actual.getFullYear(), actual.getMonth() + i, actual.getDate());
+        eventosAGuardar.push({
+          ...evento,
+          fecha: fechaNueva.toISOString().split('T')[0]
+        });
+      }
     }
 
-    this.eventoGuardado.emit(datos);
+    // Emitir todos los eventos
+    eventosAGuardar.forEach(e => this.eventoGuardado.emit(e));
 
-    // Cierra el modal manualmente con Bootstrap
+    // Cerrar modal y resetear
     const modalElement = document.getElementById('eventoModal');
     if (modalElement) {
-      const instance = bootstrap.Modal.getInstance(modalElement)
-        || new bootstrap.Modal(modalElement);
+      const instance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
       instance.hide();
     }
 
-    // Limpia el formulario
     this.eventoForm.reset();
     this.eventoParaEditar = null;
   }
+
 
 
   private uppercaseMaxLengthValidator(maxLength: number): ValidatorFn {

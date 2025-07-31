@@ -34,9 +34,28 @@ export class CalendarComponent {
       hour12: true,
       meridiem: 'short' // 👈 Esto activa 'a' / 'p' en vez de 'AM'/'PM' en algunos entornos
     },
+    datesSet: this.onDatesSet.bind(this) // 👈 aquí va el método que manejará el cambio
   };
   calendarComponent: any;
 eventoSeleccionado: any;
+
+  onDatesSet (dateInfo: any) {
+
+    var year = dateInfo.start.getFullYear()
+    var month = (dateInfo.start.getMonth() + 1).toString().padStart(2, '0') // +1 porque los meses van de 0 a 11
+    var day = dateInfo.start.getDate().toString().padStart(2, '0')
+    const fechaInicio: string = `${year}-${month}-${day}`;
+
+     year = dateInfo.end.getFullYear()
+     month = (dateInfo.end.getMonth() + 1).toString().padStart(2, '0') // +1 porque los meses van de 0 a 11
+     day = dateInfo.end.getDate().toString().padStart(2, '0')
+
+    const fechaFin: string = `${year}-${month}-${day}`;
+    console.log('Fecha inicio:', fechaInicio);
+    console.log('Fecha fin:', fechaFin);
+    //Aqui llamar al back pasandole como rango fechaInicio y fechaFin
+
+  }
 
   // 👇 clic sobre evento existente
   handleEventClick(arg: any): void {
@@ -104,6 +123,25 @@ eventoSeleccionado: any;
       ...this.calendarOptions,
       events: [...this.eventosCalendario]
     };
+
+    const nuevosEventos = Array.isArray(evento) ? evento : [evento];
+
+  nuevosEventos.forEach(e => {
+    const eventoConId = {
+      id: crypto.randomUUID(),
+      title: e.nombreSesion,
+      start: `${e.fecha}T${e.horaInicio}`,
+      end: `${e.fecha}T${e.horaFin}`,
+      extendedProps: {
+        ...e
+      }
+    };
+
+    this.calendarOptions.events = [
+      ...(this.calendarOptions.events as any[]),
+      eventoConId
+    ];
+  });
 
     // reset
     this.eventoEditando = null;
