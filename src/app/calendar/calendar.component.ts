@@ -6,12 +6,14 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import * as bootstrap from 'bootstrap';
 import esLocale from '@fullcalendar/core/locales/es';
+import { CommonModule } from '@angular/common';
+import { EventModalComponent } from '../eventos/components/event-modal.component/event-modal.component';
 
 @Component({
   selector: 'app-calendar',
   standalone: true,
   templateUrl: './calendar.component.html',
-  imports: [EventComponent, FullCalendarModule],
+  imports: [EventComponent, FullCalendarModule,CommonModule,EventModalComponent],
   styleUrls: ['./calendar.component.css'],
 })
 export class CalendarComponent {
@@ -34,20 +36,22 @@ export class CalendarComponent {
     },
   };
   calendarComponent: any;
+eventoSeleccionado: any;
 
   // 👇 clic sobre evento existente
   handleEventClick(arg: any): void {
-    this.eventoEditando = {
+    console.log('✅ CLIC EN EVENTO:', arg);
+    this.eventoSeleccionado = {
       ...arg.event.extendedProps,
       id: arg.event.id
     };
 
     // Guardar el ID del modal seleccionado para futura acción
-    const modalAcciones = document.getElementById('modalAcciones');
-    if (modalAcciones) {
-      const modal = new bootstrap.Modal(modalAcciones);
-      modal.show();
-    }
+    // const modalAcciones = document.getElementById('modalAcciones');
+    // if (modalAcciones) {
+    //   const modal = new bootstrap.Modal(modalAcciones);
+    //   modal.show();
+    // }
   }
 
   handleDateClick(arg: any) {
@@ -63,18 +67,18 @@ export class CalendarComponent {
   }
 
   //trasladar
-  abrirEdicion(): void {
-    // Cerrar modal de acciones
-    const modalAcciones = bootstrap.Modal.getInstance(document.getElementById('modalAcciones')!)!;
-    modalAcciones.hide();
+  // abrirEdicion(): void {
+  //   // Cerrar modal de acciones
+  //   const modalAcciones = bootstrap.Modal.getInstance(document.getElementById('modalAcciones')!)!;
+  //   modalAcciones.hide();
 
-    // Abrir modal de edición
-    const modalFormulario = document.getElementById('eventoModal');
-    if (modalFormulario) {
-      const modal = new bootstrap.Modal(modalFormulario);
-      modal.show();
-    }
-  }
+  //   // Abrir modal de edición
+  //   const modalFormulario = document.getElementById('eventoModal');
+  //   if (modalFormulario) {
+  //     const modal = new bootstrap.Modal(modalFormulario);
+  //     modal.show();
+  //   }
+  // }
 
   agregarOActualizarEvento(evento: any): void {
     const eventoExistente = this.eventosCalendario.find(e => e.id === evento.id);

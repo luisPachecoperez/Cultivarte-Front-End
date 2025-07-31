@@ -1,25 +1,7 @@
 <full-calendar [options]="calendarOptions"></full-calendar>
 <app-event
   [fechaPreseleccionada]="fechaSeleccionada"
-  [eventoParaEditar]="eventoEditando"
-  (eventoGuardado)="agregarOActualizarEvento($event)">
+  (eventoGuardado)="agregarOActualizarEvento($event)"
+  [eventoSeleccionado]="eventoSeleccionado"
+  (limpiarEventoSeleccionado)="eventoSeleccionado = null">
 </app-event>
-<!-- Modal de acciones del evento -->
-<div class="modal fade" id="modalAcciones" tabindex="-1" aria-labelledby="modalAccionesLabel" aria-hidden="true">
-  <div class="modal-dialog modal-sm modal-dialog-centered">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h5 class="modal-title w-100 text-center" id="modalAccionesLabel">
-          ¿Qué acción desea realizar?
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-
-      <div class="modal-body text-center d-flex flex-column gap-2">
-        <button class="btn btn-outline-primary" (click)="abrirEdicion()">Editar evento</button>
-        <button class="btn btn-outline-secondary" disabled>Tomar asistencia</button>
-      </div>
-    </div>
-  </div>
-</div>

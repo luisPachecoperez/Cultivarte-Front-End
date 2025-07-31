@@ -19,21 +19,24 @@ import {
   ValidationErrors
 } from '@angular/forms';
 import * as bootstrap from 'bootstrap';
+import { EventModalComponent } from '../event-modal.component/event-modal.component';
 
 @Component({
   selector: 'app-event',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, EventModalComponent],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.css']
 })
 export class EventComponent implements OnInit, OnChanges {
+  @Input() eventoSeleccionado: any = null; // recibido del abuelo
+  @Output() limpiarEventoSeleccionado = new EventEmitter<void>(); // para decirle al abuelo que limpie
+  @Output() eventoEditado = new EventEmitter<any>(); //
   @Output() eventoGuardado = new EventEmitter<any>();
-  @Input() fechaPreseleccionada: string | null = null; // 👈 nueva entrada
-  @Input() eventoParaEditar: any = null;
+  @Input() fechaPreseleccionada: string | null = null;
+  eventoParaEditar: any = null;
 
   eventoForm!: FormGroup;
-
   get estaEditando(): boolean {
     return !!this.eventoParaEditar;
   }
@@ -73,6 +76,12 @@ export class EventComponent implements OnInit, OnChanges {
       this.eventoForm?.patchValue({ fecha: this.fechaPreseleccionada });
     }
 
+    if (changes['eventoSeleccionado'] && this.eventoSeleccionado) {
+      console.log('✅ RECIBIDO EN HIJO:', this.eventoSeleccionado);
+      const modal = new bootstrap.Modal(document.getElementById('modalAcciones')!);
+      modal.show();
+    }
+
     if (changes['eventoParaEditar'] && this.eventoParaEditar) {
       // Edición: precargar datos
       this.eventoForm?.patchValue({
@@ -89,6 +98,43 @@ export class EventComponent implements OnInit, OnChanges {
       });
     }
   }
+
+  onAccionSeleccionada(accion: 'editar' | 'asistencia') {
+    if (accion === 'editar') {
+      this.eventoParaEditar = this.eventoSeleccionado;
+
+      // Pre-cargar el formulario con los datos del evento seleccionado
+      if (this.eventoParaEditar) {
+        this.eventoForm.patchValue({
+          institucional: this.eventoParaEditar.institucional,
+          nombreSesion: this.eventoParaEditar.nombreSesion,
+          tipoEvento: this.eventoParaEditar.tipoEvento,
+          responsable: this.eventoParaEditar.responsable,
+          aliado: this.eventoParaEditar.aliado,
+          descripcionGrupo: this.eventoParaEditar.descripcionGrupo,
+          fecha: this.eventoParaEditar.fecha,
+          horaInicio: this.eventoParaEditar.horaInicio,
+          horaFin: this.eventoParaEditar.horaFin,
+          repeticion: this.eventoParaEditar.repeticion,
+        });
+      }
+
+      // Cierra el modal de acciones
+      const modalAcciones = bootstrap.Modal.getInstance(document.getElementById('modalAcciones')!);
+      modalAcciones?.hide();
+
+      // Abre el modal del formulario
+      const modalFormulario = new bootstrap.Modal(document.getElementById('eventoModal')!);
+      modalFormulario.show();
+    }
+
+    if (accion === 'asistencia') {
+      console.log('Tomar asistencia aún no implementado');
+    }
+
+    this.limpiarEventoSeleccionado.emit(); // informar al padre que ya se usó el evento
+  }
+
 
   guardarEvento(): void {
     if (this.eventoForm.invalid) {
@@ -115,6 +161,7 @@ export class EventComponent implements OnInit, OnChanges {
 
     // Limpia el formulario
     this.eventoForm.reset();
+    this.eventoParaEditar = null;
   }
 
 
