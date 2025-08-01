@@ -20,11 +20,13 @@ import {
 } from '@angular/forms';
 import * as bootstrap from 'bootstrap';
 import { EventModalComponent } from '../event-modal.component/event-modal.component';
+import { GridSesionesComponent } from '../../../grid.sesiones/grid.sesiones.component';
+
 
 @Component({
   selector: 'app-event',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, EventModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, EventModalComponent, GridSesionesComponent],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.css']
 })
@@ -35,8 +37,11 @@ export class EventComponent implements OnInit, OnChanges {
   @Output() eventoGuardado = new EventEmitter<any>();
   @Input() fechaPreseleccionada: string | null = null;
   eventoParaEditar: any = null;
+  sesiones: any[] = []; // para almacenar las sesiones
+
 
   eventoForm!: FormGroup;
+  sesionesChange: any;
   get estaEditando(): boolean {
     return !!this.eventoParaEditar;
   }
@@ -118,6 +123,9 @@ export class EventComponent implements OnInit, OnChanges {
           repeticion: this.eventoParaEditar.repeticion,
         });
       }
+      this.sesiones = this.eventoParaEditar.sesiones
+        ? [...this.eventoParaEditar.sesiones]  // Hacemos una copia
+        : [];
 
       // Cierra el modal de acciones
       const modalAcciones = bootstrap.Modal.getInstance(document.getElementById('modalAcciones')!);
@@ -170,7 +178,7 @@ export class EventComponent implements OnInit, OnChanges {
       }
     } else if (evento.repeticion === 'mensual') {
       const actual = new Date(fechaBase);
-      const mesesFuturos = 3; // cambia si quieres más meses
+      const mesesFuturos = 3;
 
       for (let i = 0; i < mesesFuturos; i++) {
         const fechaNueva = new Date(actual.getFullYear(), actual.getMonth() + i, actual.getDate());
@@ -181,10 +189,20 @@ export class EventComponent implements OnInit, OnChanges {
       }
     }
 
-    // Emitir todos los eventos
-    eventosAGuardar.forEach(e => this.eventoGuardado.emit(e));
+    // ✅ Agregar sesiones del grid si las hay
+    if (this.sesiones.length > 0) {
+      this.sesiones.forEach(sesion => {
+        eventosAGuardar.push({
+          ...evento,
+          fecha: sesion.fecha,
+          horaInicio: sesion.horaInicio,
+          horaFin: sesion.horaFin
+        });
+      });
+    }
 
-    // Cerrar modal y resetear
+    this.eventoGuardado.emit(eventosAGuardar); // ✅ solo esta emisión
+
     const modalElement = document.getElementById('eventoModal');
     if (modalElement) {
       const instance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
@@ -194,8 +212,6 @@ export class EventComponent implements OnInit, OnChanges {
     this.eventoForm.reset();
     this.eventoParaEditar = null;
   }
-
-
 
   private uppercaseMaxLengthValidator(maxLength: number): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {

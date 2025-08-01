@@ -1,0 +1,36 @@
+<h5 class="mb-3">Sesiones del Evento</h5>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Hora Inicio</th>
+      <th>Hora Fin</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let sesion of sesiones; let i = index">
+      <td>{{ sesion.fecha }}</td>
+      <td>{{ sesion.horaInicio }}</td>
+      <td>{{ sesion.horaFin }}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" (click)="eliminarSesion(i)">Eliminar</button>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <input type="date" [(ngModel)]="nuevaSesion.fecha" class="form-control" />
+      </td>
+      <td>
+        <input type="time" [(ngModel)]="nuevaSesion.horaInicio" class="form-control" />
+      </td>
+      <td>
+        <input type="time" [(ngModel)]="nuevaSesion.horaFin" class="form-control" />
+      </td>
+      <td>
+        <button class="btn btn-primary btn-sm" (click)="agregarSesion()">Agregar</button>
+      </td>
+    </tr>
+  </tbody>
+</table>

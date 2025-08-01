@@ -13,7 +13,7 @@ import { EventModalComponent } from '../eventos/components/event-modal.component
   selector: 'app-calendar',
   standalone: true,
   templateUrl: './calendar.component.html',
-  imports: [EventComponent, FullCalendarModule,CommonModule,EventModalComponent],
+  imports: [EventComponent, FullCalendarModule, CommonModule, EventModalComponent],
   styleUrls: ['./calendar.component.css'],
 })
 export class CalendarComponent {
@@ -37,18 +37,19 @@ export class CalendarComponent {
     datesSet: this.onDatesSet.bind(this) // 👈 aquí va el método que manejará el cambio
   };
   calendarComponent: any;
-eventoSeleccionado: any;
+  eventoSeleccionado: any;
+  mostrarModalAcciones: boolean | undefined;
 
-  onDatesSet (dateInfo: any) {
+  onDatesSet(dateInfo: any) {
 
     var year = dateInfo.start.getFullYear()
     var month = (dateInfo.start.getMonth() + 1).toString().padStart(2, '0') // +1 porque los meses van de 0 a 11
     var day = dateInfo.start.getDate().toString().padStart(2, '0')
     const fechaInicio: string = `${year}-${month}-${day}`;
 
-     year = dateInfo.end.getFullYear()
-     month = (dateInfo.end.getMonth() + 1).toString().padStart(2, '0') // +1 porque los meses van de 0 a 11
-     day = dateInfo.end.getDate().toString().padStart(2, '0')
+    year = dateInfo.end.getFullYear()
+    month = (dateInfo.end.getMonth() + 1).toString().padStart(2, '0') // +1 porque los meses van de 0 a 11
+    day = dateInfo.end.getDate().toString().padStart(2, '0')
 
     const fechaFin: string = `${year}-${month}-${day}`;
     console.log('Fecha inicio:', fechaInicio);
@@ -60,17 +61,27 @@ eventoSeleccionado: any;
   // 👇 clic sobre evento existente
   handleEventClick(arg: any): void {
     console.log('✅ CLIC EN EVENTO:', arg);
+
+    const nombreSesion = arg.event.title;
+
+    const eventosRelacionados = (this.calendarOptions.events as any[])
+      .filter(e => e.title === nombreSesion);
+
+    const sesiones = eventosRelacionados.map(e => ({
+      fecha: e.start.split('T')[0],
+      horaInicio: e.start.split('T')[1].substring(0, 5),
+      horaFin: e.end.split('T')[1].substring(0, 5)
+    }));
+
     this.eventoSeleccionado = {
       ...arg.event.extendedProps,
-      id: arg.event.id
+      id: arg.event.id,
+      nombreSesion: nombreSesion,
+      sesiones: sesiones
     };
 
-    // Guardar el ID del modal seleccionado para futura acción
-    // const modalAcciones = document.getElementById('modalAcciones');
-    // if (modalAcciones) {
-    //   const modal = new bootstrap.Modal(modalAcciones);
-    //   modal.show();
-    // }
+    const modal = new bootstrap.Modal(document.getElementById('modalAcciones')!);
+    modal.show();
   }
 
   handleDateClick(arg: any) {
@@ -85,67 +96,71 @@ eventoSeleccionado: any;
     }
   }
 
-  //trasladar
-  // abrirEdicion(): void {
-  //   // Cerrar modal de acciones
-  //   const modalAcciones = bootstrap.Modal.getInstance(document.getElementById('modalAcciones')!)!;
-  //   modalAcciones.hide();
+  abrirEdicion(eventoCalendario: any) {
+    const nombreSesion = eventoCalendario.event.title;
 
-  //   // Abrir modal de edición
-  //   const modalFormulario = document.getElementById('eventoModal');
-  //   if (modalFormulario) {
-  //     const modal = new bootstrap.Modal(modalFormulario);
-  //     modal.show();
-  //   }
-  // }
+    const eventosRelacionados = (this.calendarOptions.events as any[])
+      .filter(e => e.title === nombreSesion);
+
+    const sesiones = eventosRelacionados.map(e => ({
+      fecha: e.start.split('T')[0],
+      horaInicio: e.start.split('T')[1].substring(0, 5),
+      horaFin: e.end.split('T')[1].substring(0, 5)
+    }));
+
+    this.eventoSeleccionado = {
+      ...eventoCalendario.event.extendedProps,
+      nombreSesion,
+      sesiones
+    };
+
+    this.mostrarModalAcciones = true;
+  }
 
   agregarOActualizarEvento(evento: any): void {
-    const eventoExistente = this.eventosCalendario.find(e => e.id === evento.id);
-
-    const eventoFormateado = {
-      id: evento.id ?? new Date().getTime().toString(), // nuevo ID si no existe
-      title: evento.nombreSesion,
-      start: `${evento.fecha}T${evento.horaInicio}`,
-      end: `${evento.fecha}T${evento.horaFin}`,
-      extendedProps: { ...evento }
-    };
-
-    if (eventoExistente) {
-      // actualizar
-      const index = this.eventosCalendario.findIndex(e => e.id === evento.id);
-      this.eventosCalendario[index] = eventoFormateado;
-    } else {
-      // nuevo
-      this.eventosCalendario.push(eventoFormateado);
-    }
-
-    this.calendarOptions = {
-      ...this.calendarOptions,
-      events: [...this.eventosCalendario]
-    };
-
     const nuevosEventos = Array.isArray(evento) ? evento : [evento];
 
-  nuevosEventos.forEach(e => {
-    const eventoConId = {
-      id: crypto.randomUUID(),
-      title: e.nombreSesion,
-      start: `${e.fecha}T${e.horaInicio}`,
-      end: `${e.fecha}T${e.horaFin}`,
-      extendedProps: {
-        ...e
-      }
-    };
+    if (!nuevosEventos.length) return;
 
-    this.calendarOptions.events = [
-      ...(this.calendarOptions.events as any[]),
-      eventoConId
-    ];
-  });
+    const nombreSesion = nuevosEventos[0].nombreSesion;
 
-    // reset
+    nuevosEventos.forEach(e => {
+      const id = e.id ?? crypto.randomUUID(); // ID nuevo si no tiene
+
+      const eventoFormateado = {
+        id,
+        title: e.nombreSesion,
+        start: `${e.fecha}T${e.horaInicio}`,
+        end: `${e.fecha}T${e.horaFin}`,
+        extendedProps: { ...e }
+      };
+
+      // 🔥 Eliminar solo si coincide nombre + fecha + hora exacta
+      this.eventosCalendario = this.eventosCalendario.filter(ev =>
+        !(
+          ev.title === e.nombreSesion &&
+          ev.start.startsWith(e.fecha) &&
+          ev.start.includes(e.horaInicio)
+        )
+      );
+
+      this.calendarOptions.events = (this.calendarOptions.events as any[]).filter(ev =>
+        !(
+          ev.title === e.nombreSesion &&
+          ev.start?.startsWith(e.fecha) &&
+          ev.start?.includes(e.horaInicio)
+        )
+      );
+
+      // Agregar el evento nuevo
+      this.eventosCalendario.push(eventoFormateado);
+      (this.calendarOptions.events as any[]).push({ ...eventoFormateado });
+    });
+
+    // Reset
     this.eventoEditando = null;
     this.fechaSeleccionada = null;
+    this.calendarOptions = { ...this.calendarOptions };
   }
 
 }

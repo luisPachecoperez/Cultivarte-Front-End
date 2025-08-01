@@ -120,6 +120,10 @@
             </select>
           </div>
         </form>
+        <app-grid-sesiones
+          [sesiones]="sesiones"
+          (sesionesChange)="sesiones = $event">
+        </app-grid-sesiones>
       </div>
 
       <!-- Footer -->
