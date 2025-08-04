@@ -1,0 +1,168 @@
+<!-- @if para mostrar backdrop y modal -->
+<!-- @if (mostrarFormulario) { -->
+
+  <!-- Backdrop -->
+  <div class="modal-backdrop fade show"></div>
+
+  <!-- Modal -->
+  <div
+    class="modal fade show d-block"
+    id="eventoModal"
+    tabindex="-1"
+    aria-labelledby="eventoModalLabel"
+    aria-modal="true"
+    role="dialog"
+  >
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+
+        <!-- Header -->
+        <div class="modal-header">
+          <h5 class="modal-title" id="eventoModalLabel">
+            {{ estaEditando ? 'Editar Evento' : 'Crear Evento' }}
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            aria-label="Cerrar"
+            (click)="cerrarFormulario.emit()"
+          ></button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+          <form [formGroup]="eventoForm">
+
+            <!-- ¿Es institucional? -->
+            <div class="mb-3 d-flex align-items-center gap-2">
+              <label class="form-label mb-0">¿Es institucional?</label>
+              <div class="form-check ms-2">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  formControlName="institucional"
+                  [value]="true"
+                  id="institucionalSi"
+                />
+                <label class="form-check-label" for="institucionalSi">Sí</label>
+              </div>
+              <div class="form-check ms-2">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  formControlName="institucional"
+                  [value]="false"
+                  id="institucionalNo"
+                />
+                <label class="form-check-label" for="institucionalNo">No</label>
+              </div>
+            </div>
+
+            <!-- Selects -->
+            <div class="row g-2 mb-3">
+              <div class="col">
+                <label class="form-label">Tipo de evento</label>
+                <select class="form-control" formControlName="tipoEvento">
+                  <option [value]="''" disabled>Selecciona tipo</option>
+                  @for (tipo of tiposEvento; track tipo) {
+                    <option [value]="tipo">{{ tipo }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col">
+                <label class="form-label">Responsable</label>
+                <select class="form-control" formControlName="responsable">
+                  <option [value]="''" disabled>Selecciona responsable</option>
+                  @for (r of responsables; track r) {
+                    <option [value]="r">{{ r }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col">
+                <label class="form-label">Nombre de aliado</label>
+                <select class="form-control" formControlName="aliado">
+                  <option [value]="''" disabled>Selecciona aliado</option>
+                  @for (a of aliados; track a) {
+                    <option [value]="a">{{ a }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <!-- Nombre del evento -->
+            <div class="mb-3">
+              <label class="form-label">Nombre del evento</label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="nombreSesion"
+                placeholder="Nombre del evento"
+              />
+              @if (eventoForm.get('nombreSesion')?.invalid && eventoForm.get('nombreSesion')?.touched) {
+                <div class="text-danger mt-1">
+                  @if (eventoForm.get('nombreSesion')?.errors?.['required']) {
+                    <small>El nombre es obligatorio.</small>
+                  }
+                  @if (eventoForm.get('nombreSesion')?.errors?.['uppercaseMaxLength']) {
+                    <small>Debe estar en mayúsculas y no superar 30 caracteres.</small>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Descripción -->
+            <div class="mb-3">
+              <label class="form-label">Descripción del evento</label>
+              <textarea
+                class="form-control"
+                placeholder="Descripción del evento"
+                formControlName="descripcionGrupo"
+              ></textarea>
+            </div>
+
+            <!-- ¿Cuándo? -->
+            <label class="form-label mt-3">¿Cuándo?</label>
+            <div class="row g-2 align-items-center mb-3">
+              <div class="col-4">
+                <input type="date" class="form-control" formControlName="fecha" />
+              </div>
+              <div class="col-3">
+                <input type="time" class="form-control" formControlName="horaInicio" />
+              </div>
+              <div class="col-3">
+                <input type="time" class="form-control" formControlName="horaFin" />
+              </div>
+            </div>
+
+            <!-- ¿Se repite? -->
+            <div class="mb-3">
+              <label class="form-label">¿Se repite?</label>
+              <select class="form-control" formControlName="repeticion">
+                <option value="no">No</option>
+                <option value="diario">Diario</option>
+                <option value="semanal">Semanal</option>
+                <option value="mensual">Mensual</option>
+              </select>
+            </div>
+          </form>
+
+          <!-- Grid de sesiones -->
+          <app-grid-sesiones [formArray]="sesiones"></app-grid-sesiones>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer justify-content-center">
+          <button
+            class="btn btn-danger rounded-pill px-4"
+            type="button"
+            (click)="guardarEvento()"
+            [disabled]="eventoForm.invalid"
+          >
+            {{ estaEditando ? 'Actualizar' : 'Guardar' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+<!-- } -->

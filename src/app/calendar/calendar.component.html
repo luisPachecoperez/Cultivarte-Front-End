@@ -1,0 +1,32 @@
+<full-calendar [options]="calendarOptions"></full-calendar>
+
+<!-- Mostrar estado actual para debug -->
+<p>Estado mostrarFormulario: {{ mostrarFormulario }}</p>
+<p>Estado mostrarModalAcciones: {{ mostrarModalAcciones }}</p>
+
+<!-- Formulario de evento (solo aparece si se activa) -->
+@if (mostrarFormulario) {
+  <app-event
+    [fechaPreseleccionada]="fechaSeleccionada"
+    [eventoSeleccionado]="eventoSeleccionado"
+    (eventoGuardado)="agregarOActualizarEvento($event)"
+    (cerrarFormulario)="mostrarFormulario = false; eventoSeleccionado = null">
+  </app-event>
+}
+
+<!-- Modal de acciones (solo aparece si se activa) -->
+@if (mostrarModalAcciones) {
+  <app-event-modal
+    [evento]="eventoSeleccionado"
+    (accionSeleccionada)="
+      onAccionSeleccionada($event);
+      mostrarModalAcciones = false;"
+    (cerrar)="mostrarModalAcciones = false">
+  </app-event-modal>
+}
+@if (mostrarAsistencia) {
+  <app-asistencia
+    [evento]="eventoSeleccionado"
+    (cerrar)="mostrarAsistencia = false"
+  ></app-asistencia>
+}

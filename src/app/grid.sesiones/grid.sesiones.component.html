@@ -1,0 +1,60 @@
+<h5 class="mb-3">Sesiones del Evento</h5>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Hora Inicio</th>
+      <th>Hora Fin</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (control of sesiones; track $index) {
+      <tr [formGroup]="control">
+        <td>{{ control.value.fecha }}</td>
+        <td>{{ control.value.horaInicio }}</td>
+        <td>{{ control.value.horaFin }}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" (click)="eliminarSesion($index)">Eliminar</button>
+        </td>
+      </tr>
+    }
+
+    <!-- Nueva sesión -->
+    <tr [formGroup]="nuevaSesionForm">
+      <td>
+        <input
+          type="date"
+          formControlName="fecha"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': nuevaSesionForm.get('fecha')?.invalid && nuevaSesionForm.get('fecha')?.touched }"
+        />
+      </td>
+      <td>
+        <input
+          type="time"
+          formControlName="horaInicio"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': nuevaSesionForm.get('horaInicio')?.invalid && nuevaSesionForm.get('horaInicio')?.touched }"
+        />
+      </td>
+      <td>
+        <input
+          type="time"
+          formControlName="horaFin"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': nuevaSesionForm.get('horaFin')?.invalid && nuevaSesionForm.get('horaFin')?.touched }"
+        />
+      </td>
+      <td>
+        <button
+          class="btn btn-primary btn-sm"
+          (click)="agregarSesion()"
+          [disabled]="nuevaSesionForm.invalid">
+          Agregar
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>

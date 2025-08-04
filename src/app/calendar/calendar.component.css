@@ -1,0 +1,66 @@
+:host ::ng-deep .fc-daygrid-day {
+  position: relative;
+  background-color: white;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  border-left: 1px solid #ddd;
+  padding: 0;
+  height: 100px;
+}
+
+:host ::ng-deep .fc-daygrid-day::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  width: 80%;
+  height: 4px;
+  background-color: black;
+  border-radius: 2px;
+}
+
+:host ::ng-deep .fc-daygrid-day:nth-child(even) {
+  background-color: #f6f6f6;
+}
+
+:host ::ng-deep .fc-daygrid-day-number {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 0.9rem;
+  color: black;
+  font-weight: 500;
+}
+
+:host ::ng-deep .fc-event {
+  background-color: #36ba75 !important;
+  color: white !important;
+  border: none;
+  font-weight: bold;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-top: 22px;
+  margin-left: 4px;
+  margin-right: 4px;
+  font-size: 0.85rem;
+}
+
+:host ::ng-deep .fc-col-header-cell {
+  background-color: white;
+  color: black;
+  border: none;
+  font-weight: bold;
+  font-size: 1rem;
+  text-align: center;
+}
+
+:host ::ng-deep .fc-toolbar-title {
+  color: black;
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+:host ::ng-deep .fc-daygrid-day-frame {
+  padding: 0 !important;
+}
