@@ -4,16 +4,16 @@ import { EventComponent } from "../eventos/components/event-form.component/event
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import * as bootstrap from 'bootstrap';
 import esLocale from '@fullcalendar/core/locales/es';
 import { CommonModule } from '@angular/common';
 import { EventModalComponent } from '../eventos/components/event-modal.component/event-modal.component';
+import { AsistenciaComponent } from "../asistencia/asistencia.component";
 
 @Component({
   selector: 'app-calendar',
   standalone: true,
   templateUrl: './calendar.component.html',
-  imports: [EventComponent, FullCalendarModule, CommonModule, EventModalComponent],
+  imports: [EventComponent, FullCalendarModule, CommonModule, EventModalComponent, AsistenciaComponent],
   styleUrls: ['./calendar.component.css'],
 })
 export class CalendarComponent {
@@ -21,51 +21,48 @@ export class CalendarComponent {
   fechaSeleccionada: string | null = null;
   eventoEditando: any = null;
 
+  eventoSeleccionado: any = null;
+  mostrarModalAcciones: boolean = false;
+  mostrarFormulario: boolean = false;
+  mostrarAsistencia: boolean = false;
+
+
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
     events: [],
     locale: esLocale,
-    dateClick: this.handleDateClick.bind(this), // 👈 manejar clics
+    dateClick: this.handleDateClick.bind(this),
     eventClick: this.handleEventClick.bind(this),
     eventTimeFormat: {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      meridiem: 'short' // 👈 Esto activa 'a' / 'p' en vez de 'AM'/'PM' en algunos entornos
+      meridiem: 'short'
     },
-    datesSet: this.onDatesSet.bind(this) // 👈 aquí va el método que manejará el cambio
+    datesSet: this.onDatesSet.bind(this)
   };
-  calendarComponent: any;
-  eventoSeleccionado: any;
-  mostrarModalAcciones: boolean | undefined;
 
   onDatesSet(dateInfo: any) {
-
-    var year = dateInfo.start.getFullYear()
-    var month = (dateInfo.start.getMonth() + 1).toString().padStart(2, '0') // +1 porque los meses van de 0 a 11
-    var day = dateInfo.start.getDate().toString().padStart(2, '0')
-    const fechaInicio: string = `${year}-${month}-${day}`;
-
-    year = dateInfo.end.getFullYear()
-    month = (dateInfo.end.getMonth() + 1).toString().padStart(2, '0') // +1 porque los meses van de 0 a 11
-    day = dateInfo.end.getDate().toString().padStart(2, '0')
-
-    const fechaFin: string = `${year}-${month}-${day}`;
-    console.log('Fecha inicio:', fechaInicio);
-    console.log('Fecha fin:', fechaFin);
-    //Aqui llamar al back pasandole como rango fechaInicio y fechaFin
-
+    const fechaInicio = dateInfo.start.toISOString().split('T')[0];
+    const fechaFin = dateInfo.end.toISOString().split('T')[0];
+    console.log('📅 Vista del calendario:', { fechaInicio, fechaFin });
   }
 
-  // 👇 clic sobre evento existente
+  handleDateClick(arg: any) {
+    console.log('📌 Click en fecha:', arg.dateStr);
+    this.fechaSeleccionada = arg.dateStr;
+    this.eventoSeleccionado = null;
+    this.mostrarFormulario = true;
+  }
+
   handleEventClick(arg: any): void {
-    console.log('✅ CLIC EN EVENTO:', arg);
+    console.log('🟢 Click en evento del calendario');
 
     const nombreSesion = arg.event.title;
-
-    const eventosRelacionados = (this.calendarOptions.events as any[])
-      .filter(e => e.title === nombreSesion);
+    const eventosRelacionados = (this.calendarOptions.events as any[]).filter(
+      e => e.title === nombreSesion
+    );
 
     const sesiones = eventosRelacionados.map(e => ({
       fecha: e.start.split('T')[0],
@@ -76,31 +73,19 @@ export class CalendarComponent {
     this.eventoSeleccionado = {
       ...arg.event.extendedProps,
       id: arg.event.id,
-      nombreSesion: nombreSesion,
-      sesiones: sesiones
+      nombreSesion,
+      sesiones
     };
 
-    const modal = new bootstrap.Modal(document.getElementById('modalAcciones')!);
-    modal.show();
-  }
-
-  handleDateClick(arg: any) {
-    console.log('Fecha seleccionada:', arg.dateStr);
-    this.fechaSeleccionada = arg.dateStr;
-    this.eventoEditando = null; //
-    // Abrir el modal directamente usando su ID
-    const modalElement = document.getElementById('eventoModal');
-    if (modalElement) {
-      const modal = new bootstrap.Modal(modalElement);
-      modal.show();
-    }
+    console.log('🎯 Evento seleccionado para acciones:', this.eventoSeleccionado);
+    this.mostrarModalAcciones = true;
   }
 
   abrirEdicion(eventoCalendario: any) {
     const nombreSesion = eventoCalendario.event.title;
-
-    const eventosRelacionados = (this.calendarOptions.events as any[])
-      .filter(e => e.title === nombreSesion);
+    const eventosRelacionados = (this.calendarOptions.events as any[]).filter(
+      e => e.title === nombreSesion
+    );
 
     const sesiones = eventosRelacionados.map(e => ({
       fecha: e.start.split('T')[0],
@@ -114,19 +99,35 @@ export class CalendarComponent {
       sesiones
     };
 
-    this.mostrarModalAcciones = true;
+    console.log('✏️ Abrir edición para:', this.eventoSeleccionado);
+    this.mostrarFormulario = true;
   }
 
   agregarOActualizarEvento(evento: any): void {
-    const nuevosEventos = Array.isArray(evento) ? evento : [evento];
+    const { sesiones, editarUna, idSesionOriginal } = evento;
 
-    if (!nuevosEventos.length) return;
+    if (!Array.isArray(sesiones) || sesiones.length === 0) return;
 
-    const nombreSesion = nuevosEventos[0].nombreSesion;
+    const nombreSesion = sesiones[0].nombreSesion;
 
-    nuevosEventos.forEach(e => {
-      const id = e.id ?? crypto.randomUUID(); // ID nuevo si no tiene
+    if (editarUna && idSesionOriginal) {
+      console.log('🛠 Editando solo una sesión:', idSesionOriginal);
 
+      // 1. Eliminar esa única sesión del calendario y del array de eventos
+      this.eventosCalendario = this.eventosCalendario.filter(ev => ev.id !== idSesionOriginal);
+      this.calendarOptions.events = (this.calendarOptions.events as any[]).filter(ev => ev.id !== idSesionOriginal);
+
+    } else {
+      console.log('🧹 Reemplazando todas las sesiones de:', nombreSesion);
+
+      // 2. Borrar todas las sesiones que comparten el mismo nombre de sesión
+      this.eventosCalendario = this.eventosCalendario.filter(ev => ev.title !== nombreSesion);
+      this.calendarOptions.events = (this.calendarOptions.events as any[]).filter(ev => ev.title !== nombreSesion);
+    }
+
+    // 3. Agregar las nuevas sesiones
+    sesiones.forEach(e => {
+      const id = e.id ?? `${e.nombreSesion}-${e.fecha}-${e.horaInicio}`;
       const eventoFormateado = {
         id,
         title: e.nombreSesion,
@@ -135,32 +136,41 @@ export class CalendarComponent {
         extendedProps: { ...e }
       };
 
-      // 🔥 Eliminar solo si coincide nombre + fecha + hora exacta
-      this.eventosCalendario = this.eventosCalendario.filter(ev =>
-        !(
-          ev.title === e.nombreSesion &&
-          ev.start.startsWith(e.fecha) &&
-          ev.start.includes(e.horaInicio)
-        )
-      );
+      console.log('➕ Agregando sesión:', eventoFormateado);
 
-      this.calendarOptions.events = (this.calendarOptions.events as any[]).filter(ev =>
-        !(
-          ev.title === e.nombreSesion &&
-          ev.start?.startsWith(e.fecha) &&
-          ev.start?.includes(e.horaInicio)
-        )
-      );
-
-      // Agregar el evento nuevo
       this.eventosCalendario.push(eventoFormateado);
-      (this.calendarOptions.events as any[]).push({ ...eventoFormateado });
     });
 
-    // Reset
+    // 4. Refrescar el calendario
+    this.calendarOptions = {
+      ...this.calendarOptions,
+      events: [...this.eventosCalendario]
+    };
+
     this.eventoEditando = null;
     this.fechaSeleccionada = null;
-    this.calendarOptions = { ...this.calendarOptions };
+    this.mostrarFormulario = false;
+
+    console.log('✅ Sesiones actualizadas. Total en calendario:', this.eventosCalendario.length);
   }
 
+
+  onAccionSeleccionada(accion: 'editar' | 'asistencia') {
+    if (accion === 'editar') {
+      this.abrirEdicion({
+        event: {
+          extendedProps: this.eventoSeleccionado,
+          title: this.eventoSeleccionado?.nombreSesion
+        }
+      });
+      this.mostrarModalAcciones = false;
+      return;
+    }
+
+    if (accion === 'asistencia') {
+      this.mostrarFormulario = false;
+      this.mostrarModalAcciones = false;
+      this.mostrarAsistencia = true;
+    }
+  }
 }

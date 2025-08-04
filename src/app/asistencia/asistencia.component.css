@@ -1,0 +1,134 @@
+/* Fondo oscurecido */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1040;
+}
+
+/* Contenedor centrado del modal */
+.asistencia-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 15px;
+  padding: 2rem;
+  width: 95%;
+  max-width: 720px;
+  z-index: 1050;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Encabezado */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.modal-header h5 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #444;
+}
+
+/* Subtítulo */
+.modal-subtitle {
+  background-color: #d84875;
+  color: #fff;
+  font-weight: bold;
+  padding: 0.5rem;
+  text-align: center;
+  border-radius: 999px;
+  margin-bottom: 1.2rem;
+}
+
+/* Búsqueda */
+.input-busqueda {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+/* Lista de sugerencias */
+.lista-sugerencias {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.lista-sugerencias li {
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.lista-sugerencias li:hover {
+  background-color: #f5f5f5;
+}
+
+/* Tabla */
+.tabla-asistentes {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.tabla-asistentes th,
+.tabla-asistentes td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.tabla-asistentes th {
+  font-weight: bold;
+  color: #444;
+}
+
+/* Botón eliminar */
+.btn-eliminar {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #d84875;
+  cursor: pointer;
+}
+
+/* Botón guardar */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-guardar {
+  background-color: #d84875;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 999px;
+  font-weight: bold;
+  cursor: pointer;
+}

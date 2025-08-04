@@ -1,20 +1,28 @@
 :host ::ng-deep .fc-daygrid-day {
   position: relative;
   background-color: white;
-  border-top: 4px solid black !important;
   border-right: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
   border-left: 1px solid #ddd;
   padding: 0;
-  height: 100px; /* ajusta si quieres más alto */
+  height: 100px;
 }
 
-/* Intercalar blanco y gris claro entre días */
+:host ::ng-deep .fc-daygrid-day::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  width: 80%;
+  height: 4px;
+  background-color: black;
+  border-radius: 2px;
+}
+
 :host ::ng-deep .fc-daygrid-day:nth-child(even) {
-  background-color: #f6f6f6; /* gris claro */
+  background-color: #f6f6f6;
 }
 
-/* Número del día en la esquina superior izquierda */
 :host ::ng-deep .fc-daygrid-day-number {
   position: absolute;
   top: 4px;
@@ -24,7 +32,6 @@
   font-weight: 500;
 }
 
-/* Estilo de eventos */
 :host ::ng-deep .fc-event {
   background-color: #36ba75 !important;
   color: white !important;
@@ -38,7 +45,6 @@
   font-size: 0.85rem;
 }
 
-/* Encabezado de los días (domingo, lunes, etc.) */
 :host ::ng-deep .fc-col-header-cell {
   background-color: white;
   color: black;
@@ -48,7 +54,6 @@
   text-align: center;
 }
 
-/* Título del mes */
 :host ::ng-deep .fc-toolbar-title {
   color: black;
   font-size: 1.8rem;
@@ -56,7 +61,6 @@
   text-align: center;
 }
 
-/* Elimina padding interior para alinear correctamente */
 :host ::ng-deep .fc-daygrid-day-frame {
   padding: 0 !important;
 }

@@ -1,0 +1,60 @@
+<!-- Fondo oscurecido -->
+<div class="modal-backdrop"></div>
+
+<!-- Modal centrado -->
+<div class="asistencia-modal">
+  <!-- Encabezado -->
+  <div class="modal-header">
+    <h5>
+      Asistencia beneficiarios:
+      <strong>{{ evento?.fecha }}</strong>
+      Hora: <strong>{{ evento?.horaInicio }}</strong> a <strong>{{ evento?.horaFin }}</strong>
+    </h5>
+    <button class="btn-close" (click)="cerrar.emit()">×</button>
+  </div>
+
+  <!-- Subtítulo -->
+  <div class="modal-subtitle">
+    Contenido: <strong>{{ evento?.nombreSesion }}</strong>
+  </div>
+
+  <!-- Campo de búsqueda -->
+  <input
+    type="text"
+    [formControl]="filtro"
+    placeholder="Busca al beneficiario, nombre, código o ID"
+    class="input-busqueda"
+  />
+
+  <!-- Lista sugerida -->
+  <ul class="lista-sugerencias" *ngIf="resultadosBusqueda.length">
+    <li *ngFor="let b of resultadosBusqueda" (click)="agregarAsistente(b)">
+      {{ b.nombre }} - {{ b.codigo }}
+    </li>
+  </ul>
+
+  <!-- Tabla de asistentes -->
+  <table class="tabla-asistentes" *ngIf="asistentes.length">
+    <thead>
+      <tr>
+        <th>Beneficiario</th>
+        <th>Código</th>
+        <th>Eliminar</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let a of asistentes">
+        <td>{{ a.nombre }}</td>
+        <td>{{ a.codigo }}</td>
+        <td>
+          <button class="btn-eliminar" (click)="eliminarAsistente(a.codigo)">🗑️</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Botón de guardar -->
+  <div class="modal-footer">
+    <button class="btn-guardar" (click)="guardarAsistencia()">Guardar</button>
+  </div>
+</div>

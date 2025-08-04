@@ -1,9 +1,7 @@
-/* Estilo del modal ampliado */
 .modal-dialog.modal-xl {
   max-width: 900px;
 }
 
-/* Resto de estilos igual */
 .modal-content {
   border-radius: 20px;
   padding: 1.5rem;
@@ -33,11 +31,19 @@
   position: absolute;
   right: 1rem;
   top: 1rem;
+  z-index: 10;
+}
+@media (max-width: 576px) {
+  .btn-close {
+    right: 0.5rem;
+    top: 0.5rem;
+  }
 }
 
+input.form-control,
+textarea.form-control,
+select.form-control,
 .custom-input,
-textarea,
-select,
 input[type="text"],
 input[type="date"],
 input[type="time"] {
@@ -48,6 +54,14 @@ input[type="time"] {
   font-size: 14px;
   color: #333;
   width: 100%;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #e91e63;
+  box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.2);
 }
 
 label.form-label {
@@ -63,12 +77,9 @@ label.form-label {
   padding: 8px 30px;
 }
 
-select.form-control {
-  background-color: #f9f9f9;
-}
-
 .modal-body form {
-  padding: 0 5px;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .mb-3 {
