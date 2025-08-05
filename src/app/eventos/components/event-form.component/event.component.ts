@@ -85,7 +85,6 @@ export class EventComponent implements OnInit, OnChanges {
       }
     });
 
-    // Si ya hay un evento seleccionado al iniciar, precargarlo
     if (this.eventoSeleccionado) {
       this.eventoParaEditar = this.eventoSeleccionado;
       this.precargarFormulario(this.eventoSeleccionado);
@@ -238,12 +237,12 @@ export class EventComponent implements OnInit, OnChanges {
       alert('⚠️ Algunas sesiones fueron descartadas por superposición de horarios.');
     }
 
-    // En vez de emitir simplemente `sesiones`, emite metadatos
     this.eventoGuardado.emit({
       sesiones,
       editarUna: this.estaEditando && sesiones.length === 1,
       idSesionOriginal: this.eventoParaEditar?.id || null
     });
+
     this.eventoForm.reset();
     this.sesiones.clear();
     this.eventoParaEditar = null;
@@ -280,13 +279,38 @@ export class EventComponent implements OnInit, OnChanges {
 
       return !isUppercase || !isWithinLimit
         ? {
-          uppercaseMaxLength: {
-            requiredUppercase: true,
-            requiredMaxLength: maxLength,
-            actualLength: value.length
+            uppercaseMaxLength: {
+              requiredUppercase: true,
+              requiredMaxLength: maxLength,
+              actualLength: value.length
+            }
           }
-        }
         : null;
     };
+  }
+
+  // ✅ NUEVO MÉTODO AÑADIDO
+  guardarSesionEditada(sesion: any): void {
+    const eventoBase = this.eventoForm.value;
+    const idSesionOriginal = `${eventoBase.nombreSesion}-${this.eventoParaEditar?.fecha}-${this.eventoParaEditar?.horaInicio}`;
+
+    const sesionFinal = {
+      ...eventoBase,
+      ...sesion,
+      nombreSesion: eventoBase.nombreSesion,
+      id: `${eventoBase.nombreSesion}-${sesion.fecha}-${sesion.horaInicio}`
+    };
+
+    this.eventoGuardado.emit({
+      sesiones: [sesionFinal],
+      editarUna: true,
+      idSesionOriginal
+    });
+
+    this.eventoForm.reset();
+    this.sesiones.clear();
+    this.eventoParaEditar = null;
+    this.cerrarFormulario.emit();
+    this.limpiarEventoSeleccionado.emit();
   }
 }

@@ -147,7 +147,10 @@
           </form>
 
           <!-- Grid de sesiones -->
-          <app-grid-sesiones [formArray]="sesiones"></app-grid-sesiones>
+          <app-grid-sesiones
+            [formArray]="sesiones"
+            (sesionActualizada)="guardarSesionEditada($event)">
+          </app-grid-sesiones>
         </div>
 
         <!-- Footer -->

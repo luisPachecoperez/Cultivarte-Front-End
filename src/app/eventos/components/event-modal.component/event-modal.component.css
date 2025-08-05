@@ -1,0 +1,77 @@
+/* Fondo semitransparente */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1050;
+}
+
+/* Modal centrado y limpio */
+.modal-content {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  padding: 1.5rem 1.2rem;
+  background: #fff;
+}
+
+/* Título al estilo pastilla roja */
+.modal-header {
+  justify-content: center;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.modal-title {
+  background-color: #d84875;
+  color: white;
+  padding: 0.5rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  display: inline-block;
+  text-align: center;
+  width: 100%;
+}
+
+.btn-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666;
+}
+
+/* Contenedor de botones */
+.modal-body {
+  padding-top: 1.5rem;
+  padding-bottom: 1rem;
+}
+
+/* Botones suaves, sin bordes */
+.modal-body button {
+  background: none;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+/* Separación entre botones */
+.modal-body button + button {
+  border-top: 1px solid #eee;
+}
+
+/* Hover visual suave */
+.modal-body button:hover {
+  background-color: #f5f5f5;
+  border-radius: 10px;
+}
