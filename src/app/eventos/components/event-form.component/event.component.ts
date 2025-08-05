@@ -19,13 +19,12 @@ import {
   ValidationErrors,
   FormArray
 } from '@angular/forms';
-import { EventModalComponent } from '../event-modal.component/event-modal.component';
 import { GridSesionesComponent } from '../../../grid.sesiones/grid.sesiones.component';
 
 @Component({
   selector: 'app-event',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, EventModalComponent, GridSesionesComponent],
+  imports: [CommonModule, ReactiveFormsModule, GridSesionesComponent],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.css']
 })
@@ -150,92 +149,65 @@ export class EventComponent implements OnInit, OnChanges {
     }
 
     const evento = this.eventoForm.value;
-    const sesiones: any[] = [];
+    let sesiones: any[] = [];
 
-    const fechaBase = new Date(evento.fecha);
-    const finMes = new Date(fechaBase.getFullYear(), fechaBase.getMonth() + 1, 0);
-
+    // Si NO se repite, creamos una sola sesión base
     if (evento.repeticion === 'no') {
-      sesiones.push({
-        ...evento,
-        fecha: evento.fecha,
-        horaInicio: evento.horaInicio,
-        horaFin: evento.horaFin,
-        id: `${evento.nombreSesion}-${evento.fecha}-${evento.horaInicio}`
-      });
-    } else if (evento.repeticion === 'diario') {
+      sesiones.push(this.crearSesion(evento.fecha, evento.horaInicio, evento.horaFin, evento));
+    }
+
+    // Si tiene repetición (diaria, semanal, mensual)
+    else {
+      const fechaBase = new Date(evento.fecha);
+      const finMes = new Date(fechaBase.getFullYear(), fechaBase.getMonth() + 1, 0);
       const actual = new Date(fechaBase);
-      while (actual <= finMes) {
-        const fechaStr = actual.toISOString().split('T')[0];
-        sesiones.push({
-          ...evento,
-          fecha: fechaStr,
-          horaInicio: evento.horaInicio,
-          horaFin: evento.horaFin,
-          id: `${evento.nombreSesion}-${fechaStr}-${evento.horaInicio}`
-        });
-        actual.setDate(actual.getDate() + 1);
+
+      if (evento.repeticion === 'diario') {
+        while (actual <= finMes) {
+          const fechaStr = actual.toISOString().split('T')[0];
+          sesiones.push(this.crearSesion(fechaStr, evento.horaInicio, evento.horaFin, evento));
+          actual.setDate(actual.getDate() + 1);
+        }
       }
-    } else if (evento.repeticion === 'semanal') {
-      const actual = new Date(fechaBase);
-      while (actual <= finMes) {
-        const fechaStr = actual.toISOString().split('T')[0];
-        sesiones.push({
-          ...evento,
-          fecha: fechaStr,
-          horaInicio: evento.horaInicio,
-          horaFin: evento.horaFin,
-          id: `${evento.nombreSesion}-${fechaStr}-${evento.horaInicio}`
-        });
-        actual.setDate(actual.getDate() + 7);
+
+      if (evento.repeticion === 'semanal') {
+        while (actual <= finMes) {
+          const fechaStr = actual.toISOString().split('T')[0];
+          sesiones.push(this.crearSesion(fechaStr, evento.horaInicio, evento.horaFin, evento));
+          actual.setDate(actual.getDate() + 7);
+        }
       }
-    } else if (evento.repeticion === 'mensual') {
-      for (let i = 0; i < 3; i++) {
-        const fechaNueva = new Date(
-          fechaBase.getFullYear(),
-          fechaBase.getMonth() + i,
-          fechaBase.getDate()
-        );
-        const fechaStr = fechaNueva.toISOString().split('T')[0];
-        sesiones.push({
-          ...evento,
-          fecha: fechaStr,
-          horaInicio: evento.horaInicio,
-          horaFin: evento.horaFin,
-          id: `${evento.nombreSesion}-${fechaStr}-${evento.horaInicio}`
-        });
+
+      if (evento.repeticion === 'mensual') {
+        for (let i = 0; i < 3; i++) {
+          const nuevaFecha = new Date(
+            fechaBase.getFullYear(),
+            fechaBase.getMonth() + i,
+            fechaBase.getDate()
+          );
+          const fechaStr = nuevaFecha.toISOString().split('T')[0];
+          sesiones.push(this.crearSesion(fechaStr, evento.horaInicio, evento.horaFin, evento));
+        }
       }
     }
 
-    const totalAntes = sesiones.length;
-
+    // Agregar todas las sesiones modificadas manualmente desde el grid
     this.sesiones.controls.forEach(control => {
       const s = control.value;
-      const nueva = {
-        ...evento,
-        fecha: s.fecha,
-        horaInicio: s.horaInicio,
-        horaFin: s.horaFin,
-        id: `${evento.nombreSesion}-${s.fecha}-${s.horaInicio}`
-      };
+      const nueva = this.crearSesion(s.fecha, s.horaInicio, s.horaFin, evento);
 
-      const duplicadoExacto = sesiones.some(ev =>
+      const yaExiste = sesiones.some(ev =>
         ev.fecha === nueva.fecha &&
         ev.horaInicio === nueva.horaInicio &&
         ev.horaFin === nueva.horaFin
       );
 
-      const solapa = this.haySuperposicion(sesiones, nueva);
+      const haySolape = this.haySuperposicion(sesiones, nueva);
 
-      if (!duplicadoExacto && !solapa) {
+      if (!yaExiste && !haySolape) {
         sesiones.push(nueva);
       }
     });
-
-    const totalDespues = sesiones.length;
-    if (totalDespues < totalAntes + this.sesiones.length) {
-      alert('⚠️ Algunas sesiones fueron descartadas por superposición de horarios.');
-    }
 
     this.eventoGuardado.emit({
       sesiones,
@@ -248,6 +220,16 @@ export class EventComponent implements OnInit, OnChanges {
     this.eventoParaEditar = null;
     this.cerrarFormulario.emit();
     this.limpiarEventoSeleccionado.emit();
+  }
+
+  private crearSesion(fecha: string, horaInicio: string, horaFin: string, base: any) {
+    return {
+      ...base,
+      fecha,
+      horaInicio,
+      horaFin,
+      id: `${base.nombreSesion}-${fecha}-${horaInicio}`
+    };
   }
 
   private haySuperposicion(sesiones: any[], nuevaSesion: any): boolean {
@@ -287,30 +269,5 @@ export class EventComponent implements OnInit, OnChanges {
           }
         : null;
     };
-  }
-
-  // ✅ NUEVO MÉTODO AÑADIDO
-  guardarSesionEditada(sesion: any): void {
-    const eventoBase = this.eventoForm.value;
-    const idSesionOriginal = `${eventoBase.nombreSesion}-${this.eventoParaEditar?.fecha}-${this.eventoParaEditar?.horaInicio}`;
-
-    const sesionFinal = {
-      ...eventoBase,
-      ...sesion,
-      nombreSesion: eventoBase.nombreSesion,
-      id: `${eventoBase.nombreSesion}-${sesion.fecha}-${sesion.horaInicio}`
-    };
-
-    this.eventoGuardado.emit({
-      sesiones: [sesionFinal],
-      editarUna: true,
-      idSesionOriginal
-    });
-
-    this.eventoForm.reset();
-    this.sesiones.clear();
-    this.eventoParaEditar = null;
-    this.cerrarFormulario.emit();
-    this.limpiarEventoSeleccionado.emit();
   }
 }

@@ -10,6 +10,7 @@
     </tr>
   </thead>
   <tbody>
+    <!-- Lista de sesiones con scroll -->
     <tr>
       <td colspan="4" style="padding: 0;">
         <div style="max-height: 250px; overflow-y: auto;">
@@ -27,7 +28,6 @@
                     <input type="time" class="form-control" formControlName="horaFin" />
                   </td>
                   <td class="d-flex gap-1">
-                    <button class="btn btn-success btn-sm" (click)="actualizarSesion($index)">Actualizar</button>
                     <button class="btn btn-danger btn-sm" (click)="eliminarSesion($index)">Eliminar</button>
                   </td>
                 </tr>
@@ -38,7 +38,7 @@
       </td>
     </tr>
 
-    <!-- Nueva sesión -->
+    <!-- Formulario para nueva sesión -->
     <tr [formGroup]="nuevaSesionForm">
       <td>
         <input
