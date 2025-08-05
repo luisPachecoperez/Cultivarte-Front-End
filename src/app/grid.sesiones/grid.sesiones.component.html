@@ -10,16 +10,33 @@
     </tr>
   </thead>
   <tbody>
-    @for (control of sesiones; track $index) {
-      <tr [formGroup]="control">
-        <td>{{ control.value.fecha }}</td>
-        <td>{{ control.value.horaInicio }}</td>
-        <td>{{ control.value.horaFin }}</td>
-        <td>
-          <button class="btn btn-danger btn-sm" (click)="eliminarSesion($index)">Eliminar</button>
-        </td>
-      </tr>
-    }
+    <tr>
+      <td colspan="4" style="padding: 0;">
+        <div style="max-height: 250px; overflow-y: auto;">
+          <table class="table mb-0">
+            <tbody>
+              @for (control of sesiones; track $index) {
+                <tr [formGroup]="control">
+                  <td>
+                    <input type="date" class="form-control" formControlName="fecha" />
+                  </td>
+                  <td>
+                    <input type="time" class="form-control" formControlName="horaInicio" />
+                  </td>
+                  <td>
+                    <input type="time" class="form-control" formControlName="horaFin" />
+                  </td>
+                  <td class="d-flex gap-1">
+                    <button class="btn btn-success btn-sm" (click)="actualizarSesion($index)">Actualizar</button>
+                    <button class="btn btn-danger btn-sm" (click)="eliminarSesion($index)">Eliminar</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </td>
+    </tr>
 
     <!-- Nueva sesión -->
     <tr [formGroup]="nuevaSesionForm">

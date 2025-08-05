@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-event-modal',
   templateUrl: './event-modal.component.html',
+  styleUrls: ['./event-modal.component.css'],
   standalone: true,
   imports: [CommonModule]
 })

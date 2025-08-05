@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -10,6 +10,7 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 })
 export class GridSesionesComponent {
   @Input() formArray!: FormArray;
+  @Output() sesionActualizada = new EventEmitter<{ index: number; sesion: any }>(); // NUEVO
 
   nuevaSesionForm: FormGroup;
 
@@ -41,6 +42,13 @@ export class GridSesionesComponent {
   eliminarSesion(index: number): void {
     if (index >= 0 && index < this.formArray.length) {
       this.formArray.removeAt(index);
+    }
+  }
+
+  actualizarSesion(index: number): void {
+    const control = this.formArray.at(index);
+    if (control && control.valid) {
+      this.sesionActualizada.emit({ index, sesion: control.value }); // NUEVO
     }
   }
 }
