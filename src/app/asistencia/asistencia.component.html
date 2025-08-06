@@ -8,7 +8,10 @@
     <h5>
       Asistencia beneficiarios:
       <strong>{{ evento?.fecha }}</strong>
-      Hora: <strong>{{ evento?.horaInicio }}</strong> a <strong>{{ evento?.horaFin }}</strong>
+      Hora:
+      <strong>{{ evento?.fecha + 'T' + evento?.horaInicio | date: 'hh:mm a' }}</strong>
+      a
+      <strong>{{ evento?.fecha + 'T' + evento?.horaFin | date: 'hh:mm a' }}</strong>
     </h5>
     <button class="btn-close" (click)="cerrar.emit()">×</button>
   </div>
