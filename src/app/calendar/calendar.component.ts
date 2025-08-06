@@ -173,14 +173,22 @@ export class CalendarComponent {
       Nombre: ev.title
     })));
   }
-  eliminarSesionDelCalendario(idSesion: string) {
-    console.log('🗑️ Eliminando sesión desde evento:', idSesion);
+  eliminarSesionDelCalendario(id: string) {
+    // Si es UUID asumimos que es una sesión individual
+    const esUUID = /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(id);
 
-    this.eventosCalendario = this.eventosCalendario.filter(ev => ev.id !== idSesion);
-    this.calendarOptions.events = this.eventosCalendario;
+    if (esUUID) {
+      console.log('🗑️ Eliminando sesión individual:', id);
+      this.eventosCalendario = this.eventosCalendario.filter(ev => ev.id !== id);
+    } else {
+      console.log('🧹 Eliminando todas las sesiones con nombre:', id);
+      this.eventosCalendario = this.eventosCalendario.filter(ev => ev.title !== id);
+    }
 
-    console.log('📆 Sesión eliminada del calendario:', idSesion);
+    this.calendarOptions.events = [...this.eventosCalendario];
+    console.log('📆 Sesión(es) eliminada(s). Calendario actualizado.');
   }
+
 
 
   onAccionSeleccionada(accion: 'editar' | 'asistencia') {

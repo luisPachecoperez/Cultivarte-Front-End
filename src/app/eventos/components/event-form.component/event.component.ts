@@ -248,31 +248,32 @@ actualizarSesion() {
   if (sesiones.length === 0) {
     console.warn('⚠️ No hay sesiones para actualizar. Cerrando formulario...');
 
-    // 🧼 Emitir eliminación desde el componente padre
-    this.sesionEliminada.emit(this.eventoParaEditar?.id);
+    // 🔁 Si es edición múltiple (repetido), eliminamos por nombre
+    if (this.eventoParaEditar?.idSesion) {
+      this.sesionEliminada.emit(this.eventoParaEditar.idSesion);
+    } else if (this.eventoParaEditar?.nombreSesion) {
+      this.sesionEliminada.emit(this.eventoParaEditar.nombreSesion); // <-- importantísimo
+    }
 
     this.cerrarFormulario.emit();
     return;
   }
 
-  const sesionEditada = sesiones.at(0).value;
-
-  console.log('📦 Sesión a guardar (actualización manual):', sesionEditada);
-
-  if (!sesionEditada.fecha || !sesionEditada.horaInicio || !sesionEditada.horaFin) {
-    console.warn('❌ Sesión incompleta, no se puede guardar');
-    return;
-  }
-
-  const datosCompletos = {
+  const nuevasSesiones = sesiones.controls.map((control, i) => ({
     ...this.eventoParaEditar,
-    ...sesionEditada
-  };
+    ...control.value,
+    id: this.eventoParaEditar?.sesiones?.[i]?.id || crypto.randomUUID() // mantener o crear ID
+  }));
+
+  console.log('📦 Sesiones a guardar (actualización múltiple):', nuevasSesiones);
+
+  const editarUna = nuevasSesiones.length === 1;
+  const idSesionOriginal = editarUna ? this.eventoParaEditar?.id : null;
 
   this.eventoEditado.emit({
-    sesiones: [datosCompletos],
-    editarUna: true,
-    idSesionOriginal: this.eventoParaEditar?.id
+    sesiones: nuevasSesiones,
+    editarUna,
+    idSesionOriginal
   });
 
   this.cerrarFormulario.emit();
