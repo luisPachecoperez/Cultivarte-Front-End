@@ -32,6 +32,7 @@ export class EventComponent implements OnInit, OnChanges {
   @Input() eventoSeleccionado: any = null;
 
   private _fechaPreseleccionada: string | null = null;
+  actualizarSesionEnCalendario: any;
   @Input() set fechaPreseleccionada(value: string | null) {
     this._fechaPreseleccionada = value;
     if (value && this.eventoForm) {
@@ -55,7 +56,10 @@ export class EventComponent implements OnInit, OnChanges {
   get estaEditando(): boolean {
     return !!this.eventoParaEditar;
   }
-
+  get modoSoloLectura(): boolean {
+    // Solo es readonly cuando se está editando UNA sesión (no el evento completo)
+    return this.estaEditando && this.eventoParaEditar?.idSesion;
+  }
   tiposEvento = ['Taller', 'Conferencia', 'Seminario'];
   responsables = ['Juan', 'Ana', 'Carlos'];
   aliados = ['Aliado A', 'Aliado B', 'Aliado C'];
@@ -64,16 +68,16 @@ export class EventComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.eventoForm = this.fb.group({
-      institucional: [null, Validators.required],
-      tipoEvento: ['', Validators.required],
-      responsable: ['', Validators.required],
-      aliado: [''],
-      nombreSesion: ['', [Validators.required, this.uppercaseMaxLengthValidator(30)]],
-      descripcionGrupo: [''],
-      fecha: [this._fechaPreseleccionada ?? '', Validators.required],
-      horaInicio: ['', Validators.required],
-      horaFin: ['', Validators.required],
-      repeticion: ['no'],
+      institucional: [{ value: null, disabled: this.estaEditando }, Validators.required],
+      tipoEvento: [{ value: '', disabled: this.estaEditando }, Validators.required],
+      responsable: [{ value: '', disabled: this.estaEditando }, Validators.required],
+      aliado: [{ value: '', disabled: this.estaEditando }],
+      nombreSesion: [{ value: '', disabled: this.estaEditando }, [Validators.required, this.uppercaseMaxLengthValidator(30)]],
+      descripcionGrupo: [{ value: '', disabled: this.estaEditando }],
+      fecha: [{ value: this._fechaPreseleccionada ?? '', disabled: this.estaEditando }, Validators.required],
+      horaInicio: [{ value: '', disabled: this.estaEditando }, Validators.required],
+      horaFin: [{ value: '', disabled: this.estaEditando }, Validators.required],
+      repeticion: [{ value: 'no', disabled: this.estaEditando }],
       sesiones: this.fb.array([])
     });
 
@@ -130,6 +134,20 @@ export class EventComponent implements OnInit, OnChanges {
       repeticion: evento.repeticion || 'no'
     });
 
+    if (this.estaEditando) {
+      this.eventoForm.get('institucional')?.disable();
+      this.eventoForm.get('tipoEvento')?.disable();
+      this.eventoForm.get('responsable')?.disable();
+      this.eventoForm.get('aliado')?.disable();
+      this.eventoForm.get('nombreSesion')?.disable();
+      this.eventoForm.get('descripcionGrupo')?.disable();
+      this.eventoForm.get('fecha')?.disable();
+      this.eventoForm.get('horaInicio')?.disable();
+      this.eventoForm.get('horaFin')?.disable();
+      this.eventoForm.get('repeticion')?.disable();
+    }
+
+
     this.sesiones.clear();
     if (evento.sesiones && Array.isArray(evento.sesiones)) {
       evento.sesiones.forEach((s: any) => {
@@ -145,54 +163,53 @@ export class EventComponent implements OnInit, OnChanges {
   guardarEvento(): void {
     if (this.eventoForm.invalid) {
       this.eventoForm.markAllAsTouched();
+      console.log('⚠️ Formulario inválido. Revisa los campos.');
       return;
     }
 
+    if (this.estaEditando && this.eventoParaEditar?.id) {
+      this.actualizarSesion();
+    } else {
+      this.crearEvento();
+    }
+  }
+
+  private crearEvento(): void {
     const evento = this.eventoForm.value;
     let sesiones: any[] = [];
 
-    // Si NO se repite, creamos una sola sesión base
+    console.log('📋 Evento base:', evento);
+
+    const fechaBase = new Date(evento.fecha);
+    const finMes = new Date(fechaBase.getFullYear(), fechaBase.getMonth() + 1, 0);
+    const actual = new Date(fechaBase);
+
     if (evento.repeticion === 'no') {
       sesiones.push(this.crearSesion(evento.fecha, evento.horaInicio, evento.horaFin, evento));
     }
 
-    // Si tiene repetición (diaria, semanal, mensual)
-    else {
-      const fechaBase = new Date(evento.fecha);
-      const finMes = new Date(fechaBase.getFullYear(), fechaBase.getMonth() + 1, 0);
-      const actual = new Date(fechaBase);
-
-      if (evento.repeticion === 'diario') {
-        while (actual <= finMes) {
-          const fechaStr = actual.toISOString().split('T')[0];
-          sesiones.push(this.crearSesion(fechaStr, evento.horaInicio, evento.horaFin, evento));
-          actual.setDate(actual.getDate() + 1);
-        }
-      }
-
-      if (evento.repeticion === 'semanal') {
-        while (actual <= finMes) {
-          const fechaStr = actual.toISOString().split('T')[0];
-          sesiones.push(this.crearSesion(fechaStr, evento.horaInicio, evento.horaFin, evento));
-          actual.setDate(actual.getDate() + 7);
-        }
-      }
-
-      if (evento.repeticion === 'mensual') {
-        for (let i = 0; i < 3; i++) {
-          const nuevaFecha = new Date(
-            fechaBase.getFullYear(),
-            fechaBase.getMonth() + i,
-            fechaBase.getDate()
-          );
-          const fechaStr = nuevaFecha.toISOString().split('T')[0];
-          sesiones.push(this.crearSesion(fechaStr, evento.horaInicio, evento.horaFin, evento));
-        }
+    if (evento.repeticion === 'diario') {
+      while (actual <= finMes) {
+        sesiones.push(this.crearSesion(actual.toISOString().split('T')[0], evento.horaInicio, evento.horaFin, evento));
+        actual.setDate(actual.getDate() + 1);
       }
     }
 
-    // Agregar todas las sesiones modificadas manualmente desde el grid
-    this.sesiones.controls.forEach(control => {
+    if (evento.repeticion === 'semanal') {
+      while (actual <= finMes) {
+        sesiones.push(this.crearSesion(actual.toISOString().split('T')[0], evento.horaInicio, evento.horaFin, evento));
+        actual.setDate(actual.getDate() + 7);
+      }
+    }
+
+    if (evento.repeticion === 'mensual') {
+      for (let i = 0; i < 3; i++) {
+        const nuevaFecha = new Date(fechaBase.getFullYear(), fechaBase.getMonth() + i, fechaBase.getDate());
+        sesiones.push(this.crearSesion(nuevaFecha.toISOString().split('T')[0], evento.horaInicio, evento.horaFin, evento));
+      }
+    }
+
+    this.sesiones.controls.forEach((control, i) => {
       const s = control.value;
       const nueva = this.crearSesion(s.fecha, s.horaInicio, s.horaFin, evento);
 
@@ -209,12 +226,61 @@ export class EventComponent implements OnInit, OnChanges {
       }
     });
 
+    console.log('📦 Sesiones creadas:', sesiones);
+    sesiones.forEach((s, i) =>
+      console.log(`   #${i + 1}: ${s.id} → ${s.fecha} ${s.horaInicio}-${s.horaFin}`)
+    );
+
     this.eventoGuardado.emit({
       sesiones,
-      editarUna: this.estaEditando && sesiones.length === 1,
-      idSesionOriginal: this.eventoParaEditar?.id || null
+      editarUna: false,
+      idSesionOriginal: null
     });
 
+    this.resetearFormulario();
+  }
+
+  @Output() sesionEliminada = new EventEmitter<string>();
+
+actualizarSesion() {
+  const sesiones = this.eventoForm.get('sesiones') as FormArray;
+
+  if (sesiones.length === 0) {
+    console.warn('⚠️ No hay sesiones para actualizar. Cerrando formulario...');
+
+    // 🧼 Emitir eliminación desde el componente padre
+    this.sesionEliminada.emit(this.eventoParaEditar?.id);
+
+    this.cerrarFormulario.emit();
+    return;
+  }
+
+  const sesionEditada = sesiones.at(0).value;
+
+  console.log('📦 Sesión a guardar (actualización manual):', sesionEditada);
+
+  if (!sesionEditada.fecha || !sesionEditada.horaInicio || !sesionEditada.horaFin) {
+    console.warn('❌ Sesión incompleta, no se puede guardar');
+    return;
+  }
+
+  const datosCompletos = {
+    ...this.eventoParaEditar,
+    ...sesionEditada
+  };
+
+  this.eventoEditado.emit({
+    sesiones: [datosCompletos],
+    editarUna: true,
+    idSesionOriginal: this.eventoParaEditar?.id
+  });
+
+  this.cerrarFormulario.emit();
+}
+
+
+
+  private resetearFormulario(): void {
     this.eventoForm.reset();
     this.sesiones.clear();
     this.eventoParaEditar = null;
@@ -223,13 +289,17 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   private crearSesion(fecha: string, horaInicio: string, horaFin: string, base: any) {
-    return {
+    const idGenerado = crypto.randomUUID();
+    const sesion = {
       ...base,
       fecha,
       horaInicio,
       horaFin,
-      id: `${base.nombreSesion}-${fecha}-${horaInicio}`
+      id: idGenerado
     };
+
+    console.log(`🆕 Crear sesión → ID: ${idGenerado}, Fecha: ${fecha}, ${horaInicio} - ${horaFin}`);
+    return sesion;
   }
 
   private haySuperposicion(sesiones: any[], nuevaSesion: any): boolean {
@@ -261,12 +331,12 @@ export class EventComponent implements OnInit, OnChanges {
 
       return !isUppercase || !isWithinLimit
         ? {
-            uppercaseMaxLength: {
-              requiredUppercase: true,
-              requiredMaxLength: maxLength,
-              actualLength: value.length
-            }
+          uppercaseMaxLength: {
+            requiredUppercase: true,
+            requiredMaxLength: maxLength,
+            actualLength: value.length
           }
+        }
         : null;
     };
   }

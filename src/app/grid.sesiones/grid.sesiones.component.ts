@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -10,6 +10,12 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 })
 export class GridSesionesComponent {
   @Input() formArray!: FormArray;
+
+  /** 🔒 Indica si el grid está en modo solo lectura **/
+  @Input() soloLectura: boolean = false;
+
+  /** ✅ Emite al padre cuando una sesión es modificada **/
+  @Output() sesionModificada = new EventEmitter<void>();
 
   nuevaSesionForm: FormGroup;
 
@@ -26,7 +32,7 @@ export class GridSesionesComponent {
   }
 
   agregarSesion(): void {
-    if (this.nuevaSesionForm.invalid) return;
+    if (this.nuevaSesionForm.invalid || this.soloLectura) return;
 
     const nueva = this.fb.group({
       fecha: [this.nuevaSesionForm.value.fecha, Validators.required],
@@ -36,11 +42,21 @@ export class GridSesionesComponent {
 
     this.formArray.push(nueva);
     this.nuevaSesionForm.reset();
+    this.sesionModificada.emit();
   }
 
   eliminarSesion(index: number): void {
+    if (this.soloLectura) return;
+
     if (index >= 0 && index < this.formArray.length) {
       this.formArray.removeAt(index);
+      this.sesionModificada.emit();
+    }
+  }
+
+  notificarCambio(): void {
+    if (!this.soloLectura) {
+      this.sesionModificada.emit();
     }
   }
 }

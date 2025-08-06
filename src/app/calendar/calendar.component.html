@@ -10,9 +10,13 @@
     [fechaPreseleccionada]="fechaSeleccionada"
     [eventoSeleccionado]="eventoSeleccionado"
     (eventoGuardado)="agregarOActualizarEvento($event)"
-    (cerrarFormulario)="mostrarFormulario = false; eventoSeleccionado = null">
-  </app-event>
+    (eventoEditado)="agregarOActualizarEvento($event)"
+    (cerrarFormulario)="mostrarFormulario = false; eventoSeleccionado = null"
+    (sesionEliminada)="eliminarSesionDelCalendario($event)"
+    (limpiarEventoSeleccionado)="eventoSeleccionado = null"
+  ></app-event>
 }
+
 
 <!-- Modal de acciones (solo aparece si se activa) -->
 @if (mostrarModalAcciones) {

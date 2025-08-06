@@ -60,9 +60,15 @@ export class CalendarComponent {
     console.log('🟢 Click en evento del calendario');
 
     const nombreSesion = arg.event.title;
+
     const eventosRelacionados = (this.calendarOptions.events as any[]).filter(
       e => e.title === nombreSesion
     );
+
+    console.log(`🔍 ${eventosRelacionados.length} sesiones encontradas con nombre: ${nombreSesion}`);
+    eventosRelacionados.forEach((e, i) => {
+      console.log(`   [${i + 1}] ID: ${e.id} | Fecha: ${e.start.split('T')[0]} | Hora: ${e.start.split('T')[1].substring(0, 5)} - ${e.end.split('T')[1].substring(0, 5)}`);
+    });
 
     const sesiones = eventosRelacionados.map(e => ({
       fecha: e.start.split('T')[0],
@@ -80,6 +86,7 @@ export class CalendarComponent {
     console.log('🎯 Evento seleccionado para acciones:', this.eventoSeleccionado);
     this.mostrarModalAcciones = true;
   }
+
 
   abrirEdicion(eventoCalendario: any) {
     const nombreSesion = eventoCalendario.event.title;
@@ -106,42 +113,48 @@ export class CalendarComponent {
   agregarOActualizarEvento(evento: any): void {
     const { sesiones, editarUna, idSesionOriginal } = evento;
 
-    if (!Array.isArray(sesiones) || sesiones.length === 0) return;
+    if (!Array.isArray(sesiones) || sesiones.length === 0) {
+      console.warn('⚠️ No hay sesiones para agregar o actualizar.');
+      return;
+    }
 
     const nombreSesion = sesiones[0].nombreSesion;
+    console.log('🔁 Procesando sesiones para:', nombreSesion);
 
     if (editarUna && idSesionOriginal) {
       console.log('🛠 Editando solo una sesión:', idSesionOriginal);
 
-      // 1. Eliminar esa única sesión del calendario y del array de eventos
       this.eventosCalendario = this.eventosCalendario.filter(ev => ev.id !== idSesionOriginal);
       this.calendarOptions.events = (this.calendarOptions.events as any[]).filter(ev => ev.id !== idSesionOriginal);
 
-    } else {
+      console.log('🗑️ Eliminada sesión con ID:', idSesionOriginal);
+    } else if (!editarUna) {
       console.log('🧹 Reemplazando todas las sesiones de:', nombreSesion);
 
-      // 2. Borrar todas las sesiones que comparten el mismo nombre de sesión
+      const eliminadas = this.eventosCalendario.filter(ev => ev.title === nombreSesion);
+      eliminadas.forEach(ev => console.log('🗑️ Eliminada:', ev.id));
+
       this.eventosCalendario = this.eventosCalendario.filter(ev => ev.title !== nombreSesion);
       this.calendarOptions.events = (this.calendarOptions.events as any[]).filter(ev => ev.title !== nombreSesion);
     }
 
-    // 3. Agregar las nuevas sesiones
-    sesiones.forEach(e => {
-      const id = e.id ?? `${e.nombreSesion}-${e.fecha}-${e.horaInicio}`;
+
+    // Agregar las nuevas sesiones
+    sesiones.forEach((e, i) => {
       const eventoFormateado = {
-        id,
+        id: e.id, // ✅ Usamos el id único recibido
         title: e.nombreSesion,
         start: `${e.fecha}T${e.horaInicio}`,
         end: `${e.fecha}T${e.horaFin}`,
         extendedProps: { ...e }
       };
 
-      console.log('➕ Agregando sesión:', eventoFormateado);
+      console.log(`➕ Agregando sesión #${i + 1}:`, eventoFormateado);
 
       this.eventosCalendario.push(eventoFormateado);
     });
 
-    // 4. Refrescar el calendario
+    // Refrescar el calendario
     this.calendarOptions = {
       ...this.calendarOptions,
       events: [...this.eventosCalendario]
@@ -152,6 +165,21 @@ export class CalendarComponent {
     this.mostrarFormulario = false;
 
     console.log('✅ Sesiones actualizadas. Total en calendario:', this.eventosCalendario.length);
+    console.table(this.eventosCalendario.map(ev => ({
+      ID: ev.id,
+      Fecha: ev.start.split('T')[0],
+      HoraInicio: ev.start.split('T')[1].substring(0, 5),
+      HoraFin: ev.end.split('T')[1].substring(0, 5),
+      Nombre: ev.title
+    })));
+  }
+  eliminarSesionDelCalendario(idSesion: string) {
+    console.log('🗑️ Eliminando sesión desde evento:', idSesion);
+
+    this.eventosCalendario = this.eventosCalendario.filter(ev => ev.id !== idSesion);
+    this.calendarOptions.events = this.eventosCalendario;
+
+    console.log('📆 Sesión eliminada del calendario:', idSesion);
   }
 
 
