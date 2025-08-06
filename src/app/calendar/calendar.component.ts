@@ -8,6 +8,8 @@ import esLocale from '@fullcalendar/core/locales/es';
 import { CommonModule } from '@angular/common';
 import { EventModalComponent } from '../eventos/components/event-modal.component/event-modal.component';
 import { AsistenciaComponent } from "../asistencia/asistencia.component";
+import timeGridPlugin from '@fullcalendar/timegrid';
+
 
 @Component({
   selector: 'app-calendar',
@@ -25,11 +27,19 @@ export class CalendarComponent {
   mostrarModalAcciones: boolean = false;
   mostrarFormulario: boolean = false;
   mostrarAsistencia: boolean = false;
-
-
   calendarOptions: CalendarOptions = {
-    plugins: [dayGridPlugin, interactionPlugin],
+    plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
     initialView: 'dayGridMonth',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay' // 👈 Botones para cambiar vistas
+    },
+    views: {
+      dayGridMonth: { buttonText: 'Mes' },
+      timeGridWeek: { buttonText: 'Semana' },
+      timeGridDay: { buttonText: 'Día' }
+    },
     events: [],
     locale: esLocale,
     dateClick: this.handleDateClick.bind(this),
@@ -42,6 +52,23 @@ export class CalendarComponent {
     },
     datesSet: this.onDatesSet.bind(this)
   };
+
+
+  // calendarOptions: CalendarOptions = {
+  //   plugins: [dayGridPlugin, interactionPlugin],
+  //   initialView: 'dayGridMonth',
+  //   events: [],
+  //   locale: esLocale,
+  //   dateClick: this.handleDateClick.bind(this),
+  //   eventClick: this.handleEventClick.bind(this),
+  //   eventTimeFormat: {
+  //     hour: 'numeric',
+  //     minute: '2-digit',
+  //     hour12: true,
+  //     meridiem: 'short'
+  //   },
+  //   datesSet: this.onDatesSet.bind(this)
+  // };
 
   onDatesSet(dateInfo: any) {
     const fechaInicio = dateInfo.start.toISOString().split('T')[0];
