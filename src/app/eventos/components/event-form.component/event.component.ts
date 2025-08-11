@@ -60,9 +60,30 @@ export class EventComponent implements OnInit, OnChanges {
     // Solo es readonly cuando se está editando UNA sesión (no el evento completo)
     return this.estaEditando && this.eventoParaEditar?.idSesion;
   }
-  tiposEvento = ['Taller', 'Conferencia', 'Seminario'];
-  responsables = ['Juan', 'Ana', 'Carlos'];
+  tiposEvento: string[] = [
+    'Contenido del ciclo',
+    'Local',
+    'Actividad general',
+    'Actividad institucional',
+    'Actividad',
+    'Ludoteca Viajera'
+  ];
+  responsables = ['Coordinador', 'Ludotecario', 'Aliado', 'Voluntario'];
   aliados = ['Aliado A', 'Aliado B', 'Aliado C'];
+
+  // Listas de nombres según tipo de evento
+  nombresContenidoCiclo = ['Nombre A', 'Nombre B', 'Nombre C'];
+  nombresActividadGeneral = ['Nombre D', 'Nombre E', 'Nombre F'];
+  sedes = ['Sede A', 'Sede B', 'Sede C'];
+
+  // Getter para obtener la lista correcta
+  get nombresSegunTipo(): string[] {
+    const tipo = this.eventoForm.get('tipoEvento')?.value;
+    if (tipo === 'Contenido del ciclo') return this.nombresContenidoCiclo;
+    if (tipo === 'Actividad general') return this.nombresActividadGeneral;
+    return [];
+  }
+
 
   private fb = inject(FormBuilder);
 
@@ -72,6 +93,7 @@ export class EventComponent implements OnInit, OnChanges {
       tipoEvento: [{ value: '', disabled: this.estaEditando }, Validators.required],
       responsable: [{ value: '', disabled: this.estaEditando }, Validators.required],
       aliado: [{ value: '', disabled: this.estaEditando }],
+      sedes: [{ value: '', disabled: this.estaEditando }],
       nombreSesion: [{ value: '', disabled: this.estaEditando }, [Validators.required, this.uppercaseMaxLengthValidator(30)]],
       descripcionGrupo: [{ value: '', disabled: this.estaEditando }],
       fecha: [{ value: this._fechaPreseleccionada ?? '', disabled: this.estaEditando }, Validators.required],
@@ -108,6 +130,7 @@ export class EventComponent implements OnInit, OnChanges {
   onAccionSeleccionada(accion: 'editar' | 'asistencia') {
     if (accion === 'editar') {
       this.eventoParaEditar = this.eventoSeleccionado;
+      console.log('Editar evento', this.eventoParaEditar);
       this.precargarFormulario(this.eventoParaEditar);
     }
 
@@ -127,6 +150,7 @@ export class EventComponent implements OnInit, OnChanges {
       responsable: evento.responsable,
       aliado: evento.aliado,
       nombreSesion: evento.nombreSesion,
+      sedes: evento.sedes,
       descripcionGrupo: evento.descripcionGrupo,
       fecha: evento.fecha,
       horaInicio: evento.horaInicio,
@@ -140,6 +164,7 @@ export class EventComponent implements OnInit, OnChanges {
       this.eventoForm.get('responsable')?.disable();
       this.eventoForm.get('aliado')?.disable();
       this.eventoForm.get('nombreSesion')?.disable();
+      this.eventoForm.get('sedes')?.disable();
       this.eventoForm.get('descripcionGrupo')?.disable();
       this.eventoForm.get('fecha')?.disable();
       this.eventoForm.get('horaInicio')?.disable();
@@ -183,6 +208,9 @@ export class EventComponent implements OnInit, OnChanges {
     const fechaBase = new Date(evento.fecha);
     const finMes = new Date(fechaBase.getFullYear(), fechaBase.getMonth() + 1, 0);
     const actual = new Date(fechaBase);
+    console.log('📅 Fecha base:', evento.fecha);
+    console.log('📅 Hora fin:', evento.horaFin);
+    console.log('📅 Hora inicio:', evento.horaInicio);
 
     if (evento.repeticion === 'no') {
       sesiones.push(this.crearSesion(evento.fecha, evento.horaInicio, evento.horaFin, evento));
@@ -242,42 +270,42 @@ export class EventComponent implements OnInit, OnChanges {
 
   @Output() sesionEliminada = new EventEmitter<string>();
 
-actualizarSesion() {
-  const sesiones = this.eventoForm.get('sesiones') as FormArray;
+  actualizarSesion() {
+    const sesiones = this.eventoForm.get('sesiones') as FormArray;
 
-  if (sesiones.length === 0) {
-    console.warn('⚠️ No hay sesiones para actualizar. Cerrando formulario...');
+    if (sesiones.length === 0) {
+      console.warn('⚠️ No hay sesiones para actualizar. Cerrando formulario...');
 
-    // 🔁 Si es edición múltiple (repetido), eliminamos por nombre
-    if (this.eventoParaEditar?.idSesion) {
-      this.sesionEliminada.emit(this.eventoParaEditar.idSesion);
-    } else if (this.eventoParaEditar?.nombreSesion) {
-      this.sesionEliminada.emit(this.eventoParaEditar.nombreSesion); // <-- importantísimo
+      // 🔁 Si es edición múltiple (repetido), eliminamos por nombre
+      if (this.eventoParaEditar?.idSesion) {
+        this.sesionEliminada.emit(this.eventoParaEditar.idSesion);
+      } else if (this.eventoParaEditar?.nombreSesion) {
+        this.sesionEliminada.emit(this.eventoParaEditar.nombreSesion); // <-- importantísimo
+      }
+
+      this.cerrarFormulario.emit();
+      return;
     }
 
+    const nuevasSesiones = sesiones.controls.map((control, i) => ({
+      ...this.eventoParaEditar,
+      ...control.value,
+      id: this.eventoParaEditar?.sesiones?.[i]?.id || crypto.randomUUID() // mantener o crear ID
+    }));
+
+    console.log('📦 Sesiones a guardar (actualización múltiple):', nuevasSesiones);
+
+    const editarUna = nuevasSesiones.length === 1;
+    const idSesionOriginal = editarUna ? this.eventoParaEditar?.id : null;
+
+    this.eventoEditado.emit({
+      sesiones: nuevasSesiones,
+      editarUna,
+      idSesionOriginal
+    });
+
     this.cerrarFormulario.emit();
-    return;
   }
-
-  const nuevasSesiones = sesiones.controls.map((control, i) => ({
-    ...this.eventoParaEditar,
-    ...control.value,
-    id: this.eventoParaEditar?.sesiones?.[i]?.id || crypto.randomUUID() // mantener o crear ID
-  }));
-
-  console.log('📦 Sesiones a guardar (actualización múltiple):', nuevasSesiones);
-
-  const editarUna = nuevasSesiones.length === 1;
-  const idSesionOriginal = editarUna ? this.eventoParaEditar?.id : null;
-
-  this.eventoEditado.emit({
-    sesiones: nuevasSesiones,
-    editarUna,
-    idSesionOriginal
-  });
-
-  this.cerrarFormulario.emit();
-}
 
 
 

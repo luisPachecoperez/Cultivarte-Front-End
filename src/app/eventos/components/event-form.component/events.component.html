@@ -87,24 +87,51 @@
           </div>
 
           <!-- Nombre del evento -->
-          <div class="mb-3">
-            <label class="form-label">Nombre del evento</label>
-            <input
-              type="text"
-              class="form-control"
-              formControlName="nombreSesion"
-              placeholder="Nombre del evento"
-            />
-            @if (eventoForm.get('nombreSesion')?.invalid && eventoForm.get('nombreSesion')?.touched) {
-              <div class="text-danger mt-1">
-                @if (eventoForm.get('nombreSesion')?.errors?.['required']) {
-                  <small>El nombre es obligatorio.</small>
+          <div class="row g-2 mb-3">
+            <!-- Nombre del evento -->
+            <div class="col">
+              <label class="form-label">Nombre del evento</label>
+
+              @if (nombresSegunTipo.length > 0) {
+                <select class="form-control" formControlName="nombreSesion" [disabled]="modoSoloLectura">
+                  <option value="" disabled>Selecciona nombre</option>
+                  @for (nombre of nombresSegunTipo; track nombre) {
+                    <option [value]="nombre">{{ nombre }}</option>
+                  }
+                </select>
+              }
+              @else {
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="nombreSesion"
+                  placeholder="Nombre del evento"
+                  [readonly]="modoSoloLectura"
+                />
+              }
+
+              @if (eventoForm.get('nombreSesion')?.invalid && eventoForm.get('nombreSesion')?.touched) {
+                <div class="text-danger mt-1">
+                  @if (eventoForm.get('nombreSesion')?.errors?.['required']) {
+                    <small>El nombre es obligatorio.</small>
+                  }
+                  @if (eventoForm.get('nombreSesion')?.errors?.['uppercaseMaxLength']) {
+                    <small>Debe estar en mayúsculas y no superar 30 caracteres.</small>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Sede -->
+            <div class="col-4">
+              <label class="form-label">Sede</label>
+              <select class="form-control" formControlName="sedes" [disabled]="modoSoloLectura">
+                <option value="" disabled>Selecciona sede</option>
+                @for (s of sedes; track s) {
+                  <option [value]="s">{{ s }}</option>
                 }
-                @if (eventoForm.get('nombreSesion')?.errors?.['uppercaseMaxLength']) {
-                  <small>Debe estar en mayúsculas y no superar 30 caracteres.</small>
-                }
-              </div>
-            }
+              </select>
+            </div>
           </div>
 
           <!-- Descripción -->
@@ -115,6 +142,20 @@
               placeholder="Descripción del evento"
               formControlName="descripcionGrupo"
             ></textarea>
+          </div>
+
+          <!-- ¿Se repite? -->
+          <div class="mb-3">
+            <label class="form-label">¿Se repite?</label>
+            <select
+              class="form-control"
+              formControlName="repeticion"
+            >
+              <option value="no">No</option>
+              <option value="diario">Diario</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensual">Mensual</option>
+            </select>
           </div>
 
           <!-- ¿Cuándo? -->
@@ -142,27 +183,15 @@
               />
             </div>
           </div>
-
-          <!-- ¿Se repite? -->
-          <div class="mb-3">
-            <label class="form-label">¿Se repite?</label>
-            <select
-              class="form-control"
-              formControlName="repeticion"
-            >
-              <option value="no">No</option>
-              <option value="diario">Diario</option>
-              <option value="semanal">Semanal</option>
-              <option value="mensual">Mensual</option>
-            </select>
-          </div>
         </form>
 
         <!-- Grid de sesiones -->
-        <app-grid-sesiones
-          [formArray]="sesiones"
-          [soloLectura]="modoSoloLectura"
-        ></app-grid-sesiones>
+        @if (estaEditando) {
+          <app-grid-sesiones
+            [formArray]="sesiones"
+            [soloLectura]="modoSoloLectura"
+          ></app-grid-sesiones>
+        }
       </div>
 
       <!-- Footer con lógica única -->

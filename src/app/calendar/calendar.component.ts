@@ -192,6 +192,7 @@ export class CalendarComponent {
     this.mostrarFormulario = false;
 
     console.log('✅ Sesiones actualizadas. Total en calendario:', this.eventosCalendario.length);
+    console.log('✅ Sesiones actualizadas. Total en calendario:', this.eventosCalendario);
     console.table(this.eventosCalendario.map(ev => ({
       ID: ev.id,
       Fecha: ev.start.split('T')[0],
