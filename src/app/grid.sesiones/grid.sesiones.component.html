@@ -23,7 +23,7 @@
                       type="date"
                       class="form-control"
                       formControlName="fecha"
-                      [readonly]="soloLectura"
+                      [readonly]="soloLectura()"
                       (keydown.enter)="$event.stopPropagation()"
                       (blur)="notificarCambio()"
                     />
@@ -33,7 +33,7 @@
                       type="time"
                       class="form-control"
                       formControlName="horaInicio"
-                      [readonly]="soloLectura"
+                      [readonly]="soloLectura()"
                       (keydown.enter)="$event.stopPropagation()"
                       (blur)="notificarCambio()"
                     />
@@ -43,7 +43,7 @@
                       type="time"
                       class="form-control"
                       formControlName="horaFin"
-                      [readonly]="soloLectura"
+                      [readonly]="soloLectura()"
                       (keydown.enter)="$event.stopPropagation()"
                       (blur)="notificarCambio()"
                     />
@@ -52,7 +52,7 @@
                     <button
                       class="btn btn-danger btn-sm"
                       (click)="eliminarSesion($index)"
-                      [disabled]="soloLectura"
+                      [disabled]="soloLectura()"
                     >
                       Eliminar
                     </button>
@@ -66,7 +66,7 @@
     </tr>
 
     <!-- Formulario para nueva sesión -->
-    @if (!soloLectura) {
+    @if (!soloLectura()) {
       <tr [formGroup]="nuevaSesionForm">
         <td>
           <input

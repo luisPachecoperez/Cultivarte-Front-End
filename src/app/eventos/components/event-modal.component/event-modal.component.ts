@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -9,10 +9,12 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule]
 })
 export class EventModalComponent {
-  @Input() evento: any;
+  // 🔹 Señales para inputs
+  evento = input<any>(null);
 
-  @Output() accionSeleccionada = new EventEmitter<'editar' | 'asistencia'>();
-  @Output() cerrar = new EventEmitter<void>();
+  // 🔹 Outputs con nueva API
+  accionSeleccionada = output<'editar' | 'asistencia'>();
+  cerrar = output<void>();
 
   seleccionarAccion(tipo: 'editar' | 'asistencia') {
     this.accionSeleccionada.emit(tipo);

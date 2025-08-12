@@ -53,23 +53,6 @@ export class CalendarComponent {
     datesSet: this.onDatesSet.bind(this)
   };
 
-
-  // calendarOptions: CalendarOptions = {
-  //   plugins: [dayGridPlugin, interactionPlugin],
-  //   initialView: 'dayGridMonth',
-  //   events: [],
-  //   locale: esLocale,
-  //   dateClick: this.handleDateClick.bind(this),
-  //   eventClick: this.handleEventClick.bind(this),
-  //   eventTimeFormat: {
-  //     hour: 'numeric',
-  //     minute: '2-digit',
-  //     hour12: true,
-  //     meridiem: 'short'
-  //   },
-  //   datesSet: this.onDatesSet.bind(this)
-  // };
-
   onDatesSet(dateInfo: any) {
     const fechaInicio = dateInfo.start.toISOString().split('T')[0];
     const fechaFin = dateInfo.end.toISOString().split('T')[0];

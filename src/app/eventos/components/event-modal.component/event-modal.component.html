@@ -9,12 +9,12 @@
       <!-- Header -->
       <div class="modal-header">
         <h5 class="modal-title w-100 text-center" id="modalAccionesLabel">
-          <strong class="d-block mb-1 text-uppercase fs-5">{{ evento?.nombreSesion }}</strong>
+          <strong class="d-block mb-1 text-uppercase fs-5">{{ evento()?.nombreSesion }}</strong>
           <small class="text-muted">
-            {{ evento?.fecha }} |
-            {{ evento?.fecha + 'T' + evento?.horaInicio | date: 'hh:mm a' }}
+            {{ evento()?.fecha }} |
+            {{ evento()?.fecha + 'T' + evento()?.horaInicio | date: 'hh:mm a' }}
             a
-            {{ evento?.fecha + 'T' + evento?.horaFin | date: 'hh:mm a' }}
+            {{ evento()?.fecha + 'T' + evento()?.horaFin | date: 'hh:mm a' }}
           </small>
         </h5>
         <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrar.emit()"></button>

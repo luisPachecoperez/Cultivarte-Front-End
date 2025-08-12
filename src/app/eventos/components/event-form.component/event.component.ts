@@ -1,11 +1,12 @@
 import {
   Component,
   EventEmitter,
-  Input,
+  input,
   OnInit,
-  Output,
+  output,
   SimpleChanges,
   OnChanges,
+  effect,
   inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -29,26 +30,37 @@ import { GridSesionesComponent } from '../../../grid.sesiones/grid.sesiones.comp
   styleUrls: ['./events.component.css']
 })
 export class EventComponent implements OnInit, OnChanges {
-  @Input() eventoSeleccionado: any = null;
+  // Inputs convertidos a señales
+  eventoSeleccionado = input<any>(null);
+  fechaPreseleccionada = input<string | null>(null);
+  mostrarFormulario = input<boolean>(false);
 
   private _fechaPreseleccionada: string | null = null;
   actualizarSesionEnCalendario: any;
-  @Input() set fechaPreseleccionada(value: string | null) {
-    this._fechaPreseleccionada = value;
-    if (value && this.eventoForm) {
-      this.eventoForm.patchValue({ fecha: value });
-    }
-  }
-  get fechaPreseleccionada(): string | null {
-    return this._fechaPreseleccionada;
+  constructor(private fb: FormBuilder) {
+    // Effect para reaccionar a cambios de fechaPreseleccionada
+    effect(() => {
+      const fecha = this.fechaPreseleccionada();
+      if (fecha && this.eventoForm) {
+        this.eventoForm.patchValue({ fecha });
+      }
+    });
+
+    // Effect para reaccionar a cambios de eventoSeleccionado y precargar datos
+    effect(() => {
+      const evento = this.eventoSeleccionado();
+      if (evento && this.eventoForm) {
+        this.precargarFormulario(evento);
+      }
+    });
   }
 
-  @Input() mostrarFormulario: boolean = false;
-
-  @Output() limpiarEventoSeleccionado = new EventEmitter<void>();
-  @Output() eventoEditado = new EventEmitter<any>();
-  @Output() eventoGuardado = new EventEmitter<any>();
-  @Output() cerrarFormulario = new EventEmitter<void>();
+  // Outputs con la nueva API
+  limpiarEventoSeleccionado = output<void>();
+  eventoEditado = output<any>();
+  eventoGuardado = output<any>();
+  cerrarFormulario = output<void>();
+  sesionEliminada = output<string>();
 
   eventoForm!: FormGroup;
   eventoParaEditar: any = null;
@@ -84,22 +96,19 @@ export class EventComponent implements OnInit, OnChanges {
     return [];
   }
 
-
-  private fb = inject(FormBuilder);
-
   ngOnInit(): void {
     this.eventoForm = this.fb.group({
-      institucional: [{ value: null, disabled: this.estaEditando }, Validators.required],
-      tipoEvento: [{ value: '', disabled: this.estaEditando }, Validators.required],
-      responsable: [{ value: '', disabled: this.estaEditando }, Validators.required],
-      aliado: [{ value: '', disabled: this.estaEditando }],
-      sedes: [{ value: '', disabled: this.estaEditando }],
-      nombreSesion: [{ value: '', disabled: this.estaEditando }, [Validators.required, this.uppercaseMaxLengthValidator(30)]],
-      descripcionGrupo: [{ value: '', disabled: this.estaEditando }],
-      fecha: [{ value: this._fechaPreseleccionada ?? '', disabled: this.estaEditando }, Validators.required],
-      horaInicio: [{ value: '', disabled: this.estaEditando }, Validators.required],
-      horaFin: [{ value: '', disabled: this.estaEditando }, Validators.required],
-      repeticion: [{ value: 'no', disabled: this.estaEditando }],
+      institucional: [null, Validators.required],
+      tipoEvento: ['', Validators.required],
+      responsable: ['', Validators.required],
+      aliado: [''],
+      sedes: [''],
+      nombreSesion: ['', [Validators.required, this.uppercaseMaxLengthValidator(30)]],
+      descripcionGrupo: [''],
+      fecha: [this._fechaPreseleccionada ?? '', Validators.required],
+      horaInicio: ['', Validators.required],
+      horaFin: ['', Validators.required],
+      repeticion: ['no'],
       sesiones: this.fb.array([])
     });
 
@@ -110,16 +119,32 @@ export class EventComponent implements OnInit, OnChanges {
       }
     });
 
-    if (this.eventoSeleccionado) {
-      this.eventoParaEditar = this.eventoSeleccionado;
-      this.precargarFormulario(this.eventoSeleccionado);
+    const evento = this.eventoSeleccionado();
+    if (evento) {
+      this.eventoParaEditar = evento;
+      this.precargarFormulario(evento);
+    } else {
+      // Si es creación, asegurar que todo esté habilitado
+      this.eventoParaEditar = null;
+      this.eventoForm.enable();
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['eventoSeleccionado'] && this.eventoSeleccionado && this.eventoForm) {
-      this.eventoParaEditar = this.eventoSeleccionado;
-      this.precargarFormulario(this.eventoSeleccionado);
+    if (changes['eventoSeleccionado']) {
+      const evento = this.eventoSeleccionado();
+      if (evento) {
+        this.eventoParaEditar = evento;
+        if (this.eventoForm) {
+          this.precargarFormulario(evento);
+        }
+      } else {
+        // Si no hay evento, es creación
+        this.eventoParaEditar = null;
+        if (this.eventoForm) {
+          this.eventoForm.enable();
+        }
+      }
     }
   }
 
@@ -267,9 +292,6 @@ export class EventComponent implements OnInit, OnChanges {
 
     this.resetearFormulario();
   }
-
-  @Output() sesionEliminada = new EventEmitter<string>();
-
   actualizarSesion() {
     const sesiones = this.eventoForm.get('sesiones') as FormArray;
 
