@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, input, output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 
@@ -10,8 +10,8 @@ import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
   styleUrls: ['./asistencia.component.css']
 })
 export class AsistenciaComponent implements OnInit {
-  @Input() evento: any;
-  @Output() cerrar = new EventEmitter<void>(); // Cambiado de cerrarModal → cerrar
+  evento = input<any>(null);
+  cerrar = output<void>();
 
   beneficiariosBD: any[] = [];
   asistentes: any[] = [];
