@@ -16,14 +16,14 @@
         <div style="max-height: 250px; overflow-y: auto;">
           <table class="table mb-0">
             <tbody>
-              @for (control of sesiones; track $index) {
+              @for (control of sesiones; track control.value.id ?? $index) {
                 <tr [formGroup]="control">
                   <td>
                     <input
                       type="date"
                       class="form-control"
                       formControlName="fecha"
-                      [readonly]="soloLectura()"
+                      [readonly]="soloLectura() || control.value.asistentes_sesion > 0"
                       (keydown.enter)="$event.stopPropagation()"
                       (blur)="notificarCambio()"
                     />
@@ -33,7 +33,7 @@
                       type="time"
                       class="form-control"
                       formControlName="horaInicio"
-                      [readonly]="soloLectura()"
+                      [readonly]="soloLectura() || control.value.asistentes_sesion > 0"
                       (keydown.enter)="$event.stopPropagation()"
                       (blur)="notificarCambio()"
                     />
@@ -43,19 +43,23 @@
                       type="time"
                       class="form-control"
                       formControlName="horaFin"
-                      [readonly]="soloLectura()"
+                      [readonly]="soloLectura() || control.value.asistentes_sesion > 0"
                       (keydown.enter)="$event.stopPropagation()"
                       (blur)="notificarCambio()"
                     />
                   </td>
-                  <td class="d-flex gap-1">
-                    <button
-                      class="btn btn-danger btn-sm"
-                      (click)="eliminarSesion($index)"
-                      [disabled]="soloLectura()"
-                    >
-                      Eliminar
-                    </button>
+                  <td class="d-flex gap-1 align-items-center">
+                    @if (control.value.asistentes_sesion > 0) {
+                      <span class="badge bg-secondary">Bloqueada</span>
+                    } @else {
+                      <button
+                        class="btn btn-danger btn-sm"
+                        (click)="eliminarSesion($index)"
+                        [disabled]="soloLectura()"
+                      >
+                        Eliminar
+                      </button>
+                    }
                   </td>
                 </tr>
               }

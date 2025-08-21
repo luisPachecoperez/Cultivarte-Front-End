@@ -9,16 +9,20 @@ import { CommonModule } from '@angular/common';
 import { EventModalComponent } from '../eventos/components/event-modal.component/event-modal.component';
 import { AsistenciaComponent } from "../asistencia/asistencia.component";
 import timeGridPlugin from '@fullcalendar/timegrid';
-
+import { CalendarService } from './calendar.services';
+import { AsistenciaFotograficaComponent } from "../asistencia/fotografica/asistencia-fotografica.component";
+import { AsistenciaService } from '../asistencia/asistencia.service';
 
 @Component({
   selector: 'app-calendar',
   standalone: true,
   templateUrl: './calendar.component.html',
-  imports: [EventComponent, FullCalendarModule, CommonModule, EventModalComponent, AsistenciaComponent],
+  imports: [EventComponent, FullCalendarModule, CommonModule, EventModalComponent, AsistenciaComponent, AsistenciaFotograficaComponent],
   styleUrls: ['./calendar.component.css'],
 })
 export class CalendarComponent {
+  constructor(private calendarService: CalendarService, private asistenciaService: AsistenciaService) {}
+
   eventosCalendario: any[] = [];
   fechaSeleccionada: string | null = null;
   eventoEditando: any = null;
@@ -27,6 +31,15 @@ export class CalendarComponent {
   mostrarModalAcciones: boolean = false;
   mostrarFormulario: boolean = false;
   mostrarAsistencia: boolean = false;
+  mostrarAsistenciaFotografica: boolean = false;
+
+  // 👇 ahora usamos un tipo en vez de dos flags
+  tipoAsistencia: 'normal' | 'fotografica' | null = null;
+
+  // Guardar última vista visible
+  ultimaFechaInicio: string | null = null;
+  ultimaFechaFin: string | null = null;
+
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
     initialView: 'dayGridMonth',
@@ -54,9 +67,31 @@ export class CalendarComponent {
   };
 
   onDatesSet(dateInfo: any) {
-    const fechaInicio = dateInfo.start.toISOString().split('T')[0];
-    const fechaFin = dateInfo.end.toISOString().split('T')[0];
-    console.log('📅 Vista del calendario:', { fechaInicio, fechaFin });
+    this.ultimaFechaInicio = dateInfo.start.toISOString().split('T')[0];
+    this.ultimaFechaFin = dateInfo.end.toISOString().split('T')[0];
+
+    console.log('📅 Vista del calendario:', {
+      fechaInicio: this.ultimaFechaInicio,
+      fechaFin: this.ultimaFechaFin
+    });
+
+    this.cargarSesiones();
+  }
+
+  cargarSesiones() {
+    if (!this.ultimaFechaInicio || !this.ultimaFechaFin) return;
+
+    const idUsuario = 'usuario-001'; // 🔹 Temporal
+
+    this.calendarService.obtenerSesiones(this.ultimaFechaInicio, this.ultimaFechaFin, idUsuario)
+      .subscribe(sesionesFormateadas => {
+        console.log('📥 Sesiones recibidas y formateadas:', sesionesFormateadas);
+        this.eventosCalendario = sesionesFormateadas;
+        this.calendarOptions = {
+          ...this.calendarOptions,
+          events: [...this.eventosCalendario]
+        };
+      });
   }
 
   handleDateClick(arg: any) {
@@ -75,34 +110,34 @@ export class CalendarComponent {
       e => e.title === nombreSesion
     );
 
-    console.log(`🔍 ${eventosRelacionados.length} sesiones encontradas con nombre: ${nombreSesion}`);
-    eventosRelacionados.forEach((e, i) => {
-      console.log(`   [${i + 1}] ID: ${e.id} | Fecha: ${e.start.split('T')[0]} | Hora: ${e.start.split('T')[1].substring(0, 5)} - ${e.end.split('T')[1].substring(0, 5)}`);
-    });
-
     const sesiones = eventosRelacionados.map(e => ({
       fecha: e.start.split('T')[0],
       horaInicio: e.start.split('T')[1].substring(0, 5),
       horaFin: e.end.split('T')[1].substring(0, 5)
     }));
 
+    const primeraSesion = sesiones[0] || { fecha: '', horaInicio: '', horaFin: '' };
+
     this.eventoSeleccionado = {
-      ...arg.event.extendedProps,
-      id: arg.event.id,
+      // 👇 forzamos incluir los campos que vienen desde CalendarService
+      id_evento: arg.event.extendedProps.idEvento,
+      id_sesion: arg.event.id,
+      asistentes_evento: arg.event.extendedProps.asistentes,
+      tipo_evento: arg.event.extendedProps.tipo_evento,
       nombreSesion,
-      sesiones
+      sesiones,
+      fecha: primeraSesion.fecha,
+      horaInicio: primeraSesion.horaInicio,
+      horaFin: primeraSesion.horaFin
     };
 
     console.log('🎯 Evento seleccionado para acciones:', this.eventoSeleccionado);
     this.mostrarModalAcciones = true;
   }
 
-
   abrirEdicion(eventoCalendario: any) {
     const nombreSesion = eventoCalendario.event.title;
-    const eventosRelacionados = (this.calendarOptions.events as any[]).filter(
-      e => e.title === nombreSesion
-    );
+    const eventosRelacionados = (this.calendarOptions.events as any[]).filter(e => e.title === nombreSesion);
 
     const sesiones = eventosRelacionados.map(e => ({
       fecha: e.start.split('T')[0],
@@ -111,14 +146,20 @@ export class CalendarComponent {
     }));
 
     this.eventoSeleccionado = {
-      ...eventoCalendario.event.extendedProps,
+      id_evento: eventoCalendario.event.extendedProps.idEvento,
+      id_sesion: eventoCalendario.event.id,
+      asistentes_evento: eventoCalendario.event.extendedProps.asistentes,
+      tipo_evento: eventoCalendario.event.extendedProps.tipo_evento,
       nombreSesion,
-      sesiones
+      sesiones,
+      fecha: sesiones[0]?.fecha || '',
+      horaInicio: sesiones[0]?.horaInicio || '',
+      horaFin: sesiones[0]?.horaFin || ''
     };
 
-    console.log('✏️ Abrir edición para:', this.eventoSeleccionado);
     this.mostrarFormulario = true;
   }
+
 
   agregarOActualizarEvento(evento: any): void {
     const { sesiones, editarUna, idSesionOriginal } = evento;
@@ -200,9 +241,30 @@ export class CalendarComponent {
     console.log('📆 Sesión(es) eliminada(s). Calendario actualizado.');
   }
 
+ // ✅ Recargar sesiones al cerrar formularios o modales
+ cerrarFormulario() {
+  this.mostrarFormulario = false;
+  this.eventoSeleccionado = null;
+  this.cargarSesiones();
+}
 
+cerrarModalAcciones() {
+  this.mostrarModalAcciones = false;
+  this.cargarSesiones();
+}
 
-  onAccionSeleccionada(accion: 'editar' | 'asistencia') {
+cerrarAsistencia() {
+  this.mostrarAsistencia = false;
+  this.cargarSesiones();
+}
+
+cerrarAsistenciaFotografica() { // 👈 nuevo
+  this.mostrarAsistenciaFotografica = false;
+  this.cargarSesiones();
+}
+
+   // 🔹 Aquí es donde decidimos si abrir normal o fotográfica
+   onAccionSeleccionada(accion: 'editar' | 'asistencia') {
     if (accion === 'editar') {
       this.abrirEdicion({
         event: {
@@ -217,7 +279,21 @@ export class CalendarComponent {
     if (accion === 'asistencia') {
       this.mostrarFormulario = false;
       this.mostrarModalAcciones = false;
-      this.mostrarAsistencia = true;
+
+      this.asistenciaService.obtenerDetalleAsistencia(this.eventoSeleccionado.id_evento)
+        .subscribe((respuesta) => {
+          console.log('📥 Respuesta detalle asistencia:', respuesta);
+
+          // Guardamos la respuesta en el evento
+          this.eventoSeleccionado = { ...this.eventoSeleccionado, ...respuesta };
+
+          // Definir el tipo de asistencia
+          this.tipoAsistencia = respuesta.foto === 'S' ? 'fotografica' : 'normal';
+
+          // Mostrar modal
+          this.mostrarAsistencia = true;
+        });
     }
   }
 }
+

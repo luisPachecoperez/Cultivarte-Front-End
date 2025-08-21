@@ -28,6 +28,28 @@
         <button class="btn btn-outline-success" (click)="seleccionarAccion('asistencia')">
           Tomar asistencia
         </button>
+
+        <!-- Botón Eliminar -->
+        <button
+          class="btn btn-outline-danger"
+          [disabled]="evento()?.asistentes_evento > 0"
+          (click)="eliminarEvento()"
+        >
+          Eliminar evento
+        </button>
+
+        <!-- Mensaje de error/éxito -->
+        @if (mensajeResultado) {
+          <div
+            class="alert mt-2"
+            [ngClass]="{
+              'alert-success': exitoAccion,
+              'alert-danger': !exitoAccion
+            }"
+          >
+            {{ mensajeResultado }}
+          </div>
+        }
       </div>
 
     </div>

@@ -6,7 +6,7 @@
     [eventoSeleccionado]="eventoSeleccionado"
     (eventoGuardado)="agregarOActualizarEvento($event)"
     (eventoEditado)="agregarOActualizarEvento($event)"
-    (cerrarFormulario)="mostrarFormulario = false; eventoSeleccionado = null"
+    (cerrarFormulario)="cerrarFormulario()"
     (sesionEliminada)="eliminarSesionDelCalendario($event)"
     (limpiarEventoSeleccionado)="eventoSeleccionado = null"
   ></app-event>
@@ -17,13 +17,21 @@
     [evento]="eventoSeleccionado"
     (accionSeleccionada)="
       onAccionSeleccionada($event);
-      mostrarModalAcciones = false;"
-    (cerrar)="mostrarModalAcciones = false">
+      cerrarModalAcciones()"
+    (cerrar)="cerrarModalAcciones()">
   </app-event-modal>
 }
-@if (mostrarAsistencia) {
+
+@if (mostrarAsistencia && tipoAsistencia === 'normal') {
   <app-asistencia
     [evento]="eventoSeleccionado"
-    (cerrar)="mostrarAsistencia = false"
+    (cerrar)="cerrarAsistencia()"
   ></app-asistencia>
+}
+
+@if (mostrarAsistencia && tipoAsistencia === 'fotografica') {
+  <app-asistencia-fotografica
+    [evento]="eventoSeleccionado"
+    (cerrar)="cerrarAsistencia()"
+  ></app-asistencia-fotografica>
 }
