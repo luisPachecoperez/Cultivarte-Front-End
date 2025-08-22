@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
   selector: 'app-grid-sesiones',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './grid.sesiones.component.html'
+  templateUrl: './grid-sesiones.component.html'
 })
 export class GridSesionesComponent {
   /** 📥 FormArray del padre */

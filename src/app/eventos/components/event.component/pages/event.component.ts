@@ -1,3 +1,4 @@
+import { GridSesionesComponent } from './../../grid-sesiones.component/pages/grid-sesiones.component';
 import {
   Component,
   EventEmitter,
@@ -21,8 +22,7 @@ import {
   ValidationErrors,
   FormArray
 } from '@angular/forms';
-import { GridSesionesComponent } from '../../../grid.sesiones/grid.sesiones.component';
-import { EventService } from './event.services';
+import { EventService } from '../services/event.services';
 
 @Component({
   selector: 'app-event',

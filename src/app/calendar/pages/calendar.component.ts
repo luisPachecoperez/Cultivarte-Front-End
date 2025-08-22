@@ -1,17 +1,17 @@
 import { Component } from '@angular/core';
 import { CalendarOptions } from '@fullcalendar/core';
-import { EventComponent } from "../eventos/components/event-form.component/event.component";
+import { EventComponent } from "../../eventos/components/event.component/pages/event.component";
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
 import { CommonModule } from '@angular/common';
-import { EventModalComponent } from '../eventos/components/event-modal.component/event-modal.component';
-import { AsistenciaComponent } from "../asistencia/asistencia.component";
+import { EventModalComponent } from "../../eventos/components/event-modal.component/pages/event-modal.component";
+import { AsistenciaComponent } from "../../asistencia/asistencia-lista/pages/asistencia.component";
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { CalendarService } from './calendar.services';
-import { AsistenciaFotograficaComponent } from "../asistencia/fotografica/asistencia-fotografica.component";
-import { AsistenciaService } from '../asistencia/asistencia.service';
+import { CalendarService } from '../../calendar/services/calendar.services';
+import { AsistenciaFotograficaComponent } from "../../asistencia/asistencia-fotografica/pages/asistencia-fotografica.component";
+import { AsistenciaService } from '../../asistencia/asistencia-lista/services/asistencia.service';
 
 @Component({
   selector: 'app-calendar',
