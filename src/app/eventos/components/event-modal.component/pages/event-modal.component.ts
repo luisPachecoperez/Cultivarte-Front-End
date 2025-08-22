@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EventModalService } from './event-modal.services';
+import { EventModalService } from '../services/event-modal.services';
 
 @Component({
   selector: 'app-event-modal',
