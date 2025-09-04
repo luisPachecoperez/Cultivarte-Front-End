@@ -15,6 +15,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
   evento = input<any>(null);
   cerrar = output<void>();
   asistenciaGuardada = output<any>();
+  bloqueado = false;
 
   asistenciaForm: FormGroup;
   imagenPrevia: string | null = null;
@@ -46,12 +47,26 @@ export class AsistenciaFotograficaComponent implements OnInit {
         this.imagenBase64 = data.imagen; // si ya viene en base64 o URL
       }
 
+      // ✅ Precargar descripción
+      if (data.descripcion) {
+        this.asistenciaForm.patchValue({
+          descripcion: data.descripcion
+        });
+      }
+
       // ✅ Precargar número de asistentes
       if (data.numero_asistentes && data.numero_asistentes > 0) {
         this.asistenciaForm.patchValue({
           numeroAsistentes: data.numero_asistentes
         });
       }
+
+      // 🔒 Si hay cualquier dato, bloqueamos el formulario completo
+      if (data.numero_asistentes > 0 || data.descripcion || data.imagen) {
+        this.bloqueado = true;
+        this.asistenciaForm.disable();
+      }
+
     });
   }
 

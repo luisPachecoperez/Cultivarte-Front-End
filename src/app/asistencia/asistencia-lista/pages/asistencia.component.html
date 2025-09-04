@@ -72,7 +72,13 @@
             <td>{{ a.nombre_completo }}</td>
             <td>{{ a.id_persona }}</td>
             <td>
-              <button class="btn-eliminar" (click)="eliminarAsistente(a.id_persona)">🗑️</button>
+              @if (a.eliminar === 'S') {
+                <button
+                  class="btn-eliminar"
+                  (click)="eliminarAsistente(a.id_persona)">
+                  🗑️
+                </button>
+              }
             </td>
           </tr>
         }

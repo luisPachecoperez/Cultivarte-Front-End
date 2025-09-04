@@ -49,7 +49,8 @@ export class AsistenciaComponent implements OnInit {
         return {
           id_persona: asis.id_persona,
           nombre_completo: beneficiario?.nombre_completo || 'Desconocido',
-          id_sede: beneficiario?.id_sede || null
+          id_sede: beneficiario?.id_sede || null,
+          eliminar: asis.eliminar || 'S'
         };
       });
       console.log('asistentes precargados:', this.asistentes);
@@ -95,6 +96,11 @@ export class AsistenciaComponent implements OnInit {
   }
 
   eliminarAsistente(id_persona: string) {
+    const asistente = this.asistentes.find(a => a.id_persona === id_persona);
+    if (asistente?.eliminar === 'N') {
+      console.warn('❌ No se puede eliminar este asistente');
+      return;
+    }
     this.asistentes = this.asistentes.filter(a => a.id_persona !== id_persona);
   }
 
