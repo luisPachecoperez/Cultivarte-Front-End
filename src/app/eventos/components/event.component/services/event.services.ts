@@ -1,224 +1,362 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
+import { delay, map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
+
+import { v4 as uuidv4 } from 'uuid';
+
+import { from } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+import { GraphQLService } from '../../../../shared/services/graphql.service';
+import { AuthService } from '../../../../shared/services/auth.service';
+import { ActividadesDataSource } from '../../../../indexdb/datasources/actividades-datasource';
+import { ActividadSesiones } from '../../../../indexdb/interfaces/actividad-sesiones';
+import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.model';
+import { SesionesDataSource } from '../../../../indexdb/datasources/sesiones-datasource';
+import { PreCreateActividad } from '../../../../indexdb/interfaces/pre-create-actividad';
+import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';
+import { Sesiones } from '../../../../indexdb/interfaces/sesiones';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EventService {
 
-  private apiUrl = 'http://localhost:3000/crear-evento';// TODO: cambiar por la URL real
-
-  constructor(private http: HttpClient) {}
-
- /**
-   * 📡 Obtiene sesiones para mostrar en el calendario
-   * @param fechaInicio YYYY-MM-DD
-   * @param fechaFin YYYY-MM-DD
-   * @param idUsuario string
-   */
-
- obtenerSesiones(fechaInicio: string, fechaFin: string, idUsuario: string) {
-  console.log('📤 Enviando al backend:', { fechaInicio, fechaFin, idUsuario });
-
-  const mockResponse = {
-    data: [
-      {
-        id_evento: "123a-345b",
-        id_sesion: "123a-3444",
-        nombre_actividad: "Reunión de equipo",
-        desde: "2025-08-12 15:00:00",
-        hasta: "2025-08-12 16:00:00",
-        asistentes_evento: 5
-      },
-      {
-        id_evento: "443a-345b",
-        id_sesion: "563a-3444",
-        nombre_actividad: "Ludoteca Viajera",
-        desde: "2025-08-19 11:00:00",
-        hasta: "2025-08-19 12:00:00",
-        asistentes_evento: 0
-      }
-    ]
-  };
-
-  return of(mockResponse).pipe(
-    delay(500),
-    map(res => res.data.map(e => ({
-      id: e.id_sesion,
-      title: e.nombre_actividad,
-      start: e.desde.replace(' ', 'T'),
-      end: e.hasta.replace(' ', 'T'),
-      extendedProps: {
-        idEvento: e.id_evento,
-        asistentes: e.asistentes_evento
-      }
-    })))
-  );
-}
-
-/**
- * 📡 Obtiene un evento por su ID con parámetros y sesiones (Mock GraphQL)
- * @param idEvento string
- */
-obtenerEventoPorId(idEvento: string) {
-  console.log(`📡 Mock GraphQL → Buscando evento con ID: ${idEvento}`);
-
-  return of({
-    evento: {
-      id_programa: "e29b-41d4-a716-446655440000",
-      id_evento: "50e8400-e29b-41d4-a716-4466521320",
-      institucional: "S",
-      id_tipo_actividad: "550e8400-e29b-41d4-a716-446655440002",
-      id_responsable: "50e8400-a716",
-      id_aliado: "e29b-41d4-a716",
-      id_sede: "50e8400-446655440000",
-      nombre_actividad: "xyz",
-      descripcion: "xyz",
-      id_frecuencia: "50e8400-e29b-440000",
-      fecha_sesion: "2025-12-13",
-      hora_inicio: "14:00",
-      hora_fin: "14:00"
-    },
-    parametros: {
-      sedes: [
-        { id: "550e8400-e29b-41d4-a716-446655440000", nombre: "Sede Central" },
-        { id: "550e8400-e29b-41d4-a716-446655440001", nombre: "Sede Norte" }
-      ],
-      tiposDeEvento: [
-        { id: "550e8400-e29b-41d4-a716-446655440002", nombre: "Ludoteca Viajera" },
-        { id: "550e8400-e29b-41d4-a716-446655440003", nombre: "Taller" }
-      ],
-      aliados: [
-        { id: "550e8400-e29b-41d4-a716-446655440004", nombre: "Persona A" },
-        { id: "550e8400-e29b-41d4-a716-446655440005", nombre: "Grupo de Interés B" },
-        { id: "550e8400-e29b-41d4-a716-446655440006", nombre: "Aliado Cultivarte C" }
-      ],
-      responsables: [
-        { id: "550e8400-e29b-41d4-a716-446655440007", nombre: "Responsable X" },
-        { id: "550e8400-e29b-41d4-a716-446655440008", nombre: "Responsable Y" }
-      ],
-      nombreDeEventos: [
-        { id_parametro_detalle: "550e8400-e29b-41d4-a716-446655440009", nombre: "Evento Anual" },
-        { id_parametro_detalle: "550e8400-e29b-41d4-a716-446655440010", nombre: "Evento Mensual" }
-      ],
-      frecuencias: [
-        { id: "550e8400-e29b-41d4-a716-446655440011", nombre: "Diaria" },
-        { id: "550e8400-e29b-41d4-a716-446655440012", nombre: "Semanal" },
-        { id: "550e8400-e29b-41d4-a716-446655440013", nombre: "Mensual" }
-      ]
-    },
-    sesiones: [
-      {
-        id_evento: "f738-52ad-4b83-a588-34656",
-        id_sesion: "2c45f738-52ad-4b83-a588-346568126948",
-        fecha_sesion: "2025-08-20",
-        hora_inicio: "16:00",
-        hora_fin: "18:00",
-        asistentes_sesion: 0
-      },
-      {
-        id_evento: "f738-52ad-4b83-a588-34656",
-        id_sesion: "03aebcca-4a86-4aea-a413-d398a8277d21",
-        fecha_sesion: "2025-08-21",
-        hora_inicio: "16:00",
-        hora_fin: "18:00",
-        asistentes_sesion: 2
-      },
-      {
-        id_evento: "f738-52ad-4b83-a588-34656",
-        id_sesion: "6ba30d47-4227-4a40-b1bf-7285e1d1f146",
-        fecha_sesion: "2025-08-22",
-        hora_inicio: "16:00",
-        hora_fin: "18:00",
-        asistentes_sesion: 3
-      }
-    ]
-  }).pipe(delay(500)); // Simula tiempo de respuesta
-}
-
-  obtenerConfiguracionEvento(idUsuario: string): Observable<any> {
-    console.log('📡 Solicitando configuración de evento para usuario:', idUsuario);
-
-    // 🔹 Simulación de respuesta del backend
-    const mockResponse = {
-      id_programa: '9b-41d4-a716-446655',
-      sedes: [
-        { id: '550e8400-e29b-41d4-a716-446655440000', nombre: 'Sede Central' },
-        { id: '550e8400-e29b-41d4-a716-446655440001', nombre: 'Sede Norte' }
-      ],
-      tiposDeEvento: [
-        { id: '550e8400-e29b-41d4-a716-446655440002', nombre: 'Contenido del ciclo' },
-        { id: '550e8400-e29b-41d4-a716-446655440003', nombre: 'Actividad general' },
-        { id: '550e8400-e29b-41d4-a716-446655440004', nombre: 'Taller' }
-      ],
-      aliados: [
-        { id: '550e8400-e29b-41d4-a716-446655440005', nombre: 'Persona A' },
-        { id: '550e8400-e29b-41d4-a716-446655440006', nombre: 'Grupo de Interés B' },
-        { id: '550e8400-e29b-41d4-a716-446655440007', nombre: 'Aliado Cultivarte C' }
-      ],
-      responsables: [
-        { id: '550e8400-e29b-41d4-a716-446655440008', nombre: 'Responsable X' },
-        { id: '550e8400-e29b-41d4-a716-446655440009', nombre: 'Responsable Y' }
-      ],
-      nombreDeEventos: [
-        { id_parametro_detalle: '550e8400-e29b-41d4-a716-446655440010', nombre: 'Evento Anual' },
-        { id_parametro_detalle: '550e8400-e29b-41d4-a716-446655440011', nombre: 'Evento Mensual' }
-      ],
-      frecuencias: [
-        { id: '550e8400-e29b-41d4-a716-446655440012', nombre: 'A diario' },
-        { id: '550e8400-e29b-41d4-a716-446655440013', nombre: 'Todos los dias de la semana' },
-        { id: '550e8400-e29b-41d4-a716-446655440014', nombre: 'Semanalmente' },
-        { id: '550e8400-e29b-41d4-a716-446655440015', nombre: 'Mensualmente' }
-      ]
-    };
-
-    // 🔹 Simulación de delay de red
-    return of(mockResponse).pipe(delay(500));
+  private apiUrl = 'http://localhost:4000/graphql';// TODO: cambiar por la URL real
+  private readonly CREATE_ACTIVIDAD = `
+  mutation CreateActividad($data: ActividadInput!) {
+    createActividad(data: $data) {
+      exitoso
+      mensaje
+    }
   }
+`;
+  private readonly GET_EVENTO = `
+query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
+  getPreEditActividad(id_actividad: $id_actividad, id_usuario: $id_usuario) {
+    id_programa
 
-  /**
-   * 🔹 Envía al backend el evento para crearlo junto con sus sesiones
-   * @param payload Objeto con la estructura que requiere el back
-   */
-  crearEvento(payload: any): Observable<any> {
-    console.log('📤 Enviando evento al back:', payload);
-    // console.log('📤 Datos que se enviarían al backend:', payload);
+    sedes {
+      id_sede
+      nombre
+    }
 
-    // 🔹 Simulamos que el backend tarda 1 segundo en responder
-    return of({
-      exitoso: 'S',
-      mensaje: 'Registro guardado exitosamente (mock)'
-    }).pipe(delay(1000));
+    tiposDeActividad {
+      id_tipo_actividad
+      nombre
+    }
 
-    // Si es REST:
-    // return this.http.post<any>(`${this.apiUrl}/crear-evento`, payload);
+    aliados {
+      id_aliado
+      nombre
+    }
 
-    // Si es GraphQL (descomentar y ajustar):
-    /*
-    const query = `
-      mutation CrearEvento($input: EventoInput!) {
-        crearEvento(input: $input) {
-          exitoso
-          mensaje
+    responsables {
+      id_responsable
+      nombre
+    }
+
+    nombresDeActividad {
+      id_tipo_actividad
+      nombre
+    }
+
+    frecuencias {
+      id_frecuencia
+      nombre
+    }
+
+    actividad {
+      id_actividad
+      id_programa
+      id_tipo_actividad
+      id_responsable
+      id_aliado
+      id_sede
+      id_frecuencia
+      institucional
+      nombre_actividad
+      descripcion
+      fecha_actividad
+      hora_inicio
+      hora_fin
+      plazo_asistencia
+      estado
+      id_creado_por
+      fecha_creacion
+      id_modificado_por
+      fecha_modificacion
+    }
+
+    sesiones {
+      id_sesion
+      fecha_actividad
+      hora_inicio
+      hora_fin
+      nro_asistentes
+      id_creado_por
+      fecha_creacion
+      id_modificado_por
+      fecha_modificacion
+    }
+  }
+}
+`;
+
+  private readonly GET_PRE_CREATE_ACTIVIDAD = `
+    query GetPreCreateActividad($id_usuario: ID!) {
+      getPreCreateActividad(id_usuario: $id_usuario) {
+        id_programa
+
+        sedes {
+          id_sede
+          nombre
+        }
+
+        tiposDeActividad {
+          id_tipo_actividad
+          nombre
+        }
+
+        aliados {
+          id_aliado
+          nombre
+        }
+
+        responsables {
+          id_responsable
+          nombre
+        }
+        nombresDeActividad
+            {id_tipo_actividad
+            nombre
+            }
+        frecuencias {
+          id_frecuencia
+          nombre
         }
       }
-    `;
-    return this.http.post<any>(this.apiUrl, {
-      query,
-      variables: { input: payload }
-    });
+    }
+  `;
+
+  constructor(
+    private http: HttpClient,
+    private graphql: GraphQLService,
+    private authService: AuthService,
+    private actividadesDataSource: ActividadesDataSource,
+    private sesionesDataSource: SesionesDataSource,
+    private gridSesionesService: GridSesionesService
+  ) { }
+
+  /**
+    * 📡 Obtiene sesiones para mostrar en el calendario
+    * @param fechaInicio YYYY-MM-DD
+    * @param fechaFin YYYY-MM-DD
+    * @param id_usuario string
     */
 
-    // 🔹 Para pruebas sin back:
-    /*
-    const mockResp = {
-      exitoso: 'S',
-      mensaje: 'Registro guardado exitosamente'
+  /**
+   * 📡 Obtiene un evento por su ID con parámetros y sesiones (Mock GraphQL)
+   * @param id_actividad string
+   */
+  // obtenerEventoPorId(id_actividad: string) {
+  //   const id_usuario = this.authService.getUserUuid();
+  //   console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
+  //   return this.graphql
+  //     .query<{ getPreEditActividad: ActividadSesiones }>(this.GET_EVENTO, {
+  //       id_actividad,
+  //       id_usuario
+  //     })
+  //     .pipe(
+  //       tap((res) =>
+  //         console.log('📡 Respuesta cruda de GraphQL:', res.actividad)
+  //       ),
+  //       map((res) => res.getPreEditActividad),
+  //       catchError((err) => {
+  //         console.error(
+  //           '❌ Error al consultar evento por GraphQL, usando fallback:',
+  //           err
+  //         );
+
+  //         // 🔹 Fallback: solo sesiones locales, resto se simula vacío
+  //         return from(
+  //           this.actividadesDataSource.getActividadSesiones(
+  //             id_actividad,
+  //             id_usuario
+  //           )
+  //         ).pipe(
+  //           map((resp) =>
+  //             resp
+  //               ? {
+  //                   actividad: {
+  //                     id_programa: resp.id_programa,
+  //                     id_actividad: resp.id_actividad,
+  //                     institucional: resp.institucional,
+  //                     id_tipo_actividad: resp.id_tipo_actividad,
+  //                     id_responsable: resp.id_responsable,
+  //                     id_aliado: resp.id_aliado,
+  //                     id_sede: resp.id_sede,
+  //                     nombre_actividad: resp.nombre_actividad,
+  //                     descripcion: resp.descripcion,
+  //                     id_frecuencia: resp.id_frecuencia,
+  //                     fecha_actividad: resp.fecha_actividad,
+  //                     hora_inicio: resp.hora_inicio,
+  //                     hora_fin: resp.hora_fin
+  //                   },
+  //                   sesiones: resp.sesiones,
+  //                   sedes: resp.sedes,
+  //                   tiposDeActividad: resp.tiposDeActividad,
+  //                   aliados: resp.aliados,
+  //                   responsables: resp.responsables,
+  //                   nombreEventos: resp.nombreEventos,
+  //                   frecuencias: resp.frecuencias
+  //                 } as ActividadSesiones
+  //               : {
+  //                   id_programa: '',
+  //                   id_actividad,
+  //                   institucional: '',
+  //                   id_tipo_actividad: '',
+  //                   id_responsable: '',
+  //                   id_aliado: '',
+  //                   id_sede: '',
+  //                   nombre_actividad: 'Evento local (fallback)',
+  //                   descripcion: '',
+  //                   id_frecuencia: '',
+  //                   fecha_actividad: '',
+  //                   hora_inicio: '',
+  //                   hora_fin: '',
+  //                   sesiones: [],
+  //                   sedes: [],
+  //                   tiposDeActividad: [],
+  //                   aliados: [],
+  //                   responsables: [],
+  //                   nombreEventos: [],
+  //                   frecuencias: []
+  //                 } as ActividadSesiones
+  //           )
+  //         );
+  //       })
+  //     );
+  // }
+  obtenerEventoPorId(id_actividad: string): Observable<any> {
+    const id_usuario = this.authService.getUserUuid();
+    console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
+
+    return this.graphql
+      .query<any>(this.GET_EVENTO, {
+        id_actividad,
+        id_usuario
+      })
+      .pipe(
+        tap((res) =>
+          console.log('📡 Respuesta cruda de GraphQL:', res)
+        ),
+        map((res) => res.getPreEditActividad)
+      );
+  }
+
+
+
+  obtenerConfiguracionEvento(id_usuario: string): Observable<any> {
+    console.log('📡 Solicitando configuración de evento para usuario:', id_usuario);
+    return this.graphql
+      .query<{ getPreCreateActividad: PreCreateActividad }>(
+        this.GET_PRE_CREATE_ACTIVIDAD,
+        { id_usuario }
+      )
+      .pipe(
+        map((res) => res.getPreCreateActividad),
+        catchError((err) => {
+          console.error(
+            '❌ Error al consultar configuración de evento por GraphQL, usando fallback local:',
+            err
+          );
+
+          // 🔹 Fallback: usar IndexedDB
+          return from(
+            this.actividadesDataSource.getPreCreateActividad(id_usuario)
+          );
+        })
+      );
+
+  }
+
+  crearEvento(evento: any, sesiones: Sesiones[]): Observable<GraphQLResponse> {
+    console.log('📤 Enviando evento al back:', evento);
+    console.log('📤 Enviando sesiones al back:', sesiones);
+    const hoy = new Date().toISOString().split('T')[0];
+
+    // 🔹 Construcción del payload de la actividad
+    const actividadPayload = {
+      id_actividad: uuidv4(),
+      id_programa: evento.id_programa,
+      institucional: evento.institucional ? 'S' : 'N',
+      id_tipo_actividad: evento.id_tipo_actividad,
+      id_responsable: evento.id_responsable,
+      id_aliado: evento.id_aliado,
+      id_sede: evento.id_sede,
+      id_frecuencia: evento.id_frecuencia,
+      nombre_actividad: evento.nombre_actividad,
+      descripcion: evento.descripcion,
+      fecha_actividad: evento.fecha_actividad,
+      hora_inicio: evento.hora_inicio,
+      hora_fin: evento.hora_fin,
+      estado: 'A',
+      id_creado_por: this.authService.getUserUuid(),
+      fecha_creacion: new Date().toISOString().split('T')[0],
+      id_modificado_por: null,
+      fecha_modificacion: null,
     };
-    return of(mockResp).pipe(delay(800));
-    */
+
+    sesiones.forEach((s: Sesiones) => {
+      this.sesionesDataSource.create({
+        ...s,
+        id_sesion: uuidv4(),
+        id_actividad: actividadPayload.id_actividad,
+        syncStatus: 'pending',
+        deleted: false,
+      });
+    });
+
+    // this.actividadesDataSource.create(actividadPayload);
+
+    // 🔹 Intentar sincronizar con backend
+    console.log('📤 Enviando actividad al back:', actividadPayload);
+    return this.graphql
+      .mutation<{ createActividad: GraphQLResponse }>(
+        this.CREATE_ACTIVIDAD,
+        { data: actividadPayload }   // 👈 Ojo: ahora mandamos dentro de data
+      )
+      .pipe(
+        switchMap((res) => {
+          const actividadResponse = res.createActividad;
+
+          if (actividadResponse?.exitoso === 'S') {
+            const sesionesPayload = {
+              nuevos: sesiones.map((s) => ({
+                ...s,
+                id_sesion: uuidv4(),
+                id_actividad: actividadPayload.id_actividad,
+              })),
+              modificados: [],
+              eliminados: [],
+            };
+
+            return from(
+              this.gridSesionesService.guardarCambiosSesiones(sesionesPayload)
+            );
+          }
+
+          return of(actividadResponse);
+        }),
+        catchError((err) => {
+          console.error('❌ Error al crear en GraphQL, usando solo IndexDB:', err);
+          return of({
+            exitoso: 'N',
+            mensaje: err?.message || 'Error al sincronizar con backend',
+          });
+        })
+      );
   }
 }
 

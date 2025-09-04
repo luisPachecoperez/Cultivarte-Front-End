@@ -30,25 +30,28 @@
         </button>
 
         <!-- Botón Eliminar -->
-        <button
-          class="btn btn-outline-danger"
-          [disabled]="evento()?.asistentes_evento > 0"
-          (click)="eliminarEvento()"
-        >
+        @if (evento()?.asistentes_evento > 0) {
+        <button class="btn btn-outline-danger" disabled
+          [attr.title]="'No se puede eliminar. Asistentes: ' + evento()?.asistentes_evento" data-bs-toggle="tooltip">
           Eliminar evento
         </button>
+        }
+        @else {
+        <button class="btn btn-outline-danger" (click)="eliminarEvento()">
+          Eliminar evento
+        </button>
+        }
+
+
 
         <!-- Mensaje de error/éxito -->
         @if (mensajeResultado) {
-          <div
-            class="alert mt-2"
-            [ngClass]="{
+        <div class="alert mt-2" [ngClass]="{
               'alert-success': exitoAccion,
               'alert-danger': !exitoAccion
-            }"
-          >
-            {{ mensajeResultado }}
-          </div>
+            }">
+          {{ mensajeResultado }}
+        </div>
         }
       </div>
 

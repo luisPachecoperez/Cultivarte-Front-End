@@ -16,7 +16,7 @@
         <div style="max-height: 250px; overflow-y: auto;">
           <table class="table mb-0">
             <tbody>
-              @for (control of sesiones; track control.value.id ?? $index) {
+              @for (control of sesiones; track control.value.id_sesion ?? $index) {
                 <tr [formGroup]="control">
                   <td>
                     <input
