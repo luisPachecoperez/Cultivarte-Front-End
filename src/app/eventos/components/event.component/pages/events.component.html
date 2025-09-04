@@ -18,6 +18,9 @@
       <!-- Body -->
       <div class="modal-body">
         <form [formGroup]="eventoForm">
+
+          <input type="text" class="form-control" [value]="eventoForm.get('id_programa')?.value" style="display: none;"/>
+
           <!-- ¿Es institucional? -->
           <div class="mb-3 d-flex align-items-center gap-2">
             <label class="form-label mb-0">¿Es institucional?</label>
@@ -39,8 +42,8 @@
               <label class="form-label">Tipo de evento</label>
               <select class="form-control" formControlName="tipoEvento">
                 <option value="" disabled>Selecciona tipo</option>
-                @for (tipo of tiposDeEvento; track tipo.id) {
-                  <option [value]="tipo.id">{{ tipo.nombre }}</option>
+                @for (tipo of tiposDeActividad; track tipo.id_tipo_actividad) {
+                <option [value]="tipo.id_tipo_actividad">{{ tipo.nombre }}</option>
                 }
               </select>
             </div>
@@ -48,8 +51,8 @@
               <label class="form-label">Responsable</label>
               <select class="form-control" formControlName="responsable">
                 <option value="" disabled>Selecciona responsable</option>
-                @for (r of responsables; track r.id) {
-                  <option [value]="r.id">{{ r.nombre }}</option>
+                @for (r of responsables; track r.id_responsable) {
+                <option [value]="r.id_responsable">{{ r.nombre }}</option>
                 }
               </select>
             </div>
@@ -78,17 +81,27 @@
           <div class="row g-2 mb-3">
             <div class="col">
               <label class="form-label">Nombre del evento</label>
-              @if (esListaNombreEvento()) {
-              <select class="form-control" formControlName="nombreEvento">
-                <option value="" disabled>Selecciona nombre</option>
-                @for (n of nombreDeEventos; track n.id_parametro_detalle) {
-                  <option [value]="n.id_parametro_detalle">{{ n.nombre }}</option>
-                }
+
+              @if (esListaNombreEvento() && eventosFiltrados.length > 0) {
+                <select class="form-control" formControlName="nombreEvento">
+                  <option value="" disabled>Selecciona nombre</option>
+                  @for (n of eventosFiltrados; track n.id_parametro_detalle) {
+                    <option [value]="n.id_parametro_detalle">{{ n.nombre }}</option>
+                  }
+                </select>
+              }
+
+              <!-- Si corresponde mostrar lista pero NO hay items -->
+              @if (esListaNombreEvento() && (!eventosFiltrados || eventosFiltrados.length === 0)) {
+              <select class="form-control" disabled>
+                <option value="">No hay nombres disponibles para este tipo</option>
               </select>
               }
-              @else {
+              <!-- Input libre si la lógica no requiere lista -->
+              @if (!esListaNombreEvento()) {
               <input type="text" class="form-control" formControlName="nombreEvento" placeholder="Nombre del evento" />
               }
+
               @if (eventoForm.get('nombreEvento')?.invalid && eventoForm.get('nombreEvento')?.touched) {
               <div class="text-danger mt-1">
                 @if (eventoForm.get('nombreEvento')?.errors?.['required']) {
@@ -103,8 +116,8 @@
               <label class="form-label">Sede</label>
               <select class="form-control" formControlName="sede">
                 <option value="" disabled>Selecciona sede</option>
-                @for (s of sedes; track s.id) {
-                  <option [value]="s.id">{{ s.nombre }}</option>
+                @for (s of sedes; track s.id_sede) {
+                <option [value]="s.id_sede">{{ s.nombre }}</option>
                 }
               </select>
             </div>
@@ -122,8 +135,8 @@
             <label class="form-label">Frecuencia</label>
             <select class="form-control" formControlName="frecuencia">
               <option value="" disabled>Selecciona frecuencia</option>
-              @for (f of frecuencias; track f.id) {
-                <option [value]="f.id">{{ f.nombre }}</option>
+              @for (f of frecuencias; track f.id_frecuencia) {
+              <option [value]="f.id_frecuencia">{{ f.nombre }}</option>
               }
             </select>
           </div>
@@ -145,7 +158,10 @@
 
         <!-- Grid de sesiones -->
         @if (estaEditando) {
-        <app-grid-sesiones [formArray]="sesiones" [soloLectura]="modoSoloLectura"></app-grid-sesiones>
+        <app-grid-sesiones [formArray]="sesiones" [soloLectura]="modoSoloLectura"
+          [idEvento]="eventoParaEditar?.id || eventoSeleccionado()?.idEvento || null"
+          (cambios)="onCambiosSesiones($event)">
+        </app-grid-sesiones>
         }
       </div>
 

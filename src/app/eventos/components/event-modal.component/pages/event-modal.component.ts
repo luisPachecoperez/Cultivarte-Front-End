@@ -1,50 +1,62 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EventModalService } from '../services/event-modal.services';
+import { Tooltip } from 'bootstrap';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { SnackbarService } from '../../../../shared/services/snackbar.service'; // ajusta la ruta
 
 @Component({
   selector: 'app-event-modal',
   templateUrl: './event-modal.component.html',
   styleUrls: ['./event-modal.component.css'],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule, MatSnackBarModule]
 })
-export class EventModalComponent {
-  // 🔹 Señales para inputs
+export class EventModalComponent implements AfterViewInit {
   evento = input<any>(null);
-
-  // 🔹 Outputs con nueva API
   accionSeleccionada = output<'editar' | 'asistencia'>();
   cerrar = output<void>();
 
-  // 🔹 Estado local para feedback
   mensajeResultado: string | null = null;
   exitoAccion = false;
 
-  constructor(private eventModalService: EventModalService) {}
+  constructor(
+    private eventModalService: EventModalService,
+    private snack: SnackbarService
+  ) {}
+
+  ngAfterViewInit(): void {
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(el => new Tooltip(el));
+  }
 
   seleccionarAccion(tipo: 'editar' | 'asistencia') {
     this.accionSeleccionada.emit(tipo);
-    this.cerrar.emit(); // cerrar modal desde el padre
+    this.cerrar.emit();
   }
 
   eliminarEvento() {
     const e = this.evento();
     if (!e) return;
 
-    this.eventModalService.eliminarEvento(e.id_evento, e.asistentes_evento).subscribe({
-      next: (res) => {
-        this.exitoAccion = res.exitoso === 'S';
-        this.mensajeResultado = res.mensaje;
+    this.snack
+      .confirm(`¿Deseas eliminar el evento "${e?.nombre_actividad ?? 'sin nombre'}"?`)
+      .subscribe((ok) => {
+        if (!ok) return;
 
-        if (this.exitoAccion) {
-          setTimeout(() => this.cerrar.emit(), 1500); // cerrar modal tras éxito
-        }
-      },
-      error: (err) => {
-        this.exitoAccion = false;
-        this.mensajeResultado = err.mensaje ?? 'Error eliminando el evento';
-      }
-    });
+        this.eventModalService.eliminarEvento(e.id_actividad).subscribe({
+          next: (res) => {
+            const success = res.exitoso === 'S';
+            success
+              ? this.snack.success(res.mensaje ?? 'Eliminado correctamente')
+              : this.snack.error(res.mensaje ?? 'No se pudo eliminar');
+
+            if (success) this.cerrar.emit();
+          },
+          error: (err) => {
+            this.snack.error(err?.mensaje ?? 'Error eliminando el evento');
+          }
+        });
+      });
   }
 }

@@ -10,8 +10,7 @@
       <div class="modal-header border-0">
         <h5 class="modal-title w-100 text-center fw-bold text-primary">
           Asistencia de beneficiarios:
-{{ evento()?.fecha }} Hora: {{ evento()?.horaInicio }} a {{ evento()?.horaFin }}
-
+          {{ evento()?.fecha }} Hora: {{ evento()?.horaInicio }} a {{ evento()?.horaFin }}
         </h5>
         <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrar.emit()"></button>
       </div>
@@ -37,21 +36,6 @@
               [ngClass]="{ 'is-invalid': asistenciaForm.get('numeroAsistentes')?.touched && asistenciaForm.get('numeroAsistentes')?.invalid }"
             />
             <div class="invalid-feedback">Debe ingresar un número válido</div>
-          </div>
-
-          <!-- Selección de sede -->
-          <div>
-            <select
-              class="form-select text-center"
-              formControlName="id_sede"
-              [ngClass]="{ 'is-invalid': asistenciaForm.get('id_sede')?.touched && asistenciaForm.get('id_sede')?.invalid }"
-            >
-              <option value="">Seleccione una sede</option>
-              @for (sede of evento()?.sedes; track sede.id_sede) {
-                <option [value]="sede.id_sede">{{ sede.nombre_sede }}</option>
-              }
-            </select>
-            <div class="invalid-feedback">Debe seleccionar una sede</div>
           </div>
 
           <!-- Descripción -->
