@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormControl, FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { AsistenciaService } from '../services/asistencia.service';
 import { v4 as uuidv4 } from 'uuid';
+import { SnackbarService } from '../../../shared/services/snackbar.service';
 
 @Component({
   selector: 'app-asistencia',
@@ -24,7 +25,8 @@ export class AsistenciaComponent implements OnInit {
 
   constructor(
     private asistenciaService: AsistenciaService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private snack: SnackbarService
   ) {
     this.asistenciaForm = this.fb.group({
       id_sede: ['', Validators.required],
@@ -107,6 +109,7 @@ export class AsistenciaComponent implements OnInit {
   guardarAsistencia() {
     if (this.asistenciaForm.invalid) {
       this.asistenciaForm.markAllAsTouched();
+      this.snack.warning('⚠️ Debes completar todos los campos obligatorios');
       return;
     }
 
@@ -133,13 +136,16 @@ export class AsistenciaComponent implements OnInit {
         console.log('✅ Respuesta del back:', resp);
         if (resp.exitoso === 'S') {
           // éxito → cerramos modal
+          this.snack.success('✅ Asistencia guardada correctamente');
           this.cerrar.emit();
         } else {
           console.error('❌ Error al guardar asistencia:', resp.mensaje);
+          this.snack.error('❌ Error al guardar asistencia');
         }
       },
       error: (err) => {
         console.error('❌ Error HTTP al guardar asistencia:', err);
+        this.snack.error('❌ Error al guardar asistencia');
       }
     });
   }

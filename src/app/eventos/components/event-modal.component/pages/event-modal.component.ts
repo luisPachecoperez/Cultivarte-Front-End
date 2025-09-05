@@ -40,7 +40,7 @@ export class EventModalComponent implements AfterViewInit {
     if (!e) return;
 
     this.snack
-      .confirm(`¿Deseas eliminar el evento "${e?.nombre_actividad ?? 'sin nombre'}"?`)
+      .confirm(`¿Deseas eliminar el evento "${e?.nombreSesion?? 'sin nombre'}"?`)
       .subscribe((ok) => {
         if (!ok) return;
 

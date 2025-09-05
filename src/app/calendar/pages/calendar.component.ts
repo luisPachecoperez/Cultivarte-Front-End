@@ -93,7 +93,7 @@ export class CalendarComponent {
           ...this.calendarOptions,
           events: [...this.eventosCalendario]
         };
-        this.snack.success('Sesiones cargadas');
+        // this.snack.success('Sesiones cargadas');
       },
       error: err => {
         this.snack.error('No fue posible cargar las sesiones');
