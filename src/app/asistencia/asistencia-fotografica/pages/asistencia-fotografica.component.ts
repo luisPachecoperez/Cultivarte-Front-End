@@ -2,6 +2,8 @@ import { Component, input, output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AsistenciaService } from '../../asistencia-lista/services/asistencia.service';
+import { SnackbarService } from '../../../shared/services/snackbar.service';
+
 
 @Component({
   selector: 'app-asistencia-fotografica',
@@ -22,7 +24,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
   imagenBase64: string | null = null; // ✅ para almacenar la foto en Base64
   sedes: any[] = []; // ✅ lista de sedes que viene del back/mock
 
-  constructor(private fb: FormBuilder, private asistenciaService: AsistenciaService) {
+  constructor(private fb: FormBuilder, private asistenciaService: AsistenciaService, private snack: SnackbarService) {
     this.asistenciaForm = this.fb.group({
       numeroAsistentes: ['', [Validators.required, Validators.min(1)]],
       descripcion: ['', Validators.required],
@@ -86,6 +88,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
   guardar(): void {
     if (this.asistenciaForm.invalid) {
       this.asistenciaForm.markAllAsTouched();
+      this.snack.warning('⚠️ Debes completar todos los campos obligatorios');
       return;
     }
 
@@ -112,10 +115,12 @@ export class AsistenciaFotograficaComponent implements OnInit {
           this.cerrar.emit();
         } else {
           console.error('❌ Error al guardar asistencia fotográfica:', resp.mensaje);
+          this.snack.error('❌ Error al guardar asistencia fotográfica');
         }
       },
       error: (err) => {
         console.error('❌ Error HTTP al guardar asistencia fotográfica:', err);
+        this.snack.error('❌ Error al guardar asistencia fotográfica');
       }
     });
   }

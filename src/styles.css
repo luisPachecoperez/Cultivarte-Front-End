@@ -19,3 +19,13 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
   font-size: 18px !important;
 }
+
+/* Forzar que el overlay de Angular Material quede siempre por encima de los modales */
+.cdk-overlay-container {
+  z-index: 2000 !important; /* mayor que 1050 de Bootstrap */
+}
+
+/* Aseguramos que los snackbars respeten su prioridad */
+.mat-snack-bar-container {
+  z-index: 2001 !important;
+}
