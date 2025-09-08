@@ -93,6 +93,7 @@ export class AsistenciaComponent implements OnInit {
 
   agregarAsistente(beneficiario: any) {
     if (!this.asistentes.find(a => a.id_persona === beneficiario.id_persona)) {
+      console.log('Agregar asistente:', beneficiario);
       this.asistentes.push({ ...beneficiario });
     }
   }

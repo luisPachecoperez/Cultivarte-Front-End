@@ -72,7 +72,7 @@
             <td>{{ a.nombre_completo }}</td>
             <td>{{ a.id_persona }}</td>
             <td>
-              @if (a.eliminar === 'S') {
+              @if (a.eliminar === 'S' ||a.eliminar === undefined) {
                 <button
                   class="btn-eliminar"
                   (click)="eliminarAsistente(a.id_persona)">
