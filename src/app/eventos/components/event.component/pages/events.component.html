@@ -60,10 +60,11 @@
             <div class="col position-relative">
               <label class="form-label">Nombre de aliado</label>
               <input type="text" class="form-control" [value]="aliadoTexto" (input)="onAliadoInput($event)"
-                (focus)="mostrarSugerencias = true" placeholder="Escribe para buscar" autocomplete="off" />
+              (focus)="!estaEditando && (mostrarSugerencias = true)"
+              [readonly]="estaEditando" placeholder="Escribe para buscar" autocomplete="off" />
 
               <!-- Lista de aliados filtrados -->
-              @if (mostrarSugerencias && aliadosFiltrados.length > 0) {
+              @if (!estaEditando && mostrarSugerencias && aliadosFiltrados.length > 0) {
               <ul class="list-group position-absolute w-100"
                 style="z-index: 1050; max-height: 200px; overflow-y: auto;">
                 @for (a of aliadosFiltrados; track a) {

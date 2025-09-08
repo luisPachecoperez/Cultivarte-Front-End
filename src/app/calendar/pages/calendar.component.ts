@@ -130,6 +130,12 @@ export class CalendarComponent {
 
     const primeraSesion = sesiones[0] || { fecha: '', horaInicio: '', horaFin: '' };
     console.log('arg.event', arg.event);
+    const desde = arg.event.extendedProps.desde; // "2025-09-13 14:00:00"
+    const hasta = arg.event.extendedProps.hasta; // "2025-09-13 16:00:00"
+
+    // ⚡ Separamos fecha y hora
+    const [fechaDesde, horaInicio] = desde.split(' ');
+    const [, horaFin] = hasta.split(' ');
     this.eventoSeleccionado = {
       // 👇 forzamos incluir los campos que vienen desde CalendarService
       id_actividad: arg.event.extendedProps.id_actividad,
@@ -138,9 +144,9 @@ export class CalendarComponent {
       // tipo_evento: arg.event.extendedProps.tipo_evento,
       nombreSesion,
       sesiones,
-      fecha: primeraSesion.fecha,
-      horaInicio: primeraSesion.horaInicio,
-      horaFin: primeraSesion.horaFin
+      fecha: fechaDesde,
+      horaInicio: horaInicio,
+      horaFin: horaFin
     };
 
     console.log('🎯 Evento seleccionado para acciones:', this.eventoSeleccionado);

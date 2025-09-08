@@ -392,6 +392,14 @@ export class EventComponent implements OnInit, OnChanges {
       this.eventoForm.disable();
     }
 
+    // FORZAR bloqueo del control 'aliado' cuando estamos en modo edición
+    if (this.estaEditando) {
+      this.eventoForm.get('aliado')?.disable({ emitEvent: false });
+    } else {
+      // por si acaso: en creación dejamos el control habilitado
+      this.eventoForm.get('aliado')?.enable({ emitEvent: false });
+    }
+
     this.sesiones.clear();
     console.log("Justo antes de cargar las sesiones:", evento.sesiones);
     if (evento.sesiones && Array.isArray(evento.sesiones)) {
