@@ -280,6 +280,20 @@ export class EventComponent implements OnInit, OnChanges {
       this.frecuencias = data.frecuencias;
       console.log('📦 frecuencias:', this.frecuencias);
       // actualizar eventos filtrados si ya hay un tipo seleccionado
+
+
+      // ✅ Si hay exactamente una sede y estamos creando (no editando)
+      if (!this.estaEditando && this.sedes.length === 1) {
+        this.eventoForm.patchValue({
+          sede: this.sedes[0].id_sede
+        });
+        // 👇 deshabilitar el select para que no se pueda cambiar
+        this.eventoForm.get('sede')?.disable({ emitEvent: false });
+      } else {
+        // 👇 asegurar que el select quede habilitado en caso contrario
+        this.eventoForm.get('sede')?.enable({ emitEvent: false });
+      }
+
       this.filtrarEventosPorTipo(this.eventoForm?.get('tipoEvento')?.value);
     });
     console.log('📦 configuración cargada:', this.sedes, this.tiposDeActividad, this.aliados, this.responsables, this.nombreDeEventos, this.frecuencias);
