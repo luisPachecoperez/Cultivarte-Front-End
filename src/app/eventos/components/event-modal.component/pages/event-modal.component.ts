@@ -1,9 +1,18 @@
-import { Component, input, output, AfterViewInit } from '@angular/core';
+import { Component, input, output, AfterViewInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EventModalService } from '../services/event-modal.services';
 import { Tooltip } from 'bootstrap';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../../../shared/services/snackbar.service'; // ajusta la ruta
+
+export interface EventoModalData {
+  id_actividad: string;
+  nombreSesion: string;
+  fecha?: string;
+  horaInicio?: string;
+  horaFin?: string;
+  asistentes_evento?: number;
+}
 
 @Component({
   selector: 'app-event-modal',
@@ -13,17 +22,15 @@ import { SnackbarService } from '../../../../shared/services/snackbar.service'; 
   imports: [CommonModule, MatSnackBarModule]
 })
 export class EventModalComponent implements AfterViewInit {
-  evento = input<any>(null);
+  evento = input<EventoModalData|null>(null);
   accionSeleccionada = output<'editar' | 'asistencia'>();
   cerrar = output<void>();
 
   mensajeResultado: string | null = null;
   exitoAccion = false;
 
-  constructor(
-    private eventModalService: EventModalService,
-    private snack: SnackbarService
-  ) {}
+  private eventModalService = inject(EventModalService);
+  private snack = inject(SnackbarService);
 
   ngAfterViewInit(): void {
     const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -47,12 +54,14 @@ export class EventModalComponent implements AfterViewInit {
         this.eventModalService.eliminarEvento(e.id_actividad).subscribe({
           next: (res) => {
             const success = res.exitoso === 'S';
-            success
-              ? this.snack.success(res.mensaje ?? 'Eliminado correctamente')
-              : this.snack.error(res.mensaje ?? 'No se pudo eliminar');
-
-            if (success) this.cerrar.emit();
+            if (success) {
+              this.snack.success(res.mensaje ?? 'Eliminado correctamente');
+              this.cerrar.emit();
+            } else {
+              this.snack.error(res.mensaje ?? 'No se pudo eliminar');
+            }
           },
+
           error: (err) => {
             this.snack.error(err?.mensaje ?? 'Error eliminando el evento');
           }

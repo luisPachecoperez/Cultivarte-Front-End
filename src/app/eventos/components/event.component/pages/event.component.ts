@@ -56,13 +56,14 @@ export class EventComponent implements OnInit, OnChanges {
     eliminados: []
   };
 
-  constructor(
-    private fb: FormBuilder,
-    private eventService: EventService,
-    private gridSesionesService: GridSesionesService,
-    private authService: AuthService,
-    private snack: SnackbarService
-  ) {
+  // Inyectamos con funciones
+private fb = inject(FormBuilder);
+private eventService = inject(EventService);
+private gridSesionesService = inject(GridSesionesService);
+private authService = inject(AuthService);
+private snack = inject(SnackbarService);
+
+  constructor() {
     // Effect: cambios en fecha preseleccionada
     effect(() => {
       const fecha = this.fechaPreseleccionada();
@@ -233,7 +234,7 @@ export class EventComponent implements OnInit, OnChanges {
       this.eventosFiltrados = [];
       return;
     }
-    // nombreDeEventos viene del mock; filtramos por id_parametro_detalle
+    // nombreDeEventos viene del mock; filtramos por id_parametro_detalle (padre)
     console.log('📦 nombreDeEventos:', this.nombreDeEventos);
     this.eventosFiltrados = (this.nombreDeEventos || []).filter(
       n => n.id_tipo_actividad === tipoId
@@ -282,15 +283,13 @@ export class EventComponent implements OnInit, OnChanges {
       // actualizar eventos filtrados si ya hay un tipo seleccionado
 
 
-      // ✅ Si hay exactamente una sede y estamos creando (no editando)
+      // ✅ Lógica de sede
       if (!this.estaEditando && this.sedes.length === 1) {
-        this.eventoForm.patchValue({
-          sede: this.sedes[0].id_sede
-        });
-        // 👇 deshabilitar el select para que no se pueda cambiar
+        this.eventoForm.get('sede')?.enable({ emitEvent: false });
+        this.eventoForm.get('sede')?.setValue(this.sedes[0].id_sede, { emitEvent: false });
         this.eventoForm.get('sede')?.disable({ emitEvent: false });
+        console.log('✅ Sede única asignada:', this.eventoForm.get('sede')?.value);
       } else {
-        // 👇 asegurar que el select quede habilitado en caso contrario
         this.eventoForm.get('sede')?.enable({ emitEvent: false });
       }
 
@@ -451,7 +450,7 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   private crearEvento(): void {
-    const evento = this.eventoForm.value;
+    const evento = this.eventoForm.getRawValue();
     let sesiones: any[] = [];
 
     console.log('📋 Evento base:', evento);
@@ -535,6 +534,22 @@ export class EventComponent implements OnInit, OnChanges {
 
     // 📤 Construir payload para el back
     console.log('📦 Evento basessssss:', evento);
+    // traducir nombreEvento si vino como id desde la lista
+    let nombreActividad = evento.nombreEvento;
+
+    // Si estamos en modo lista (esListaNombreEvento) y el valor es un id,
+    // buscar el objeto en eventosFiltrados por id_parametro_detalle y usar su nombre.
+    if (this.esListaNombreEvento()) {
+      const seleccionado = this.eventosFiltrados.find(n => n.id_parametro_detalle === evento.nombreEvento);
+      if (seleccionado) {
+        nombreActividad = seleccionado.nombre;
+      } else {
+        // fallback: si no está en eventosFiltrados intentar buscar en nombreDeEventos
+        const buscado = (this.nombreDeEventos || []).find(n => n.id_parametro_detalle === evento.nombreEvento);
+        nombreActividad = buscado?.nombre ?? evento.nombreEvento;
+      }
+    }
+
     const payload = {
       id_programa: evento.id_programa, // esto vendrá del back en producción
       institucional: evento.institucional ? 'S' : 'N',
@@ -543,7 +558,7 @@ export class EventComponent implements OnInit, OnChanges {
       id_aliado: evento.aliado,
       id_sede: evento.sede,
       id_frecuencia: evento.frecuencia,
-      nombre_actividad: evento.nombreEvento,
+      nombre_actividad: nombreActividad,
       descripcion: evento.descripcionGrupo,
       fecha_actividad: evento.fecha,
       hora_inicio: evento.horaInicio,
@@ -574,14 +589,14 @@ export class EventComponent implements OnInit, OnChanges {
       nuevos: this.cambiosSesionesSnapshot.nuevos.map(s => ({
         id_sesion: s.id_sesion,
         id_actividad: s.id_actividad,
-        fecha_actividad: s.fecha_sesion,
+        fecha_sesion: s.fecha_sesion,
         hora_inicio: s.hora_inicio,
         hora_fin: s.hora_fin
       })),
       modificados: this.cambiosSesionesSnapshot.modificados.map(s => ({
         id_sesion: s.id_sesion,
         id_actividad: s.id_actividad,
-        fecha_actividad: s.fecha_sesion,
+        fecha_sesion: s.fecha_sesion,
         hora_inicio: s.hora_inicio,
         hora_fin: s.hora_fin
       })),
@@ -614,6 +629,10 @@ export class EventComponent implements OnInit, OnChanges {
     this.eventoParaEditar = null;
     this.cerrarFormulario.emit();
     this.limpiarEventoSeleccionado.emit();
+
+    // 👇 Aseguramos que todo quede habilitado para la próxima creación
+    this.eventoForm.enable({ emitEvent: false });
+
   }
 
   private crearSesion(fecha: string, horaInicio: string, horaFin: string, base: any) {
