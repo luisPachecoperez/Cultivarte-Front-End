@@ -1,12 +1,21 @@
 import { Injectable, input } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
+import {
+  firstValueFrom,
+  map,
+  mergeMap,
+  from,
+  switchMap,
+  of,
+  catchError,tap
+} from 'rxjs';
+import { LoadIndexDB } from '../../../indexdb/services/load-index-db.service';
+import { ActividadesDataSource } from '../../../indexdb/datasources/actividades-datasource';
+import { PreAsistencia } from '../../../shared/interfaces/preasistencia.model';
 import { Asistencias } from '../../../indexdb/interfaces/asistencias';
-
-import { GraphQLService } from '../../../shared/services/graphql.service';
+import { AsistenciasDataSource } from '../../../indexdb/datasources/asistencias-datasource';
+import { SesionesDataSource } from '../../../indexdb/datasources/sesiones-datasource';
 import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.model';
-
 @Injectable({ providedIn: 'root' })
 export class AsistenciaService {
   private apiUrl = 'http://localhost:4000/graphql'; // 👈 Ajusta a tu backend real
@@ -46,7 +55,7 @@ mutation UpdateAsistencias($input: UpdateAsistenciaInput!) {
     }
   }
 `;
-private readonly ACTUALIZAR_SESION = `
+  private readonly ACTUALIZAR_SESION = `
 mutation updateAsistencias($input: UpdateSesionInput!) {
   updateAsistencias(input: $input) {
     exitoso
@@ -55,23 +64,109 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
 }
 `;
 
-
   // ✅ Activa o desactiva el modo mock
   private usarMock = true;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private actividadesDataSource: ActividadesDataSource,
+    private loadIndexDB: LoadIndexDB,
+    private asistenciasDataSource: AsistenciasDataSource,
+    private sesionesDataSource: SesionesDataSource
+  ) {}
 
   // 🔹 Consultar info de asistencia según id_actividad
-  obtenerDetalleAsistencia(id_sesion: string): Observable<any> {
-    return this.http.post<any>(this.apiUrl, {
-      query: this.GET_PRE_ASISTENCIA,
-      variables: { id_sesion }
-    }).pipe(
-      map(res => res.data.getPreAsistencia)
+  async obtenerDetalleAsistencia(id_sesion: string): Promise<PreAsistencia> {
+    return await firstValueFrom(
+      this.loadIndexDB.ping().pipe(
+        switchMap((ping) => {
+          console.log('ping en update sesiones:', ping);
+          if (ping === 'pong') {
+            console.log('Update sesiones backend activo');
+            return this.http
+              .post<any>(this.apiUrl, {
+                query: this.GET_PRE_ASISTENCIA,
+                variables: { id_sesion },
+              })
+              .pipe(map((res) => res.data.getPreAsistencia));
+          } else {
+            return from(this.actividadesDataSource.getPreAsistencia(id_sesion)).pipe(
+              tap((preAsistencia) =>
+                console.log('👉 preAsistencia calculada:', preAsistencia)
+              )
+            );
+          }
+        })
+      )
     );
   }
 
-  // 🔹 Guardar asistencia (unificado)
+  async guardarAsistencia(input: any): Promise<GraphQLResponse> {
+    return await firstValueFrom(
+      this.loadIndexDB.ping().pipe(
+        switchMap((ping) => {
+          console.log('ping en update asistencias:', ping);
+
+          if (ping === 'pong') {
+            console.log('✅ Backend activo: enviando asistencias');
+            return this.http
+              .post<any>(this.apiUrl, {
+                query: this.UPDATE_ASISTENCIAS,
+                variables: { input },
+              })
+              .pipe(
+                map((res) => {
+                  console.log('✅ updateAsistencias OK:', res);
+
+                  // Nuevas -> synced
+                  input.nuevos.forEach((a: Asistencias) => {
+                    this.asistenciasDataSource.create({
+                      ...a,
+                      syncStatus: 'synced',
+                    });
+                  });
+
+                  return res.data.updateAsistencias;
+                }),
+                catchError((error) => {
+                  console.error('❌ Error en updateAsistencias:', error);
+
+                  // Nuevas -> pending
+                  input.nuevos.forEach((a: Asistencias) => {
+                    this.asistenciasDataSource.create({
+                      ...a,
+                      syncStatus: 'pending-create',
+                    });
+                  });
+
+                  return of({
+                    exitoso: 'S',
+                    mensaje: 'Asistencias guardadas satisfactoriamente',
+                  });
+                })
+              );
+          } else {
+            console.log('⚠️ Backend inactivo: guardando offline');
+
+            // Nuevas -> pending
+            input.nuevos.forEach((a: Asistencias) => {
+              this.asistenciasDataSource.create({
+                ...a,
+                syncStatus: 'pending-create',
+              });
+            });
+
+            return of({
+              exitoso: 'S',
+              mensaje: 'Asistencias guardadas satisfactoriamente',
+            });
+          }
+        })
+      )
+    );
+  }
+
+  /*
   guardarAsistencia(input: any): Observable<any> {
     return this.http.post<any>(this.apiUrl, {
       query: this.UPDATE_ASISTENCIAS,
@@ -80,20 +175,65 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
       map(res => res.data.updateAsistencias)
     );
   }
-
-  // 🔹 Guardar asistencia fotográfica
-  guardarAsistenciaFotografica(input: any):  Observable<{ exitoso: string; mensaje: string }>  {
-
-    console.log('📤 Enviando asistencia EN EL SERVICES:', input);
-
-
-    return this.http.post<any>(this.apiUrl, {
-      query: this.UPDATE_ASISTENCIAS,
-      variables: { input }
-    }).pipe(
-      map(res => res.data.updateAsistencias)
-    );
-  }
-
-
+  */async guardarAsistenciaFotografica(input: any): Promise<GraphQLResponse> {
+  return await firstValueFrom(
+    this.loadIndexDB.ping().pipe(
+      switchMap((ping) => {
+        if (ping === 'pong') {
+          return this.http
+            .post<any>(this.apiUrl, {
+              query: this.UPDATE_ASISTENCIAS,
+              variables: { input },
+            })
+            .pipe(
+              mergeMap((res) =>
+                from(this.sesionesDataSource.getById(input.id_sesion)).pipe(
+                  mergeMap((sesion) =>
+                    from(
+                      this.sesionesDataSource.update(input.id_sesion, {
+                        ...sesion,
+                        syncStatus: 'synced',
+                        deleted: false,
+                        imagen: input.imagen,
+                        descripcion: input.descripcion,
+                        nro_asistentes: input.nro_asistentes,
+                      })
+                    ).pipe(
+                      map(() => {
+                        console.log('📥 Sesión actualizada en IndexedDB (synced)');
+                        return res.data.updateAsistencias;
+                      })
+                    )
+                  )
+                )
+              )
+            );
+        } else {
+          return from(this.sesionesDataSource.getById(input.id_sesion)).pipe(
+            mergeMap((sesion) =>
+              from(
+                this.sesionesDataSource.update(input.id_sesion, {
+                  ...sesion,
+                  syncStatus: 'pending-update',
+                  deleted: false,
+                  imagen: input.imagen,
+                  descripcion: input.descripcion,
+                  nro_asistentes: input.nro_asistentes,
+                })
+              ).pipe(
+                map(() => {
+                  console.log('Asistencia actualizada correctamente');
+                  return {
+                    exitoso: 'S',
+                    mensaje: 'Asistencia actualizada correctamente',
+                  };
+                })
+              )
+            )
+          );
+        }
+      })
+    )
+  );
+}
 }

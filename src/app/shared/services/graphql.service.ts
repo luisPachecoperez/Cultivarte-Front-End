@@ -19,7 +19,7 @@ export class GraphQLService {
   ) { }
 
   private getCookie(name: string): string | null {
-    console.log("Buscando cookie: " + name);
+   // console.log("Buscando cookie: " + name);
     const match = this.document.cookie
       ?.split(';')
       .map(c => c.trim())
@@ -74,7 +74,7 @@ export class GraphQLService {
     return this.http.post<{ data: T }>(this.apiUrl, body, { headers }).pipe(
       map(response => response.data),
       catchError(error => {
-        console.log('Error en GraphQL:', error);
+        //console.log('Error en GraphQL:', error);
         return throwError(() => error);
       })
     );

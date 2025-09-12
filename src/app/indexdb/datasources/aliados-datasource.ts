@@ -1,6 +1,10 @@
 import { indexDB } from '../services/database.service';
 import { Aliados } from '../interfaces/aliados';
+import { Injectable } from '@angular/core';
 
+@Injectable({
+  providedIn: 'root',
+})
 export class AliadosDataSource {
   async getAll(): Promise<Aliados[]> {
     return await indexDB.aliados.toArray();

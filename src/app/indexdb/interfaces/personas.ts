@@ -27,10 +27,12 @@ export interface Personas {
    email_contacto: string;
    telefono_movil_contacto: string;
    telefono_movil: string;
+   sede: string |null;
    eliminado: string;
    id_creado_por: string;
    fecha_creacion: Date;
    id_modificado_por: string;
    fecha_modificacion: Date;
    syncStatus: string;
+
 }

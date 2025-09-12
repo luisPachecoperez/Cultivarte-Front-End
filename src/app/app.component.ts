@@ -1,6 +1,6 @@
 import { Component, signal, ChangeDetectorRef } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-
+import { DataSyncService } from './indexdb/services/data-sync';
 
 
 @Component({
@@ -10,4 +10,10 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
+  constructor(private dataSyncService: DataSyncService) {}
+
+  ngOnInit(): void {
+    // 🚀 Arranca la sincronización en background
+    this.dataSyncService.startSync();
+  }
 }

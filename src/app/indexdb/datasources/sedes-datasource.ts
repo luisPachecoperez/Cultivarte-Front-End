@@ -1,6 +1,10 @@
 import { indexDB } from '../services/database.service';
 import { Sedes } from '../interfaces/sedes';
+import { Injectable } from '@angular/core';
 
+@Injectable({
+  providedIn: 'root',
+})
 export class SedesDataSource {
   async getAll(): Promise<Sedes[]> {
     return await indexDB.sedes.toArray();

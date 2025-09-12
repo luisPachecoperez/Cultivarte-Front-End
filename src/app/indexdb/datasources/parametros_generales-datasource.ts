@@ -1,6 +1,10 @@
 import { indexDB } from '../services/database.service';
 import { Parametros_generales } from '../interfaces/parametros_generales';
+import { Injectable } from '@angular/core';
 
+@Injectable({
+  providedIn: 'root',
+})
 export class Parametros_generalesDataSource {
   async getAll(): Promise<Parametros_generales[]> {
     return await indexDB.parametros_generales.toArray();

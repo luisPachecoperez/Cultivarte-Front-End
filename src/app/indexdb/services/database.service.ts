@@ -59,18 +59,20 @@ export class DatabaseService extends Dexie {
       personas_grupo_interes:
         'id_personas_grupo_interes, id_persona, id_grupo_interes, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
       personas_programas:
-        'id_personas_programa, id_persona, id_programa, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
+        'id_persona_programa, id_persona, id_programa, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
       personas_sedes:
         'id_personas_sede, id_persona, id_sede, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
       poblaciones:
         'id_poblacion, id_padre, nombre, codigo, estado, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
       sedes:
         'id_sede, id_pais, id_departamento, id_ciudad, nombre, direccion, telefono, email, estado, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
+
       sesiones:
-        'id_sesion, id_actividad, fecha_actividad, hora_inicio, hora_fin, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
+        'id_sesion, id_actividad, fecha_actividad, hora_inicio, hora_fin,imagen,descripcion, nro_asistentes, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
       sessions:
         'session_id, user_id, user_email, user_name, created_at, expires_at, revoked',
     });
+    console.log('Base de datos lista para usarse');
   }
 }
 

@@ -1,5 +1,5 @@
 export interface Personas_programas {
-   id_personas_programa: string;
+   id_persona_programa: string;
    id_persona: string;
    id_programa: string;
    id_creado_por: string;
