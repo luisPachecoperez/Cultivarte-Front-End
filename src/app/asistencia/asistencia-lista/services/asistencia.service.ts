@@ -1,11 +1,33 @@
-import { Injectable, input } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
-import { Asistencias } from '../../../indexdb/interfaces/asistencias';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-import { GraphQLService } from '../../../shared/services/graphql.service';
-import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.model';
+export interface PreAsistencia {
+  id_sesion: string;
+  id_sede?: string;
+  numero_asistentes?: number;
+  foto?: string;
+  descripcion?: string;
+  imagen?: string;
+  sedes: { id_sede: string; nombre: string }[];
+  beneficiarios: { id_persona: string; nombre_completo: string; id_sede: string }[];
+  asistentes_sesiones: { id_persona: string; eliminar?: 'S' | 'N' }[];
+}
+
+export interface AsistenciaInput {
+  id_actividad: string;
+  id_sesion: string;
+  imagen: string;
+  numero_asistentes: number;
+  descripcion: string;
+  nuevos: { id_persona: string; id_sesion: string; id_asistencia: string }[];
+}
+
+export interface AsistenciaResponse {
+  exitoso: string;
+  mensaje: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AsistenciaService {
@@ -54,16 +76,13 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
   }
 }
 `;
+  // ✅ Reemplazo constructor por inject()
+  private http = inject(HttpClient);
 
-
-  // ✅ Activa o desactiva el modo mock
-  private usarMock = true;
-
-  constructor(private http: HttpClient) {}
 
   // 🔹 Consultar info de asistencia según id_actividad
-  obtenerDetalleAsistencia(id_sesion: string): Observable<any> {
-    return this.http.post<any>(this.apiUrl, {
+  obtenerDetalleAsistencia(id_sesion: string): Observable<PreAsistencia> {
+    return this.http.post<{ data: { getPreAsistencia: PreAsistencia } }>(this.apiUrl, {
       query: this.GET_PRE_ASISTENCIA,
       variables: { id_sesion }
     }).pipe(
@@ -72,8 +91,8 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
   }
 
   // 🔹 Guardar asistencia (unificado)
-  guardarAsistencia(input: any): Observable<any> {
-    return this.http.post<any>(this.apiUrl, {
+  guardarAsistencia(input: AsistenciaInput): Observable<AsistenciaResponse> {
+    return this.http.post<{ data: { updateAsistencias: AsistenciaResponse } }>(this.apiUrl, {
       query: this.UPDATE_ASISTENCIAS,
       variables: { input }
     }).pipe(
@@ -82,12 +101,12 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
   }
 
   // 🔹 Guardar asistencia fotográfica
-  guardarAsistenciaFotografica(input: any):  Observable<{ exitoso: string; mensaje: string }>  {
+  guardarAsistenciaFotografica(input: AsistenciaInput):  Observable<{ exitoso: string; mensaje: string }>  {
 
     console.log('📤 Enviando asistencia EN EL SERVICES:', input);
 
 
-    return this.http.post<any>(this.apiUrl, {
+    return this.http.post<{ data: { updateAsistencias: AsistenciaResponse } }>(this.apiUrl, {
       query: this.UPDATE_ASISTENCIAS,
       variables: { input }
     }).pipe(

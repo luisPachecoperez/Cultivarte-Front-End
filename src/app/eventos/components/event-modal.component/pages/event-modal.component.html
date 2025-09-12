@@ -30,7 +30,7 @@
         </button>
 
         <!-- Botón Eliminar -->
-        @if (evento()?.asistentes_evento > 0) {
+        @if ((evento()?.asistentes_evento ?? 0) > 0) {
         <button class="btn btn-outline-danger" disabled
           [attr.title]="'No se puede eliminar. Asistentes: ' + evento()?.asistentes_evento" data-bs-toggle="tooltip">
           Eliminar evento
