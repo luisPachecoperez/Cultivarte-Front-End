@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { interval, of, from, firstValueFrom } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
@@ -7,15 +7,11 @@ import { ActividadesDataSource } from '../datasources/actividades-datasource';
 import { SesionesDataSource } from '../datasources/sesiones-datasource';
 import { AsistenciasDataSource } from '../datasources/asistencias-datasource';
 import { GraphQLService } from '../../shared/services/graphql.service';
-import { LoadIndexDB } from './load-index-db.service';
+import { LoadIndexDBService } from './load-index-db.service';
 
 @Injectable({ providedIn: 'root' })
 export class DataSyncService {
-  private readonly PING_QUERY = `
-    query Ping {
-      ping
-    }
-  `;
+
   private readonly CREATE_ACTIVIDAD = `
       mutation CreateActividad($data: ActividadInput!) {
         createActividad(data: $data) {
@@ -59,13 +55,13 @@ export class DataSyncService {
     }
     `;
 
-  constructor(
+    private loadIndexDBService = inject(LoadIndexDBService);
+    constructor(
     private http: HttpClient,
     private actividadesDataSource: ActividadesDataSource,
     private sesionesDataSource: SesionesDataSource,
     private asistenciasDataSource: AsistenciasDataSource,
     private graphQLService: GraphQLService,
-    private loadIndexDB: LoadIndexDB
   ) {}
 
   /**
@@ -459,7 +455,7 @@ export class DataSyncService {
    */
   private async pingBackend(): Promise<boolean> {
     return await firstValueFrom(
-      this.loadIndexDB.ping().pipe(
+      this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
           console.log('ping en update sesiones:', ping);
           return of(ping === 'pong'); // 👈 devolvemos un observable de boolean

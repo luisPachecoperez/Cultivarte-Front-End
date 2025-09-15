@@ -18,13 +18,13 @@ import { PreCreateActividad } from '../../../../indexdb/interfaces/pre-create-ac
 import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';
 import { Sesiones } from '../../../../indexdb/interfaces/sesiones';
 import { Actividades } from '../../../../indexdb/interfaces/actividades';
-import { LoadIndexDB } from '../../../../indexdb/services/load-index-db.service';
+import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
+import { inject } from '@angular/core';
 
 @Injectable({
   providedIn: 'root',
 })
 export class EventService {
-  private apiUrl = 'http://localhost:4000/graphql'; // TODO: cambiar por la URL real
   private readonly CREATE_ACTIVIDAD = `
   mutation CreateActividad($data: ActividadInput!) {
     createActividad(data: $data) {
@@ -140,15 +140,16 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
       }
     }
   `;
+  private http= inject(HttpClient);
+  private graphql= inject(GraphQLService);
+  private authService= inject( AuthService);
+  private actividadesDataSource= inject( ActividadesDataSource);
+  private sesionesDataSource= inject( SesionesDataSource);
+  private gridSesionesService= inject(GridSesionesService);
+  private loadIndexDBService= inject( LoadIndexDBService);
 
   constructor(
-    private http: HttpClient,
-    private graphql: GraphQLService,
-    private authService: AuthService,
-    private actividadesDataSource: ActividadesDataSource,
-    private sesionesDataSource: SesionesDataSource,
-    private gridSesionesService: GridSesionesService,
-    private loadIndexDB: LoadIndexDB
+
   ) {}
 
   /**
@@ -167,7 +168,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
     const id_usuario = this.authService.getUserUuid();
     console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
     return await firstValueFrom(
-      this.loadIndexDB.ping().pipe(
+      this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
           if (ping === 'pong') {
             return this.graphql
@@ -211,7 +212,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
       '📡 Solicitando configuración de evento para usuario:',
       id_usuario
     );
-    return this.loadIndexDB.ping().pipe(
+    return this.loadIndexDBService.ping().pipe(
       switchMap((ping) => {
         if (ping === 'pong') {
           return this.graphql
@@ -298,7 +299,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
     });
     return await firstValueFrom(
 
-     this.loadIndexDB.ping().pipe(
+     this.loadIndexDBService.ping().pipe(
       switchMap((ping) => {
         if (ping === 'pong') {
           console.log('✅ Crear evento Backend activo');

@@ -7,17 +7,16 @@ import { Sedes } from '../interfaces/sedes';
 import { Parametros_generales } from '../interfaces/parametros_generales';
 import { Parametros_detalle } from '../interfaces/parametros_detalle';
 import { PreCreateActividad } from '../interfaces/pre-create-actividad';
-import { PreEditActividad } from '../interfaces/pre-edit-actividad';
 import { PersonasDataSource } from './personas-datasource';
 import { Injectable } from '@angular/core';
 import { SesionesDataSource } from './sesiones-datasource';
 import { Sesiones } from '../interfaces/sesiones';
-import { Personas_programas } from '../interfaces/personas_programas';
 import { Personas_grupo_interes } from '../interfaces/personas_grupo_interes';
 import { Personas } from '../interfaces/personas';
 import { Personas_sedes } from '../interfaces/personas_sedes';
 import { Asistencias } from '../interfaces/asistencias';
 import { PreAsistencia } from '../../shared/interfaces/preasistencia.model';
+import { inject } from '@angular/core';
 @Injectable({
   providedIn: 'root',
 })
@@ -27,11 +26,12 @@ import { PreAsistencia } from '../../shared/interfaces/preasistencia.model';
 
 export class ActividadesDataSource {
 
+  private personasSedesDataSource = inject(Personas_sedesDataSource);
+  private personasDataSource= inject( PersonasDataSource);
+  private sesionesDataSource= inject( SesionesDataSource);
 
   constructor(
-    private personasSedesDataSource: Personas_sedesDataSource,
-    private personasDataSource: PersonasDataSource,
-    private sesionesDataSource: SesionesDataSource
+
   ) {}
   async getAll(): Promise<Actividades[]> {
     return await indexDB.actividades.toArray();

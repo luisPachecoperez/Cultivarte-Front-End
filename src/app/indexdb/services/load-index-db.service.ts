@@ -31,10 +31,9 @@ import { map,switchMap,filter,from,of } from 'rxjs';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root',
-})
-export class LoadIndexDB {
+@Injectable({ providedIn: 'root' })
+
+export class LoadIndexDBService {
   private hoy = new Date(new Date().setDate(new Date().getDate() + 180))
     .toISOString()
     .split('T')[0];

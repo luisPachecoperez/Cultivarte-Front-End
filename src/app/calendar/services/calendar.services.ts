@@ -6,8 +6,9 @@ import { tap, catchError } from 'rxjs/operators';
 import { Sesiones } from '../../indexdb/interfaces/sesiones';
 import { GraphQLService } from '../../shared/services/graphql.service';
 import { ActividadesDataSource } from '../../indexdb/datasources/actividades-datasource';
-import { LoadIndexDB } from '../../indexdb/services/load-index-db.service';
+import { LoadIndexDBService } from '../../indexdb/services/load-index-db.service';
 import { switchMap } from 'rxjs/operators';
+import { inject } from '@angular/core';
 @Injectable({
   providedIn: 'root',
 })
@@ -24,11 +25,11 @@ export class CalendarService {
     }
   }
 `;
-
+private graphqlService = inject( GraphQLService);
+private actividadesDataSource= inject( ActividadesDataSource);
+private loadIndexDBService= inject( LoadIndexDBService);
   constructor(
-    private graphql: GraphQLService,
-    private actividadesDataSource: ActividadesDataSource,
-    private loadIndexDB: LoadIndexDB
+
   ) {}
 
   /**
@@ -40,11 +41,11 @@ export class CalendarService {
 
   async obtenerSesiones(fechaInicio: string, fechaFin: string, id_usuario: string) {
     return await firstValueFrom(
-     this.loadIndexDB.ping().pipe(
+     this.loadIndexDBService.ping().pipe(
       switchMap((ping) => {
         if (ping === 'pong') {
           console.log('✅ Backend activo');
-          return this.graphql
+          return this.graphqlService
             .query<{ consultarFechaCalendario: Sesiones[] }>(this.GET_SESIONES, {
               input: {
                 fecha_inicial: fechaInicio,

@@ -9,13 +9,15 @@ import {
   of,
   catchError,tap
 } from 'rxjs';
-import { LoadIndexDB } from '../../../indexdb/services/load-index-db.service';
+import { LoadIndexDBService } from '../../../indexdb/services/load-index-db.service';
 import { ActividadesDataSource } from '../../../indexdb/datasources/actividades-datasource';
 import { PreAsistencia } from '../../../shared/interfaces/preasistencia.model';
 import { Asistencias } from '../../../indexdb/interfaces/asistencias';
 import { AsistenciasDataSource } from '../../../indexdb/datasources/asistencias-datasource';
 import { SesionesDataSource } from '../../../indexdb/datasources/sesiones-datasource';
 import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.model';
+import { inject } from '@angular/core';
+import { GraphQLService } from '../../../shared/services/graphql.service';
 
 
 
@@ -30,7 +32,6 @@ export interface AsistenciaInput {
 
 @Injectable({ providedIn: 'root' })
 export class AsistenciaService {
-  private apiUrl = 'http://localhost:4000/graphql'; // 👈 Ajusta a tu backend real
   private readonly UPDATE_ASISTENCIAS = `
     mutation UpdateAsistencias($input: UpdateAsistenciaInput!) {
       updateAsistencias(input: $input) {
@@ -75,59 +76,73 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
   }
 }
 `;
-
-
+private http =inject( HttpClient);
+private actividadesDataSource=inject( ActividadesDataSource);
+private loadIndexDBService=inject( LoadIndexDBService);
+private asistenciasDataSource=inject( AsistenciasDataSource);
+private sesionesDataSource=inject( SesionesDataSource);
+private graphQLService= inject(GraphQLService);
 
   constructor(
-    private http: HttpClient,
-    private actividadesDataSource: ActividadesDataSource,
-    private loadIndexDB: LoadIndexDB,
-    private asistenciasDataSource: AsistenciasDataSource,
-    private sesionesDataSource: SesionesDataSource
+
   ) {}
 
   // 🔹 Consultar info de asistencia según id_actividad
   async obtenerDetalleAsistencia(id_sesion: string): Promise<PreAsistencia> {
     return await firstValueFrom(
-      this.loadIndexDB.ping().pipe(
+      this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
           console.log('ping en update sesiones:', ping);
+
           if (ping === 'pong') {
             console.log('Update sesiones backend activo');
-            return this.http
-              .post<any>(this.apiUrl, {
-                query: this.GET_PRE_ASISTENCIA,
-                variables: { id_sesion },
-              })
-              .pipe(map((res) => res.data.getPreAsistencia));
+
+            return this.graphQLService
+              .query<{ getPreAsistencia: any }>(
+                this.GET_PRE_ASISTENCIA,
+                { id_sesion }
+              )
+              .pipe(
+                map((res) => {
+                  const preAsistencia = res.getPreAsistencia;
+                  console.log('👉 preAsistencia desde backend:', preAsistencia);
+                  return preAsistencia;
+                })
+              );
+
           } else {
-            return from(this.actividadesDataSource.getPreAsistencia(id_sesion)).pipe(
+            return from(
+              this.actividadesDataSource.getPreAsistencia(id_sesion)
+            ).pipe(
               tap((preAsistencia) =>
-                console.log('👉 preAsistencia calculada:', preAsistencia)
+                console.log('👉 preAsistencia calculada (offline):', preAsistencia)
               )
             );
           }
         })
       )
     );
+
   }
 
   async guardarAsistencia(input: any): Promise<GraphQLResponse> {
     return await firstValueFrom(
-      this.loadIndexDB.ping().pipe(
+      this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
           console.log('ping en update asistencias:', ping);
 
           if (ping === 'pong') {
             console.log('✅ Backend activo: enviando asistencias');
-            return this.http
-              .post<any>(this.apiUrl, {
-                query: this.UPDATE_ASISTENCIAS,
-                variables: { input },
-              })
+
+            return this.graphQLService
+              .mutation<{ updateAsistencias: { exitoso: string; mensaje: string } }>(
+                this.UPDATE_ASISTENCIAS,
+                { input }
+              )
               .pipe(
                 map((res) => {
-                  console.log('✅ updateAsistencias OK:', res);
+                  const result = res.updateAsistencias;
+                  console.log('✅ updateAsistencias OK:', result);
 
                   // Nuevas -> synced
                   input.nuevos.forEach((a: Asistencias) => {
@@ -137,7 +152,7 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
                     });
                   });
 
-                  return res.data.updateAsistencias;
+                  return result;
                 }),
                 catchError((error) => {
                   console.error('❌ Error en updateAsistencias:', error);
@@ -152,10 +167,11 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
 
                   return of({
                     exitoso: 'S',
-                    mensaje: 'Asistencias guardadas satisfactoriamente',
+                    mensaje: 'Asistencias guardadas satisfactoriamente (offline fallback)',
                   });
                 })
               );
+
           } else {
             console.log('⚠️ Backend inactivo: guardando offline');
 
@@ -169,74 +185,79 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
 
             return of({
               exitoso: 'S',
-              mensaje: 'Asistencias guardadas satisfactoriamente',
+              mensaje: 'Asistencias guardadas satisfactoriamente (offline)',
             });
+          }
+        })
+      )
+    );
+
+  }
+
+  async guardarAsistenciaFotografica(input: any): Promise<GraphQLResponse> {
+    console.log("Evidencia fotográfica:", input);
+
+    return await firstValueFrom(
+      this.loadIndexDBService.ping().pipe(
+        switchMap((ping) => {
+          if (ping === 'pong') {
+            // 🔹 Llamada al backend
+            return this.graphQLService
+              .mutation<{ updateAsistencias: GraphQLResponse }>(
+                this.UPDATE_ASISTENCIAS,
+                { input }
+              )
+              .pipe(
+                mergeMap((res) =>
+                  from(this.sesionesDataSource.getById(input.id_sesion)).pipe(
+                    mergeMap((sesion) =>
+                      from(
+                        this.sesionesDataSource.update(input.id_sesion, {
+                          ...sesion,
+                          syncStatus: 'synced',
+                          deleted: false,
+                          imagen: input.imagen,
+                          descripcion: input.descripcion,
+                          nro_asistentes: input.nro_asistentes, // 👈 corregido
+                        })
+                      ).pipe(
+                        map(() => {
+                          console.log('📥 Sesión actualizada en IndexedDB (synced)');
+                          return res.updateAsistencias;
+                        })
+                      )
+                    )
+                  )
+                )
+              );
+          } else {
+            // 🔹 Guardar solo en IndexedDB (offline)
+            return from(this.sesionesDataSource.getById(input.id_sesion)).pipe(
+              mergeMap((sesion) =>
+                from(
+                  this.sesionesDataSource.update(input.id_sesion, {
+                    ...sesion,
+                    syncStatus: 'pending-update',
+                    deleted: false,
+                    imagen: input.imagen,
+                    descripcion: input.descripcion,
+                    nro_asistentes: input.numero_asistentes, // 👈 corregido
+                  })
+                ).pipe(
+                  map(() => {
+                    console.log('⚠️ Asistencia marcada como pendiente');
+                    return {
+                      exitoso: 'S',
+                      mensaje: 'Asistencia actualizada correctamente (offline)',
+                    } as GraphQLResponse;
+                  })
+                )
+              )
+            );
           }
         })
       )
     );
   }
 
-  async guardarAsistenciaFotografica(input: any): Promise<GraphQLResponse> {
-    console.log("Evidencia fotografica:", input)
-  return await firstValueFrom(
-    this.loadIndexDB.ping().pipe(
-      switchMap((ping) => {
-        if (ping === 'pong') {
-          return this.http
-            .post<any>(this.apiUrl, {
-              query: this.UPDATE_ASISTENCIAS,
-              variables: { input },
-            })
-            .pipe(
-              mergeMap((res) =>
-                from(this.sesionesDataSource.getById(input.id_sesion)).pipe(
-                  mergeMap((sesion) =>
-                    from(
-                      this.sesionesDataSource.update(input.id_sesion, {
-                        ...sesion,
-                        syncStatus: 'synced',
-                        deleted: false,
-                        imagen: input.imagen,
-                        descripcion: input.descripcion,
-                        nro_asistentes: input.numero_asistentes,
-                      })
-                    ).pipe(
-                      map(() => {
-                        console.log('📥 Sesión actualizada en IndexedDB (synced)');
-                        return res.data.updateAsistencias;
-                      })
-                    )
-                  )
-                )
-              )
-            );
-        } else {
-          return from(this.sesionesDataSource.getById(input.id_sesion)).pipe(
-            mergeMap((sesion) =>
-              from(
-                this.sesionesDataSource.update(input.id_sesion, {
-                  ...sesion,
-                  syncStatus: 'pending-update',
-                  deleted: false,
-                  imagen: input.imagen,
-                  descripcion: input.descripcion,
-                  nro_asistentes: input.numero_asistentes,
-                })
-              ).pipe(
-                map(() => {
-                  console.log('Asistencia actualizada correctamente');
-                  return {
-                    exitoso: 'S',
-                    mensaje: 'Asistencia actualizada correctamente',
-                  };
-                })
-              )
-            )
-          );
-        }
-      })
-    )
-  );
-}
 }

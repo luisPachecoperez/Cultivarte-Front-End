@@ -2,15 +2,15 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom, switchMap, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ActividadesDataSource } from '../../../../indexdb/datasources/actividades-datasource';
-import { LoadIndexDB } from '../../../../indexdb/services/load-index-db.service';
+import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
 import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.model';
 import { HttpClient } from '@angular/common/http';
-
+import { inject } from '@angular/core';
+import { GraphQLService } from '../../../../shared/services/graphql.service';
 @Injectable({
   providedIn: 'root',
 })
 export class EventModalService {
-  private apiUrl = 'http://localhost:4000/graphql'; // TODO: cambiar por la URL real
   private readonly DELETE_ACTIVIDAD = `
   mutation DeleteActividad($id_actividad: ID!) {
     deleteActividad(id_actividad: $id_actividad) {
@@ -20,10 +20,11 @@ export class EventModalService {
   }
 `;
 
+private actividadesDataSource=inject( ActividadesDataSource);
+private loadIndexDBService =inject(LoadIndexDBService);
+private graphQLService= inject(GraphQLService);
+
   constructor(
-    private actividadesDataSource: ActividadesDataSource,
-    private loadIndexDB: LoadIndexDB,
-    private http: HttpClient
   ) {}
 
   /**
@@ -36,24 +37,33 @@ export class EventModalService {
     );
 
     return await firstValueFrom(
-      this.loadIndexDB.ping().pipe(
+      this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
           if (ping === 'pong') {
-            return this.http
-              .post<any>(this.apiUrl, {
-                query: this.DELETE_ACTIVIDAD,
-                variables: { id_actividad },
-              })
-              .pipe(map((res) => res.data.deleteActividad as GraphQLResponse));
+            // 🔹 Llamada al backend
+            return this.graphQLService
+              .mutation<{ deleteActividad: GraphQLResponse }>(
+                this.DELETE_ACTIVIDAD,
+                { id_actividad }
+              )
+              .pipe(
+                switchMap(async (res) => {
+                  const result = res.deleteActividad;
+                  if (result.exitoso === 'S') {
+                    // 🔹 Borrado definitivo en indexDB
+                    await this.actividadesDataSource.delete(id_actividad, false);
+                  }
+                  return result;
+                })
+              );
           } else {
-            return from(
-              this.actividadesDataSource.delete(id_actividad, true)
-            ).pipe(
+            // 🔹 Modo offline → solo marcado como eliminado
+            return from(this.actividadesDataSource.delete(id_actividad, true)).pipe(
               map(
                 () =>
                   ({
                     exitoso: 'S',
-                    mensaje: 'Actividad eliminada exitosamente',
+                    mensaje: 'Actividad marcada para eliminación (offline)',
                   } as GraphQLResponse)
               )
             );
@@ -61,5 +71,6 @@ export class EventModalService {
         })
       )
     );
+
   }
 }

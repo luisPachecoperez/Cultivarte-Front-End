@@ -1,7 +1,6 @@
 import { indexDB } from '../services/database.service';
 import { Personas_sedes } from '../interfaces/personas_sedes';
 import { Injectable } from '@angular/core';
-import { Personas } from '../interfaces/personas';
 
 @Injectable({
   providedIn: 'root',

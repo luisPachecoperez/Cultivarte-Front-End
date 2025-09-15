@@ -5,18 +5,22 @@ import { GraphQLService } from '../../../../shared/services/graphql.service';
 import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.model';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { switchMap } from 'rxjs/operators';
-import { LoadIndexDB } from '../../../../indexdb/services/load-index-db.service';
+import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
 import { Sesiones } from '../../../../indexdb/interfaces/sesiones';
 import { SesionesDataSource } from '../../../../indexdb/datasources/sesiones-datasource';
+import { inject } from '@angular/core';
+
 @Injectable({
   providedIn: 'root',
 })
 export class GridSesionesService {
+  private graphQLService = inject(GraphQLService);
+  private authService = inject(AuthService);
+  private loadIndexDBService = inject(LoadIndexDBService);
+  private sesionesDataSource = inject(SesionesDataSource);
+
   constructor(
-    private graphQLService: GraphQLService,
-    private authService: AuthService,
-    private loadIndexDB: LoadIndexDB,
-    private sesionesDataSource: SesionesDataSource
+
   ) {}
 
   /**
@@ -60,7 +64,7 @@ export class GridSesionesService {
     };
     console.log('📤 llamado a update de sesiones al back:', payload);
     return await firstValueFrom(
-      this.loadIndexDB.ping().pipe(
+      this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
           console.log('ping en update sesiones:', ping);
 
