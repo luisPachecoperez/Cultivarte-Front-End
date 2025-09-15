@@ -1,6 +1,10 @@
 import { indexDB } from '../services/database.service';
 import { Parametros_detalle } from '../interfaces/parametros_detalle';
+import { Injectable } from '@angular/core';
 
+@Injectable({
+  providedIn: 'root',
+})
 export class Parametros_detalleDataSource {
   async getAll(): Promise<Parametros_detalle[]> {
     return await indexDB.parametros_detalle.toArray();
@@ -29,6 +33,8 @@ export class Parametros_detalleDataSource {
       ...item,
       syncStatus: item.syncStatus ?? 'synced'
     }));
+    console.log('Response Parámetros Detalle:', withSyncStatus);
+
     await indexDB.parametros_detalle.bulkAdd(withSyncStatus);
   }
 

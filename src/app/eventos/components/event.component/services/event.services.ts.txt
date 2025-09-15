@@ -1,0 +1,370 @@
+import { Injectable } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import { delay, map, tap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+
+import { v4 as uuidv4 } from 'uuid';
+
+import { from } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+import { GraphQLService } from '../../../../shared/services/graphql.service';
+import { AuthService } from '../../../../shared/services/auth.service';
+import { ActividadesDataSource } from '../../../../indexdb/datasources/actividades-datasource';
+import { ActividadSesiones } from '../../../../indexdb/interfaces/actividad-sesiones';
+import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.model';
+import { SesionesDataSource } from '../../../../indexdb/datasources/sesiones-datasource';
+import { PreCreateActividad } from '../../../../indexdb/interfaces/pre-create-actividad';
+import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';
+import { Sesiones } from '../../../../indexdb/interfaces/sesiones';
+
+interface OperacionResponse {
+  exitoso: string;
+  mensaje?: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class EventService {
+
+  private apiUrl = 'http://localhost:4000/graphql';// TODO: cambiar por la URL real
+  private readonly CREATE_ACTIVIDAD = `
+  mutation CreateActividad($data: ActividadInput!) {
+    createActividad(data: $data) {
+      exitoso
+      mensaje
+    }
+  }
+`;
+  private readonly GET_EVENTO = `
+query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
+  getPreEditActividad(id_actividad: $id_actividad, id_usuario: $id_usuario) {
+    id_programa
+
+    sedes {
+      id_sede
+      nombre
+    }
+
+    tiposDeActividad {
+      id_tipo_actividad
+      nombre
+    }
+
+    aliados {
+      id_aliado
+      nombre
+    }
+
+    responsables {
+      id_responsable
+      nombre
+    }
+
+    nombresDeActividad {
+      id_tipo_actividad
+      nombre
+    }
+
+    frecuencias {
+      id_frecuencia
+      nombre
+    }
+
+    actividad {
+      id_actividad
+      id_programa
+      id_tipo_actividad
+      id_responsable
+      id_aliado
+      id_sede
+      id_frecuencia
+      institucional
+      nombre_actividad
+      descripcion
+      fecha_actividad
+      hora_inicio
+      hora_fin
+      plazo_asistencia
+      estado
+      id_creado_por
+      fecha_creacion
+      id_modificado_por
+      fecha_modificacion
+    }
+
+    sesiones {
+      id_sesion
+      fecha_actividad
+      hora_inicio
+      hora_fin
+      nro_asistentes
+      id_creado_por
+      fecha_creacion
+      id_modificado_por
+      fecha_modificacion
+    }
+  }
+}
+`;
+
+  private readonly GET_PRE_CREATE_ACTIVIDAD = `
+    query GetPreCreateActividad($id_usuario: ID!) {
+      getPreCreateActividad(id_usuario: $id_usuario) {
+        id_programa
+
+        sedes {
+          id_sede
+          nombre
+        }
+
+        tiposDeActividad {
+          id_tipo_actividad
+          nombre
+        }
+
+        aliados {
+          id_aliado
+          nombre
+        }
+
+        responsables {
+          id_responsable
+          nombre
+        }
+        nombresDeActividad
+            {id_tipo_actividad
+            nombre
+            }
+        frecuencias {
+          id_frecuencia
+          nombre
+        }
+      }
+    }
+  `;
+
+  constructor(
+    private http: HttpClient,
+    private graphql: GraphQLService,
+    private authService: AuthService,
+    private actividadesDataSource: ActividadesDataSource,
+    private sesionesDataSource: SesionesDataSource,
+    private gridSesionesService: GridSesionesService
+  ) { }
+
+  /**
+    * 📡 Obtiene sesiones para mostrar en el calendario
+    * @param fechaInicio YYYY-MM-DD
+    * @param fechaFin YYYY-MM-DD
+    * @param id_usuario string
+    */
+
+  /**
+   * 📡 Obtiene un evento por su ID con parámetros y sesiones (Mock GraphQL)
+   * @param id_actividad string
+   */
+  // obtenerEventoPorId(id_actividad: string) {
+  //   const id_usuario = this.authService.getUserUuid();
+  //   console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
+  //   return this.graphql
+  //     .query<{ getPreEditActividad: ActividadSesiones }>(this.GET_EVENTO, {
+  //       id_actividad,
+  //       id_usuario
+  //     })
+  //     .pipe(
+  //       tap((res) =>
+  //         console.log('📡 Respuesta cruda de GraphQL:', res.actividad)
+  //       ),
+  //       map((res) => res.getPreEditActividad),
+  //       catchError((err) => {
+  //         console.error(
+  //           '❌ Error al consultar evento por GraphQL, usando fallback:',
+  //           err
+  //         );
+
+  //         // 🔹 Fallback: solo sesiones locales, resto se simula vacío
+  //         return from(
+  //           this.actividadesDataSource.getActividadSesiones(
+  //             id_actividad,
+  //             id_usuario
+  //           )
+  //         ).pipe(
+  //           map((resp) =>
+  //             resp
+  //               ? {
+  //                   actividad: {
+  //                     id_programa: resp.id_programa,
+  //                     id_actividad: resp.id_actividad,
+  //                     institucional: resp.institucional,
+  //                     id_tipo_actividad: resp.id_tipo_actividad,
+  //                     id_responsable: resp.id_responsable,
+  //                     id_aliado: resp.id_aliado,
+  //                     id_sede: resp.id_sede,
+  //                     nombre_actividad: resp.nombre_actividad,
+  //                     descripcion: resp.descripcion,
+  //                     id_frecuencia: resp.id_frecuencia,
+  //                     fecha_actividad: resp.fecha_actividad,
+  //                     hora_inicio: resp.hora_inicio,
+  //                     hora_fin: resp.hora_fin
+  //                   },
+  //                   sesiones: resp.sesiones,
+  //                   sedes: resp.sedes,
+  //                   tiposDeActividad: resp.tiposDeActividad,
+  //                   aliados: resp.aliados,
+  //                   responsables: resp.responsables,
+  //                   nombreEventos: resp.nombreEventos,
+  //                   frecuencias: resp.frecuencias
+  //                 } as ActividadSesiones
+  //               : {
+  //                   id_programa: '',
+  //                   id_actividad,
+  //                   institucional: '',
+  //                   id_tipo_actividad: '',
+  //                   id_responsable: '',
+  //                   id_aliado: '',
+  //                   id_sede: '',
+  //                   nombre_actividad: 'Evento local (fallback)',
+  //                   descripcion: '',
+  //                   id_frecuencia: '',
+  //                   fecha_actividad: '',
+  //                   hora_inicio: '',
+  //                   hora_fin: '',
+  //                   sesiones: [],
+  //                   sedes: [],
+  //                   tiposDeActividad: [],
+  //                   aliados: [],
+  //                   responsables: [],
+  //                   nombreEventos: [],
+  //                   frecuencias: []
+  //                 } as ActividadSesiones
+  //           )
+  //         );
+  //       })
+  //     );
+  // }
+  obtenerEventoPorId(id_actividad: string): Observable<any> {
+    const id_usuario = this.authService.getUserUuid();
+    console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
+
+    return this.graphql
+      .query<any>(this.GET_EVENTO, {
+        id_actividad,
+        id_usuario
+      })
+      .pipe(
+        tap((res) =>
+          console.log('📡 Respuesta cruda de GraphQL:', res)
+        ),
+        map((res) => res.getPreEditActividad)
+      );
+  }
+
+
+
+  obtenerConfiguracionEvento(id_usuario: string): Observable<any> {
+    console.log('📡 Solicitando configuración de evento para usuario:', id_usuario);
+    return this.graphql
+      .query<{ getPreCreateActividad: PreCreateActividad }>(
+        this.GET_PRE_CREATE_ACTIVIDAD,
+        { id_usuario }
+      )
+      .pipe(
+        map((res) => res.getPreCreateActividad),
+        catchError((err) => {
+          console.error(
+            '❌ Error al consultar configuración de evento por GraphQL, usando fallback local:',
+            err
+          );
+
+          // 🔹 Fallback: usar IndexedDB
+          return from(
+            this.actividadesDataSource.getPreCreateActividad(id_usuario)
+          );
+        })
+      );
+
+  }
+
+  crearEvento(evento: any, sesiones: Sesiones[]): Observable<OperacionResponse> {
+    console.log('📤 Enviando evento al back:', evento);
+    console.log('📤 Enviando sesiones al back:', sesiones);
+    const hoy = new Date().toISOString().split('T')[0];
+
+    // 🔹 Construcción del payload de la actividad
+    const actividadPayload = {
+      id_actividad: uuidv4(),
+      id_programa: evento.id_programa,
+      institucional: evento.institucional ? 'S' : 'N',
+      id_tipo_actividad: evento.id_tipo_actividad,
+      id_responsable: evento.id_responsable,
+      id_aliado: evento.id_aliado,
+      id_sede: evento.id_sede,
+      id_frecuencia: evento.id_frecuencia,
+      nombre_actividad: evento.nombre_actividad,
+      descripcion: evento.descripcion,
+      fecha_actividad: evento.fecha_actividad,
+      hora_inicio: evento.hora_inicio,
+      hora_fin: evento.hora_fin,
+      estado: 'A',
+      id_creado_por: this.authService.getUserUuid(),
+      fecha_creacion: new Date().toISOString().split('T')[0],
+      id_modificado_por: null,
+      fecha_modificacion: null,
+    };
+
+    sesiones.forEach((s: Sesiones) => {
+      this.sesionesDataSource.create({
+        ...s,
+        id_sesion: uuidv4(),
+        id_actividad: actividadPayload.id_actividad,
+        syncStatus: 'pending',
+        deleted: false,
+      });
+    });
+
+    // this.actividadesDataSource.create(actividadPayload);
+
+    // 🔹 Intentar sincronizar con backend
+    console.log('📤 Enviando actividad al back:', actividadPayload);
+    return this.graphql
+      .mutation<{ createActividad: OperacionResponse }>(
+        this.CREATE_ACTIVIDAD,
+        { data: actividadPayload }   // 👈 Ojo: ahora mandamos dentro de data
+      )
+      .pipe(
+        switchMap((res) => {
+          const actividadResponse:OperacionResponse = res.createActividad;
+
+          if (actividadResponse?.exitoso === 'S') {
+            const sesionesPayload = {
+              nuevos: sesiones.map((s) => ({
+                ...s,
+                id_sesion: uuidv4(),
+                id_actividad: actividadPayload.id_actividad,
+                fecha_sesion: (s.fecha_sesion instanceof Date)
+                  ? s.fecha_sesion.toISOString().split('T')[0]
+                  : s.fecha_sesion,  // ya era string
+              })),
+              modificados: [],
+              eliminados: [],
+            };
+
+            return from(
+              this.gridSesionesService.guardarCambiosSesiones(sesionesPayload)
+            );
+          }
+
+          return of(actividadResponse);
+        }),
+        catchError((err) => {
+          console.error('❌ Error al crear en GraphQL, usando solo IndexDB:', err);
+          return of({
+            exitoso: 'N',
+            mensaje: err?.message || 'Error al sincronizar con backend',
+          });
+        })
+      );
+  }
+}
+

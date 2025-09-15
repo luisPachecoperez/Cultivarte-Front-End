@@ -1,7 +1,9 @@
 import { Component, input, output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AsistenciaService, PreAsistencia } from '../../asistencia-lista/services/asistencia.service';
+import { AsistenciaService } from '../../asistencia-lista/services/asistencia.service';
+import { PreAsistencia } from '../../../shared/interfaces/preasistencia.model';
+import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.model';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 
 // 🔹 Definimos tipos explícitos
@@ -63,33 +65,44 @@ export class AsistenciaFotograficaComponent implements OnInit {
     const ev = this.evento();
     if (!ev) return;
 
-    this.asistenciaService.obtenerDetalleAsistencia(ev.id_sesion).subscribe((data: PreAsistencia) => {
-      console.log('📥 Detalle asistencia fotográfica:', data);
+    this.asistenciaService
+  .obtenerDetalleAsistencia(ev.id_sesion)
+  .then((data: PreAsistencia) => {
+    console.log('📥 Detalle asistencia fotográfica:', data);
 
-      this.sedes = data.sedes || [];
+    // ✅ Guardamos sedes del backend/mock
+    this.sedes = data.sedes || [];
 
-      if (data.imagen) {
-        this.imagenPrevia = data.imagen;
-        this.imagenBase64 = data.imagen;
-      }
+    // ✅ Precargar imagen si viene del backend
+    if (data.imagen) {
+      this.imagenPrevia = data.imagen;
+      this.imagenBase64 = data.imagen; // si ya viene en base64 o URL
+    }
 
-      if (data.descripcion) {
-        this.asistenciaForm.patchValue({
-          descripcion: data.descripcion
-        });
-      }
+    // ✅ Precargar descripción
+    if (data.descripcion) {
+      this.asistenciaForm.patchValue({
+        descripcion: data.descripcion
+      });
+    }
 
-      if (data.numero_asistentes && data.numero_asistentes > 0) {
-        this.asistenciaForm.patchValue({
-          numeroAsistentes: data.numero_asistentes
-        });
-      }
+    // ✅ Precargar número de asistentes
+    if (data.numero_asistentes && data.numero_asistentes > 0) {
+      this.asistenciaForm.patchValue({
+        numeroAsistentes: data.numero_asistentes
+      });
+    }
 
-      if ((data.numero_asistentes ?? 0) > 0 || data.descripcion || data.imagen) {
-        this.bloqueado = true;
-        this.asistenciaForm.disable();
-      }
-    });
+    // 🔒 Si hay cualquier dato, bloqueamos el formulario completo
+    if (data.numero_asistentes > 0 || data.descripcion || data.imagen) {
+      this.bloqueado = true;
+      this.asistenciaForm.disable();
+    }
+  })
+  .catch((err) => {
+    console.error('❌ Error al cargar detalle asistencia fotográfica:', err);
+    // Opcional: this.snackBar.open('Error al cargar asistencia', 'Cerrar', { duration: 3000 });
+  });
   }
 
   // ✅ tipamos el evento correctamente
@@ -107,7 +120,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
     }
   }
 
-  guardar(): void {
+  async guardar():Promise<GraphQLResponse  | void> {
     if (this.asistenciaForm.invalid) {
       this.asistenciaForm.markAllAsTouched();
       this.snack.warning('⚠️ Debes completar todos los campos obligatorios');
@@ -128,21 +141,19 @@ export class AsistenciaFotograficaComponent implements OnInit {
 
     console.log('📤 Enviando asistencia fotográfica (payload JSON):', payload);
 
-    this.asistenciaService.guardarAsistenciaFotografica(payload).subscribe({
-      next: (resp) => {
-        console.log('✅ Respuesta del back (fotográfica):', resp);
-        if (resp.exitoso === 'S') {
-          this.asistenciaGuardada.emit(payload);
-          this.cerrar.emit();
-        } else {
-          console.error('❌ Error al guardar asistencia fotográfica:', resp.mensaje);
-          this.snack.error('❌ Error al guardar asistencia fotográfica');
-        }
-      },
-      error: (err) => {
-        console.error('❌ Error HTTP al guardar asistencia fotográfica:', err);
-        this.snack.error('❌ Error al guardar asistencia fotográfica');
+    try {
+      const resp = await this.asistenciaService.guardarAsistenciaFotografica(payload);
+
+      console.log('✅ Respuesta del back (fotográfica):', resp);
+
+      if (resp.exitoso === 'S') {
+        this.asistenciaGuardada.emit(payload); // avisamos al padre que se guardó
+        this.cerrar.emit();
+      } else {
+        console.error('❌ Error al guardar asistencia fotográfica:', resp.mensaje);
       }
-    });
+    } catch (err) {
+      console.error('❌ Error HTTP al guardar asistencia fotográfica:', err);
+    }
   }
 }

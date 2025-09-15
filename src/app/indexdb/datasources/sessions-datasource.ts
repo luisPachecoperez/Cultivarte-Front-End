@@ -1,6 +1,10 @@
 import { indexDB } from '../services/database.service';
 import { Sessions } from '../interfaces/sessions';
+import { Injectable } from '@angular/core';
 
+@Injectable({
+  providedIn: 'root',
+})
 export class SessionsDataSource {
   async getAll(): Promise<Sessions[]> {
     return await indexDB.sessions.toArray();

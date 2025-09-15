@@ -1,6 +1,10 @@
 import { indexDB } from '../services/database.service';
 import { Personas_programas } from '../interfaces/personas_programas';
+import { Injectable } from '@angular/core';
 
+@Injectable({
+  providedIn: 'root',
+})
 export class Personas_programasDataSource {
   async getAll(): Promise<Personas_programas[]> {
     return await indexDB.personas_programas.toArray();
@@ -14,7 +18,10 @@ export class Personas_programasDataSource {
     return await indexDB.personas_programas.add(data);
   }
 
-  async update(id: string, changes: Partial<Personas_programas>): Promise<number> {
+  async update(
+    id: string,
+    changes: Partial<Personas_programas>
+  ): Promise<number> {
     return await indexDB.personas_programas.update(id, changes);
   }
 
@@ -23,10 +30,11 @@ export class Personas_programasDataSource {
   }
 
   async bulkAdd(data: Personas_programas[]): Promise<void> {
+
     this.deleteFull();
-    const withSyncStatus = data.map(item => ({
+    const withSyncStatus = data.map((item) => ({
       ...item,
-      syncStatus: item.syncStatus ?? 'synced'
+      syncStatus: item.syncStatus ?? 'synced',
     }));
     await indexDB.personas_programas.bulkAdd(withSyncStatus);
   }

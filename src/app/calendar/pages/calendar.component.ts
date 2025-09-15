@@ -1,3 +1,4 @@
+import { PreAsistencia } from './../../shared/interfaces/preasistencia.model';
 import { Component } from '@angular/core';
 import { CalendarOptions } from '@fullcalendar/core';
 import { EventComponent } from "../../eventos/components/event.component/pages/event.component";
@@ -16,6 +17,8 @@ import { SnackbarService } from '../../shared/services/snackbar.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { inject } from '@angular/core';
 import type { DatesSetArg, EventClickArg } from '@fullcalendar/core';
+import { AuthService } from '../../shared/services/auth.service';
+
 
 interface SesionPayload {
   id: string;
@@ -101,11 +104,15 @@ export interface EventoSeleccionado {
   styleUrls: ['./calendar.component.css'],
 })
 export class CalendarComponent {
+
+
+
   // inyecciones usando `inject()`
   private calendarService = inject(CalendarService);
   private asistenciaService = inject(AsistenciaService);
   private eventoComponent = inject(EventComponent); // <- atención (ver nota abajo)
   private snack = inject(SnackbarService);
+  private authService = inject(AuthService);
 
   eventosCalendario: EventoCalendario[] = [];
   fechaSeleccionada: string | null = null;
@@ -165,21 +172,19 @@ export class CalendarComponent {
   cargarSesiones() {
     if (!this.ultimaFechaInicio || !this.ultimaFechaFin) return;
 
-    const idUsuario = '1b1a3c6e-1d54-4eae-bbbf-277d74a6493a'; // 🔹 Temporal
+    const idUsuario = this.authService.getUserUuid();
 
     this.calendarService
       .obtenerSesiones(this.ultimaFechaInicio, this.ultimaFechaFin, idUsuario)
-      .subscribe({
-        next: (sesionesFormateadas: EventoCalendario[]) => {
-          this.eventosCalendario = sesionesFormateadas;
-          this.calendarOptions = {
-            ...this.calendarOptions,
-            events: [...this.eventosCalendario]
-          };
-        },
-        error: () => {
-          this.snack.error('No fue posible cargar las sesiones');
-        }
+      .then((sesionesFormateadas) => {
+        this.eventosCalendario = sesionesFormateadas;
+        this.calendarOptions = {
+          ...this.calendarOptions,
+          events: [...this.eventosCalendario],
+        };
+      })
+      .catch((err) => {
+        console.log('No fue posible cargar las sesiones');
       });
   }
 
@@ -409,18 +414,17 @@ export class CalendarComponent {
         this.snack.error('No hay sesión seleccionada');
         return;
       }
-
-      this.asistenciaService.obtenerDetalleAsistencia(idSesion)
-        .subscribe((respuesta) => {
-          console.log('📥 Respuesta detalle asistencia:', respuesta);
-
-          const resp = respuesta ?? {};
-
+      if (this.eventoSeleccionado) {
+      this.asistenciaService
+        .obtenerDetalleAsistencia(this.eventoSeleccionado.id_sesion)
+        .then((respuesta: PreAsistencia) => {
+          // Guardamos la respuesta en el evento
+          console.log("calendar.component preasistencia:",respuesta);
           // merge seguro: garantizamos strings y arrays
           const merged: EventoSeleccionado = {
             id_actividad: this.eventoSeleccionado?.id_actividad ?? '', // si tu backend no manda id_actividad, mantiene '' por seguridad
-            id_sesion: this.eventoSeleccionado?.id_sesion ?? (resp.id_sesion ?? idSesion),
-            asistentes_evento: this.eventoSeleccionado?.asistentes_evento ?? (resp.numero_asistentes ?? 0),
+            id_sesion: this.eventoSeleccionado?.id_sesion ?? (respuesta.id_sesion ?? idSesion),
+            asistentes_evento: this.eventoSeleccionado?.asistentes_evento ?? (respuesta.numero_asistentes ?? 0),
             tipo_evento: this.eventoSeleccionado?.tipo_evento ?? '',
             nombreSesion: this.eventoSeleccionado?.nombreSesion ?? '',
             sesiones: this.eventoSeleccionado?.sesiones ?? [], // mantenemos sesiones que ya estaban (si aplican)
@@ -431,13 +435,19 @@ export class CalendarComponent {
 
           this.eventoSeleccionado = merged;
 
-
           // Definir el tipo de asistencia
-          this.tipoAsistencia = respuesta.foto === 'S' ? 'fotografica' : 'normal';
+          this.tipoAsistencia =
+            respuesta.foto === 'S' ? 'fotografica' : 'normal';
 
           // Mostrar modal
           this.mostrarAsistencia = true;
+        })
+        .catch((err) => {
+          console.error('❌ Error al obtener detalle asistencia:', err);
+          // Opcional: notificar con snackbar
+          // this.snackBar.open('Error al cargar detalle asistencia', 'Cerrar', { duration: 3000 });
         });
+      }
     }
   }
 }

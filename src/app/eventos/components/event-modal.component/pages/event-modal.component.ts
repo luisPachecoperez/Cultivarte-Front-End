@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { EventModalService } from '../services/event-modal.services';
 import { Tooltip } from 'bootstrap';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { SnackbarService } from '../../../../shared/services/snackbar.service'; // ajusta la ruta
+import { SnackbarService } from '../../../../shared/services/snackbar.service'; // ajusta la ruta}
+import { firstValueFrom } from 'rxjs';
 
 export interface EventoModalData {
   id_actividad: string;
@@ -42,30 +43,28 @@ export class EventModalComponent implements AfterViewInit {
     this.cerrar.emit();
   }
 
-  eliminarEvento() {
+  async eliminarEvento() {
     const e = this.evento();
     if (!e) return;
+    console.log("Evento a eliminar:",this.evento());
+    const ok = await firstValueFrom(
+      this.snack.confirm(`¿Deseas eliminar el Evento "${e?.nombreSesion ?? 'sin nombre'}"?`)
+    );
+    console.log("Resultado ok:", ok);
+    if (!ok) return;
 
-    this.snack
-      .confirm(`¿Deseas eliminar el evento "${e?.nombreSesion?? 'sin nombre'}"?`)
-      .subscribe((ok) => {
-        if (!ok) return;
-
-        this.eventModalService.eliminarEvento(e.id_actividad).subscribe({
-          next: (res) => {
-            const success = res.exitoso === 'S';
-            if (success) {
-              this.snack.success(res.mensaje ?? 'Eliminado correctamente');
-              this.cerrar.emit();
-            } else {
-              this.snack.error(res.mensaje ?? 'No se pudo eliminar');
-            }
-          },
-
-          error: (err) => {
-            this.snack.error(err?.mensaje ?? 'Error eliminando el evento');
-          }
-        });
-      });
+    try {
+      const res = await this.eventModalService.eliminarEvento(e.id_actividad);
+      console.log("REspuesta de elminar evento:", res);
+      const success = res.exitoso === 'S';
+      if (success) {
+        this.snack.success(res.mensaje ?? 'Eliminado correctamente');
+        this.cerrar.emit();
+      } else {
+        this.snack.error(res.mensaje ?? 'No se pudo eliminar');
+      }
+    } catch (err: any) {
+      this.snack.error(err?.mensaje ?? 'Error eliminando el evento');
+    }
   }
 }

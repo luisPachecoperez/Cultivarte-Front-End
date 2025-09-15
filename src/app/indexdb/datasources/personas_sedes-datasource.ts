@@ -1,6 +1,11 @@
 import { indexDB } from '../services/database.service';
 import { Personas_sedes } from '../interfaces/personas_sedes';
+import { Injectable } from '@angular/core';
+import { Personas } from '../interfaces/personas';
 
+@Injectable({
+  providedIn: 'root',
+})
 export class Personas_sedesDataSource {
   async getAll(): Promise<Personas_sedes[]> {
     return await indexDB.personas_sedes.toArray();
@@ -23,10 +28,13 @@ export class Personas_sedesDataSource {
   }
 
   async bulkAdd(data: Personas_sedes[]): Promise<void> {
+    this.deleteFull();
+
     const withSyncStatus = data.map(item => ({
       ...item,
       syncStatus: item.syncStatus ?? 'synced'
     }));
+    console.log('Bulk adding personas_sedes:', withSyncStatus);
     await indexDB.personas_sedes.bulkAdd(withSyncStatus);
   }
 
@@ -35,12 +43,12 @@ export class Personas_sedesDataSource {
   }
 
   async getSedesByUsuario(idUsuario: string): Promise<string[]> {
-    this.deleteFull();
+
     const registros = await indexDB.personas_sedes
       .where('id_persona')
       .equals(idUsuario)
       .toArray();
-
+    //console.log('IndexDB Registros encontrados:', registros);
     return registros.map(r => r.id_sede);
   }
 }

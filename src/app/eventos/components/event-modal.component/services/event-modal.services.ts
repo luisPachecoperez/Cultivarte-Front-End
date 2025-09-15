@@ -1,15 +1,16 @@
-import { Injectable, inject  } from '@angular/core';
-import { throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
-import { GraphQLService } from '../../../../shared/services/graphql.service';
-
+import { Injectable } from '@angular/core';
+import { firstValueFrom, switchMap, from } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { ActividadesDataSource } from '../../../../indexdb/datasources/actividades-datasource';
+import { LoadIndexDB } from '../../../../indexdb/services/load-index-db.service';
+import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.model';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class EventModalService {
-
-  private apiUrl = 'http://localhost:4000/graphql';// TODO: cambiar por la URL real
+  private apiUrl = 'http://localhost:4000/graphql'; // TODO: cambiar por la URL real
   private readonly DELETE_ACTIVIDAD = `
   mutation DeleteActividad($id_actividad: ID!) {
     deleteActividad(id_actividad: $id_actividad) {
@@ -19,28 +20,46 @@ export class EventModalService {
   }
 `;
 
-
-private graphQLService = inject(GraphQLService);
+  constructor(
+    private actividadesDataSource: ActividadesDataSource,
+    private loadIndexDB: LoadIndexDB,
+    private http: HttpClient
+  ) {}
 
   /**
    * 🗑️ Elimina un evento (solo si asistentes_evento == 0)
    */
-  eliminarEvento(id_actividad: string) {
-    console.log('📤 Enviando mutación de eliminar evento al backend:', id_actividad);
+  async eliminarEvento(id_actividad: string): Promise<GraphQLResponse> {
+    console.log(
+      '📤 Enviando mutación de eliminar evento al backend:',
+      id_actividad
+    );
 
-    return this.graphQLService.mutation<{ deleteActividad: { exitoso: string; mensaje: string } }>(
-      this.DELETE_ACTIVIDAD,
-      { id_actividad }
-    ).pipe(
-      map(resp => resp.deleteActividad), // 👈 devolvemos directamente el objeto { exitoso, mensaje }
-      tap(resp => console.log('📥 Respuesta backend:', resp)),
-      catchError(err => {
-        console.error('❌ Error al eliminar evento:', err);
-        return throwError(() => ({
-          exitoso: 'N',
-          mensaje: 'Error en el servidor al eliminar evento'
-        }));
-      })
+    return await firstValueFrom(
+      this.loadIndexDB.ping().pipe(
+        switchMap((ping) => {
+          if (ping === 'pong') {
+            return this.http
+              .post<any>(this.apiUrl, {
+                query: this.DELETE_ACTIVIDAD,
+                variables: { id_actividad },
+              })
+              .pipe(map((res) => res.data.deleteActividad as GraphQLResponse));
+          } else {
+            return from(
+              this.actividadesDataSource.delete(id_actividad, true)
+            ).pipe(
+              map(
+                () =>
+                  ({
+                    exitoso: 'S',
+                    mensaje: 'Actividad eliminada exitosamente',
+                  } as GraphQLResponse)
+              )
+            );
+          }
+        })
+      )
     );
   }
 }

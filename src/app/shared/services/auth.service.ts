@@ -67,7 +67,7 @@ export class AuthService {
 
 
     public getUserUuid(): string {
-      let  user_uuid:string="1b1a3c6e-1d54-4eae-bbbf-277d74a6493a";
+      let  user_uuid:string="850c7f57-6e71-4b56-ad23-96fff3033ef7";
       return user_uuid;
       // const encrypted :string | null = this.cookieService.getCookie(this.userCookieName);
       // if (!encrypted) {

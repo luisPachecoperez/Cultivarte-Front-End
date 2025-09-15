@@ -1,6 +1,11 @@
 import { indexDB } from '../services/database.service';
 import { Asistencias } from '../interfaces/asistencias';
+import { Injectable } from '@angular/core';
+import { GraphQLResponse } from '../../shared/interfaces/graphql-response.model';
 
+@Injectable({
+  providedIn: 'root',
+})
 export class AsistenciasDataSource {
   async getAll(): Promise<Asistencias[]> {
     return await indexDB.asistencias.toArray();
@@ -10,16 +15,34 @@ export class AsistenciasDataSource {
     return await indexDB.asistencias.get(id);
   }
 
-  async create(data: Asistencias): Promise<string> {
-    return await indexDB.asistencias.add(data);
+  async create(data: Asistencias): Promise<GraphQLResponse> {
+    await indexDB.asistencias.add(data);
+    return  {
+      exitoso: 'S',
+      mensaje: `Registro adicionado`,
+    };
   }
 
-  async update(id: string, changes: Partial<Asistencias>): Promise<number> {
-    return await indexDB.asistencias.update(id, changes);
+  async update(id: string, changes: Partial<Asistencias>): Promise<GraphQLResponse> {
+
+     await indexDB.asistencias.update(id, changes);
+     return     {
+      exitoso: 'S',
+      mensaje: `Registro actualizado`,
+    };
   }
 
-  async delete(id: string): Promise<void> {
-    await indexDB.asistencias.delete(id);
+  async delete(id: string, soft: boolean): Promise<GraphQLResponse> {
+
+    if (soft) {
+      await indexDB.asistencias.update(id, { deleted: true });
+    } else {
+      await indexDB.asistencias.delete(id);
+    }
+    return     {
+      exitoso: 'S',
+      mensaje: `Registro actualizado`,
+    };
   }
 
   async bulkAdd(data: Asistencias[]): Promise<void> {

@@ -334,48 +334,51 @@ private snack = inject(SnackbarService);
 
   // ⬇️⬇️⬇️ CAMBIO CLAVE: cuando hay id_actividad, traemos TODO del mock y recién precargamos
   cargarEdicionDesdeBackend(id_actividad: string): void {
-    this.eventService.obtenerEventoPorId(id_actividad).subscribe(resp => {
-      // 1) listas / parámetros
-      console.log('📦 respuesta del backend:', resp);
-      this.cargarConfiguracionFormulario(resp);
+    this.eventService
+      .obtenerEventoPorId(id_actividad)
+      .then((resp) => {
+        console.log('📦 respuesta del backend:', resp);
+        this.cargarConfiguracionFormulario(resp);
 
-      // 2) armar objeto "eventoParaEditar" con ids del backend (y boolean institucional)
-      // const eventoBackend = resp;
-      // const sesionesBackend = resp.sesiones || [];
-      console.log('📦 id_actividad:', resp.actividad.id_actividad);
-      const eventoAdaptado = {
-        id: resp.actividad.id_actividad,
-        institucional: resp.actividad.institucional === 'S',
-        id_sede: resp.actividad.id_sede,
-        id_tipo_actividad: resp.actividad.id_tipo_actividad,
-        id_responsable: resp.actividad.id_responsable,
-        id_aliado: resp.actividad.id_aliado,
-        nombre_actividad: resp.actividad.nombre_actividad,
-        descripcion: resp.actividad.descripcion,
-        id_frecuencia: resp.actividad.id_frecuencia,
-        fecha_actividad: resp.actividad.fecha_actividad,
-        hora_inicio: resp.actividad.hora_inicio,
-        hora_fin: resp.actividad.hora_fin,
-        sesiones: resp.sesiones.map((s: any) => ({
-          id_sesion: s.id_sesion,
-          id_actividad: resp.actividad.id_actividad,
-          fecha: s.fecha_actividad,
-          horaInicio: s.hora_inicio,
-          horaFin: s.hora_fin,
-          asistentes_sesion: s.nro_asistentes
-        }))
-      };
+        const eventoAdaptado = {
+          id: resp.actividad.id_actividad,
+          institucional: resp.actividad.institucional === 'S',
+          id_sede: resp.actividad.id_sede,
+          id_tipo_actividad: resp.actividad.id_tipo_actividad,
+          id_responsable: resp.actividad.id_responsable,
+          id_aliado: resp.actividad.id_aliado,
+          nombre_actividad: resp.actividad.nombre_actividad,
+          descripcion: resp.actividad.descripcion,
+          id_frecuencia: resp.actividad.id_frecuencia,
+          fecha_actividad: resp.actividad.fecha_actividad,
+          hora_inicio: resp.actividad.hora_inicio,
+          hora_fin: resp.actividad.hora_fin,
+          sesiones: resp.sesiones.map((s: any) => ({
+            id_sesion: s.id_sesion,
+            id_actividad: resp.actividad.id_actividad,
+            fecha: s.fecha_actividad,
+            horaInicio: s.hora_inicio,
+            horaFin: s.hora_fin,
+            asistentes_sesion: s.nro_asistentes,
+          })),
+        };
 
-      this.eventoParaEditar = eventoAdaptado;
+        console.log('✅ Evento adaptado:', eventoAdaptado);
+        this.eventoParaEditar = eventoAdaptado;
 
+        // 3) pintar formulario
+        this.precargarFormulario(eventoAdaptado);
 
-      // 3) pintar formulario
-      this.precargarFormulario(eventoAdaptado);
-
-      // 4) poner el texto visible del autocomplete de aliado (solo para mostrar nombre)
-      const aliado = this.aliados.find(a => a.id_aliado === resp.actividad.id_aliado);
-      this.aliadoTexto = aliado?.nombre || '';
-    });
+        // 4) poner el texto visible del autocomplete de aliado (solo para mostrar nombre)
+        const aliado = this.aliados.find(
+          (a) => a.id_aliado === resp.actividad.id_aliado
+        );
+        this.aliadoTexto = aliado?.nombre || '';
+      })
+      .catch((err) => {
+        console.error('❌ Error al obtener evento:', err);
+        this.snack.error('No fue posible cargar el evento');
+      });
   }
 
 
@@ -568,17 +571,26 @@ private snack = inject(SnackbarService);
 
     console.log('📤 Enviando payload al back:', payload);
 
-    this.eventService.crearEvento(payload, sesiones).subscribe(resp => {
+    this.eventService.crearEvento(payload, sesiones)
+    .then((resp) => {
       console.log('📥 Respuesta del back:', resp);
       if (resp.exitoso === 'S') {
         console.log('✅ Evento creado correctamente');
         this.snack.success('Evento creado correctamente');
-        this.eventoGuardado.emit({ sesiones, editarUna: false, idSesionOriginal: null });
+        this.eventoGuardado.emit({
+          sesiones,
+          editarUna: false,
+          idSesionOriginal: null,
+        });
         this.resetearFormulario();
       } else {
         console.error('❌ Error al crear evento:', resp.mensaje);
         this.snack.error('Error al crear evento');
       }
+    })
+    .catch((err) => {
+      console.error('❌ Excepción al crear evento:', err);
+      this.snack.error('Error inesperado al crear evento');
     });
   }
 
