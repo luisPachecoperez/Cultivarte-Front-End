@@ -21,7 +21,13 @@ import { PreAsistencia } from '../../shared/interfaces/preasistencia.model';
 @Injectable({
   providedIn: 'root',
 })
+
+
+
+
 export class ActividadesDataSource {
+
+
   constructor(
     private personasSedesDataSource: Personas_sedesDataSource,
     private personasDataSource: PersonasDataSource,
@@ -37,9 +43,7 @@ export class ActividadesDataSource {
 
   async create(data: Actividades): Promise<GraphQLResponse> {
     try {
-      data.syncStatus = 'pending-create'; // Inicialmente en "pending"
       await indexDB.actividades.add(data);
-
       return {
         exitoso: 'S',
         mensaje: 'Registro creado exitosamente',
@@ -58,7 +62,6 @@ export class ActividadesDataSource {
     changes: Partial<Actividades>
   ): Promise<GraphQLResponse> {
     try {
-      changes.syncStatus = 'pending-update'; // Inicialmente en "pending"
       const updated = await indexDB.actividades.update(id, changes);
 
       if (updated) {
@@ -83,14 +86,33 @@ export class ActividadesDataSource {
     }
   }
   async delete(id: string, soft: boolean): Promise<GraphQLResponse> {
+    // 🔹 1. Obtener todas las sesiones ligadas a la actividad
+    const sesiones = await indexDB.sesiones
+      .where('id_actividad')
+      .equals(id)
+      .toArray();
+
     if (soft) {
-      await indexDB.actividades.update(id, { deleted: true });
+      // 🔹 2a. Soft delete → marcar actividad y sesiones como eliminadas
+      await indexDB.actividades.update(id, { deleted: true, syncStatus: 'pending-delete' });
+      for (const ses of sesiones) {
+        await indexDB.sesiones.update(ses.id_sesion, { deleted: true, syncStatus: 'pending-delete' });
+      }
     } else {
+      // 🔹 2b. Hard delete → borrar actividad y sesiones de indexDB
       await indexDB.actividades.delete(id);
+      for (const ses of sesiones) {
+        await indexDB.sesiones.delete(ses.id_sesion);
+      }
     }
+
+    console.log(`Borrada la actividad ${id} y sus sesiones (soft=${soft})`);
+
     return {
       exitoso: 'S',
-      mensaje: `Registro ${id} marcado como eliminado`,
+      mensaje: soft
+        ? `Actividad ${id} y sus sesiones marcadas como eliminadas`
+        : `Actividad ${id} y sus sesiones eliminadas definitivamente`,
     };
   }
 
@@ -544,10 +566,20 @@ export class ActividadesDataSource {
     const actividad = await this.getById(id_actividad);
     const sesiones = (
       await this.sesionesDataSource.sesionesPorActividad(id_actividad)
-    ).map((s) => ({
-      ...s,
-      fecha_actividad: new Date(+s.fecha_actividad).toISOString().split('T')[0], // 🔹 yyyy-MM-dd
-    }));
+    )
+      // 🔹 Ordenamos por fecha antes de formatear
+      .sort((a, b) => {
+        const fechaA = new Date(+a.fecha_actividad).getTime();
+        const fechaB = new Date(+b.fecha_actividad).getTime();
+        return fechaA - fechaB; // ascendente (más antigua primero)
+      })
+      // 🔹 Luego mapeamos y formateamos
+      .map((s) => ({
+        ...s,
+        fecha_actividad: new Date(+s.fecha_actividad)
+          .toISOString()
+          .split('T')[0], // yyyy-MM-dd
+      }));
     const respuesta: any = {
       id_programa: programa,
       sedes,
@@ -583,7 +615,7 @@ export class ActividadesDataSource {
     if (actividades.length === 0) return [];
 
     const idsActividades = actividades.map((a) => a.id_actividad);
-    //console.log('IdsActividades en las sedes del usuario:', idsActividades);
+    console.log('IdsActividades en las sedes del usuario:', idsActividades);
     const ss = await indexDB.sesiones.toArray();
     console.log('Todas_las sesiones en IndexDB:', ss);
     // console.log('Las fechas en timestamp:', {inicio: fechaInicio.getTime(), fin: fechaFin.getTime()    });
@@ -654,9 +686,15 @@ export class ActividadesDataSource {
       );
     }
 
+    const paramTipoActividad = await indexDB.parametros_detalle
+    .filter((pd) => pd.id_parametro_detalle === actividad.id_tipo_actividad)
+    .first();
+
+  const tipo_actividad: string = paramTipoActividad?.nombre ?? '';
+  console.log("Tipo de Actividad:",tipo_actividad);
     const foto =
-      actividad.nombre_actividad?.toUpperCase() === 'ACTIVIDAD INSTITUCIONAL' ||
-      actividad.nombre_actividad?.toUpperCase() === 'LUDOTECA VIAJERA'
+    tipo_actividad?.toUpperCase() === 'ACTIVIDAD INSTITUCIONAL' ||
+    tipo_actividad?.toUpperCase() === 'LUDOTECA VIAJERA'
         ? 'S'
         : 'N';
 

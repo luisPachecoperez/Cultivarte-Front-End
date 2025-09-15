@@ -1,19 +1,26 @@
 import { Component, signal, ChangeDetectorRef } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DataSyncService } from './indexdb/services/data-sync';
-
-
+import { LoadIndexDB } from './indexdb/services/load-index-db.service';
+import { AuthService } from './shared/services/auth.service';
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet ],
+  imports: [RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.css',
 })
 export class AppComponent {
-  constructor(private dataSyncService: DataSyncService) {}
+  constructor(
+    private dataSyncService: DataSyncService,
+    private loadIndexDB: LoadIndexDB,
+    private authService: AuthService
+  ) {}
 
-  ngOnInit(): void {
+  async ngOnInit() {
     // 🚀 Arranca la sincronización en background
-    this.dataSyncService.startSync();
+
+   await this.dataSyncService.startSync();
+   await this.loadIndexDB.cargarDatosIniciales(this.authService.getUserUuid() || '');
+
   }
 }

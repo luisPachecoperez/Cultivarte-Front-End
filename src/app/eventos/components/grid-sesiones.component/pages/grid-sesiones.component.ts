@@ -113,7 +113,7 @@ export class GridSesionesComponent {
     this.formArray().removeAt(index);
     this.emitirCambios();
     this.sesionModificada.emit();
-    this.snack.success('Sesión eliminada correctamente');
+    //this.snack.success('Sesión eliminada correctamente');
   }
 
   notificarCambio(): void {

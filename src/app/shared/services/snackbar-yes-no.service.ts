@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable, race } from 'rxjs';
-import {  map, take } from 'rxjs/operators';
-import { defaultIfEmpty } from 'rxjs/operators';
+import {   take } from 'rxjs/operators';
 import { ConfirmSnackbarComponent } from '../components/confirm-snackbar/confirm-snackbar.component';
 import { Subject } from 'rxjs';
 @Injectable({ providedIn: 'root' })
-export class SnackbarService {
+export class SnackbarYesNoService {
   private confirmResult$ = new Subject<boolean>();
 
   constructor(private snack: MatSnackBar) {}
@@ -15,7 +14,7 @@ export class SnackbarService {
     this.snack.open(message, 'Cerrar', {
       duration,
       panelClass: ['success-snackbar'],
-      horizontalPosition: 'center',
+      horizontalPosition: 'right',
       verticalPosition: 'top',
     });
   }
@@ -46,7 +45,7 @@ export class SnackbarService {
       horizontalPosition: 'center',
       verticalPosition: 'top',
     });
-
+    console.log("Presiono algo");
     return this.confirmResult$.asObservable().pipe(take(1));
   }
 

@@ -26,13 +26,16 @@ export class SesionesDataSource {
 
     console.log('adicionando sesion al index:', data);
     await indexDB.sesiones.add(data);
-    return  {
+    return {
       exitoso: 'S',
       mensaje: `Registro adicionado`,
     };
   }
 
-  async update(id: string, changes: Partial<Sesiones>): Promise<GraphQLResponse> {
+  async update(
+    id: string,
+    changes: Partial<Sesiones>
+  ): Promise<GraphQLResponse> {
     if (
       changes.fecha_actividad &&
       typeof changes.fecha_actividad === 'string' &&
@@ -54,19 +57,22 @@ export class SesionesDataSource {
     }
 
     // 🔹 Si estaba pendiente de creación → mantener create
-    if (current.syncStatus === 'pending-create') {
-      await indexDB.sesiones.update(id, {
-        ...changes,
-        syncStatus: 'pending-create', // 👈 no cambiar
-      });
+    if (changes.syncStatus === 'synced') {
+      await indexDB.sesiones.update(id,changes);
     } else {
-      // 🔹 Si estaba synced → pasa a pendiente de update
-      await indexDB.sesiones.update(id, {
-        ...changes,
-        syncStatus: 'pending-update', // 👈 marcar update
-      });
+      if (current.syncStatus === 'pending-create') {
+        await indexDB.sesiones.update(id, {
+          ...changes,
+          syncStatus: 'pending-create', // 👈 no cambiar
+        });
+      } else {
+        // 🔹 Si estaba synced → pasa a pendiente de update
+        await indexDB.sesiones.update(id, {
+          ...changes,
+          syncStatus: 'pending-update', // 👈 marcar update
+        });
+      }
     }
-
     return {
       exitoso: 'S',
       mensaje: `Registro actualizado`,
@@ -107,10 +113,4 @@ export class SesionesDataSource {
       .equals(id_actividad)
       .toArray();
   }
-
-
-
-
-
-
 }

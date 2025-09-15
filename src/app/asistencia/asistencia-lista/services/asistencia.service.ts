@@ -20,13 +20,13 @@ import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.mod
 export class AsistenciaService {
   private apiUrl = 'http://localhost:4000/graphql'; // 👈 Ajusta a tu backend real
   private readonly UPDATE_ASISTENCIAS = `
-mutation UpdateAsistencias($input: UpdateAsistenciaInput!) {
-  updateAsistencias(input: $input) {
-    exitoso
-    mensaje
-  }
-}
-`;
+    mutation UpdateAsistencias($input: UpdateAsistenciaInput!) {
+      updateAsistencias(input: $input) {
+        exitoso
+        mensaje
+      }
+    }
+    `;
   private readonly GET_PRE_ASISTENCIA = `
   query GetPreAsistencia($id_sesion: ID!) {
     getPreAsistencia(id_sesion: $id_sesion) {
@@ -176,6 +176,7 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
     );
   }
   */async guardarAsistenciaFotografica(input: any): Promise<GraphQLResponse> {
+    console.log("Evidencia fotografica:", input)
   return await firstValueFrom(
     this.loadIndexDB.ping().pipe(
       switchMap((ping) => {
@@ -196,7 +197,7 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
                         deleted: false,
                         imagen: input.imagen,
                         descripcion: input.descripcion,
-                        nro_asistentes: input.nro_asistentes,
+                        nro_asistentes: input.numero_asistentes,
                       })
                     ).pipe(
                       map(() => {
@@ -218,7 +219,7 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
                   deleted: false,
                   imagen: input.imagen,
                   descripcion: input.descripcion,
-                  nro_asistentes: input.nro_asistentes,
+                  nro_asistentes: input.numero_asistentes,
                 })
               ).pipe(
                 map(() => {

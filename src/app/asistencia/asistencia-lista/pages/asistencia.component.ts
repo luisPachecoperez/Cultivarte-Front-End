@@ -146,10 +146,10 @@ export class AsistenciaComponent implements OnInit {
     }
 
     const ev = this.evento();
-
+    console.log("Asistencia: ", this.evento());
     const payload = {
-      id_actividad: '',
-      id_sesion: '',
+      id_actividad: ev.id_actividad,
+      id_sesion: ev.id_sesion,
       imagen: '', // vacío en asistencia normal
       numero_asistentes: 0,
       descripcion: '', // vacío si no aplica

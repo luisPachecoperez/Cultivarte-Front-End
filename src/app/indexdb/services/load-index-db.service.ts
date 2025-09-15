@@ -75,7 +75,7 @@ export class LoadIndexDB {
 
     return this.graphql.query<{ ping: { ping: string } }>(query).pipe(
       map((res) => {
-        console.log('PING response:', res.ping.ping);
+        //console.log('PING response:', res.ping.ping);
         // Si llega bien el backend
         return res.ping.ping;
       }),
@@ -517,6 +517,7 @@ export class LoadIndexDB {
   // ORQUESTADOR DE CARGA
   // ==========================
   async cargarDatosIniciales(id_usuario: string): Promise<void> {
+    console.log("Inicia carga de datos iniciales");
     from(this.ping()).pipe(
       // solo seguimos si devuelve "pong"
       filter(p => p.trim() === "pong"),

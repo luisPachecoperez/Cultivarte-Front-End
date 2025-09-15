@@ -336,6 +336,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
                       if (sesionesResponse?.exitoso === 'S') {
                         this.actividadesDataSource.create(actividadPayload);
 
+
                         sesiones.forEach((s: Sesiones) => {
                           this.sesionesDataSource.create(s);
                         });

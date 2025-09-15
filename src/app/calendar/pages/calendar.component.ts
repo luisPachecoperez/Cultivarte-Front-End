@@ -90,7 +90,6 @@ export class CalendarComponent {
     this.ultimaFechaFin = dateInfo.end.toISOString().split('T')[0];
 
     //console.log('📅 Vista del calendario:', { fechaInicio: this.ultimaFechaInicio, fechaFin: this.ultimaFechaFi });
-    this.loadIndexDB.cargarDatosIniciales(this.authService.getUserUuid() || '');
 
     this.cargarSesiones();
   }
