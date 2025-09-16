@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 
 import { firstValueFrom, from } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import { Sesiones } from '../../indexdb/interfaces/sesiones';
+import { Sesiones } from '../../indexdb/interfaces/sesiones.interface';
 import { GraphQLService } from '../../shared/services/graphql.service';
 import { ActividadesDataSource } from '../../indexdb/datasources/actividades-datasource';
 import { LoadIndexDBService } from '../../indexdb/services/load-index-db.service';

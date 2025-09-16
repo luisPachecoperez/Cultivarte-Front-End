@@ -33,7 +33,7 @@ export class SnackbarService {
     this.snack.open(message, 'Cerrar', {
       duration,
       panelClass: ['error-snackbar'],
-      horizontalPosition: 'right',
+      horizontalPosition: 'center',
       verticalPosition: 'top',
     });
   }

@@ -12,8 +12,8 @@ import { AsistenciaService } from '../services/asistencia.service';
 import { v4 as uuidv4 } from 'uuid';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { inject } from '@angular/core';
-import { PreAsistencia } from '../../../shared/interfaces/preasistencia.model';
-import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.model';
+import { PreAsistencia } from '../../../shared/interfaces/pre-asistencia.interface';
+import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.interface';
 interface EventoSeleccionado {
   id_actividad: string;
   id_sesion: string;

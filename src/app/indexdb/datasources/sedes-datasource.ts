@@ -1,5 +1,5 @@
 import { indexDB } from '../services/database.service';
-import { Sedes } from '../interfaces/sedes';
+import { Sedes } from '../interfaces/sedes.interface';
 import { Injectable } from '@angular/core';
 
 @Injectable({

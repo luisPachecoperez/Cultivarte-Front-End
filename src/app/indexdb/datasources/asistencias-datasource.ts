@@ -1,7 +1,7 @@
 import { indexDB } from '../services/database.service';
-import { Asistencias } from '../interfaces/asistencias';
+import { Asistencias } from '../interfaces/asistencias.interface';
 import { Injectable } from '@angular/core';
-import { GraphQLResponse } from '../../shared/interfaces/graphql-response.model';
+import { GraphQLResponse } from '../../shared/interfaces/graphql-response.interface';
 
 @Injectable({
   providedIn: 'root',

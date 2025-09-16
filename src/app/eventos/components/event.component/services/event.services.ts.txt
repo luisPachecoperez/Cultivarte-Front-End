@@ -11,7 +11,7 @@ import { GraphQLService } from '../../../../shared/services/graphql.service';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { ActividadesDataSource } from '../../../../indexdb/datasources/actividades-datasource';
 import { ActividadSesiones } from '../../../../indexdb/interfaces/actividad-sesiones';
-import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.model';
+import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.interface';
 import { SesionesDataSource } from '../../../../indexdb/datasources/sesiones-datasource';
 import { PreCreateActividad } from '../../../../indexdb/interfaces/pre-create-actividad';
 import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';

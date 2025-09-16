@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { GraphQLService } from '../../../../shared/services/graphql.service';
-import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.model';
+import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.interface';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { switchMap } from 'rxjs/operators';
 import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
-import { Sesiones } from '../../../../indexdb/interfaces/sesiones';
+import { Sesiones } from '../../../../indexdb/interfaces/sesiones.interface';
 import { SesionesDataSource } from '../../../../indexdb/datasources/sesiones-datasource';
 import { inject } from '@angular/core';
 

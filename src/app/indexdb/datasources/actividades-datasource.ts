@@ -1,21 +1,21 @@
 import { indexDB } from '../services/database.service';
-import { GraphQLResponse } from '../../shared/interfaces/graphql-response.model';
+import { GraphQLResponse } from '../../shared/interfaces/graphql-response.interface';
 import { Personas_sedesDataSource } from './personas_sedes-datasource';
 
-import { Actividades } from '../interfaces/actividades';
-import { Sedes } from '../interfaces/sedes';
-import { Parametros_generales } from '../interfaces/parametros_generales';
-import { Parametros_detalle } from '../interfaces/parametros_detalle';
-import { PreCreateActividad } from '../interfaces/pre-create-actividad';
+import { Actividades } from '../interfaces/actividades.interface';
+import { Sedes } from '../interfaces/sedes.interface';
+import { Parametros_generales } from '../interfaces/parametros_generales.interface';
+import { Parametros_detalle } from '../interfaces/parametros_detalle.interface';
+import { PreCreateActividad } from '../../shared/interfaces/pre-create-actividad.interface';
 import { PersonasDataSource } from './personas-datasource';
 import { Injectable } from '@angular/core';
 import { SesionesDataSource } from './sesiones-datasource';
-import { Sesiones } from '../interfaces/sesiones';
-import { Personas_grupo_interes } from '../interfaces/personas_grupo_interes';
-import { Personas } from '../interfaces/personas';
-import { Personas_sedes } from '../interfaces/personas_sedes';
-import { Asistencias } from '../interfaces/asistencias';
-import { PreAsistencia } from '../../shared/interfaces/preasistencia.model';
+import { Sesiones } from '../interfaces/sesiones.interface';
+import { Personas_grupo_interes } from '../interfaces/personas_grupo_interes.interface';
+import { Personas } from '../interfaces/personas.interface';
+import { Personas_sedes } from '../interfaces/personas_sedes.interface';
+import { Asistencias } from '../interfaces/asistencias.interface';
+import { PreAsistencia } from '../../shared/interfaces/pre-asistencia.interface';
 import { inject } from '@angular/core';
 @Injectable({
   providedIn: 'root',

@@ -11,11 +11,11 @@ import {
 } from 'rxjs';
 import { LoadIndexDBService } from '../../../indexdb/services/load-index-db.service';
 import { ActividadesDataSource } from '../../../indexdb/datasources/actividades-datasource';
-import { PreAsistencia } from '../../../shared/interfaces/preasistencia.model';
-import { Asistencias } from '../../../indexdb/interfaces/asistencias';
+import { PreAsistencia } from '../../../shared/interfaces/pre-asistencia.interface';
+import { Asistencias } from '../../../indexdb/interfaces/asistencias.interface';
 import { AsistenciasDataSource } from '../../../indexdb/datasources/asistencias-datasource';
 import { SesionesDataSource } from '../../../indexdb/datasources/sesiones-datasource';
-import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.model';
+import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.interface';
 import { inject } from '@angular/core';
 import { GraphQLService } from '../../../shared/services/graphql.service';
 

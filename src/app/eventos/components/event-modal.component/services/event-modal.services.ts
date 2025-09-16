@@ -3,7 +3,7 @@ import { firstValueFrom, switchMap, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ActividadesDataSource } from '../../../../indexdb/datasources/actividades-datasource';
 import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
-import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.model';
+import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.interface';
 import { HttpClient } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { GraphQLService } from '../../../../shared/services/graphql.service';

@@ -9,7 +9,7 @@ import {
   OnChanges,
   effect,
   inject,
-  HostListener
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Injectable } from '@angular/core';
@@ -21,24 +21,28 @@ import {
   AbstractControl,
   ValidatorFn,
   ValidationErrors,
-  FormArray
+  FormArray,
 } from '@angular/forms';
 import { EventService } from '../services/event.services';
 import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../../../shared/services/snackbar.service';
-
+import { LoadingService } from '../../../../shared/services/loading.service';
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
-
 @Component({
   selector: 'app-event',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, GridSesionesComponent, MatSnackBarModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    GridSesionesComponent,
+    MatSnackBarModule,
+  ],
   templateUrl: './events.component.html',
-  styleUrls: ['./events.component.css']
+  styleUrls: ['./events.component.css'],
 })
 export class EventComponent implements OnInit, OnChanges {
   // Inputs convertidos a señales
@@ -50,18 +54,22 @@ export class EventComponent implements OnInit, OnChanges {
   actualizarSesionEnCalendario: any;
 
   /** 🔹 Guardamos el snapshot del grid */
-  private cambiosSesionesSnapshot: { nuevos: any[]; modificados: any[]; eliminados: any[] } = {
+  private cambiosSesionesSnapshot: {
+    nuevos: any[];
+    modificados: any[];
+    eliminados: any[];
+  } = {
     nuevos: [],
     modificados: [],
-    eliminados: []
+    eliminados: [],
   };
 
   // Inyectamos con funciones
-private fb = inject(FormBuilder);
-private eventService = inject(EventService);
-private gridSesionesService = inject(GridSesionesService);
-private authService = inject(AuthService);
-private snack = inject(SnackbarService);
+  private fb = inject(FormBuilder);
+  private eventService = inject(EventService);
+  private gridSesionesService = inject(GridSesionesService);
+  private authService = inject(AuthService);
+  private snack = inject(SnackbarService);
 
   constructor() {
     // Effect: cambios en fecha preseleccionada
@@ -128,7 +136,7 @@ private snack = inject(SnackbarService);
     this.aliadoTexto = texto;
 
     // Filtra por coincidencia en nombre
-    this.aliadosFiltrados = this.aliados.filter(a =>
+    this.aliadosFiltrados = this.aliados.filter((a) =>
       a.nombre.toLowerCase().includes(texto)
     );
 
@@ -152,52 +160,91 @@ private snack = inject(SnackbarService);
     }
   }
 
-
   ngOnInit(): void {
-    this.eventoForm = this.fb.group({
-      id_programa: [{ value: this.id_programa, disabled: this.modoSoloLectura }, Validators.required],
-      institucional: [{ value: null, disabled: this.modoSoloLectura }, Validators.required],
-      sede: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      tipoEvento: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      responsable: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      aliado: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      nombreEvento: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      descripcionGrupo: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      fecha: [{ value: this._fechaPreseleccionada ?? '', disabled: this.modoSoloLectura }, Validators.required],
-      horaInicio: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      horaFin: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      frecuencia: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      sesiones: this.fb.array([])
-    });
-    console.log('📦 eventoForm ngOnInit:', this.eventoForm);
 
-    // 🔹 Cargar datos desde el backend simulado
-    this.cargarConfiguracionFormulario();
+      this.eventoForm = this.fb.group({
+        id_programa: [
+          { value: this.id_programa, disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        institucional: [
+          { value: null, disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        sede: [
+          { value: '', disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        tipoEvento: [
+          { value: '', disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        responsable: [
+          { value: '', disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        aliado: [
+          { value: '', disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        nombreEvento: [
+          { value: '', disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        descripcionGrupo: [
+          { value: '', disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        fecha: [
+          {
+            value: this._fechaPreseleccionada ?? '',
+            disabled: this.modoSoloLectura,
+          },
+          Validators.required,
+        ],
+        horaInicio: [
+          { value: '', disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        horaFin: [
+          { value: '', disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        frecuencia: [
+          { value: '', disabled: this.modoSoloLectura },
+          Validators.required,
+        ],
+        sesiones: this.fb.array([]),
+      });
+      console.log('📦 eventoForm ngOnInit:', this.eventoForm);
 
+      // 🔹 Cargar datos desde el backend simulado
+      this.cargarConfiguracionFormulario();
 
-    // Suscribir cambios en tipoEvento para mantener la lista filtrada
-    this.eventoForm.get('tipoEvento')?.valueChanges.subscribe(tipoId => {
-      this.filtrarEventosPorTipo(tipoId);
-    });
+      // Suscribir cambios en tipoEvento para mantener la lista filtrada
+      this.eventoForm.get('tipoEvento')?.valueChanges.subscribe((tipoId) => {
+        this.filtrarEventosPorTipo(tipoId);
+      });
 
-    // Pre-cargar si es edición (si llega algo ya en el primer render)
-    const evento = this.eventoSeleccionado();
-    console.log('📦 evento seleccionado:', evento);
-    if (evento) {
-      this.eventoParaEditar = evento;
-      if (evento.id_actividad) {
-        this.cargarEdicionDesdeBackend(evento.id_actividad);
+      // Pre-cargar si es edición (si llega algo ya en el primer render)
+      const evento = this.eventoSeleccionado();
+      console.log('📦 evento seleccionado:', evento);
+      if (evento) {
+        this.eventoParaEditar = evento;
+        if (evento.id_actividad) {
+          this.cargarEdicionDesdeBackend(evento.id_actividad);
+        } else {
+          this.precargarFormulario(evento);
+        }
       } else {
-        this.precargarFormulario(evento);
+        this.eventoParaEditar = null;
+        this.eventoForm.enable(); // 👈 si no es edición, dejamos el form editable
       }
-    } else {
-      this.eventoParaEditar = null;
-      this.eventoForm.enable(); // 👈 si no es edición, dejamos el form editable
-    }
+
   }
 
-
   ngOnChanges(changes: SimpleChanges): void {
+
     if (changes['eventoSeleccionado']) {
       const evento = this.eventoSeleccionado();
       if (evento) {
@@ -216,6 +263,7 @@ private snack = inject(SnackbarService);
         }
       }
     }
+
   }
 
   get nombresFiltrados(): any[] {
@@ -224,7 +272,7 @@ private snack = inject(SnackbarService);
 
     // Retorna sólo los nombres cuyo id_parametro_detalle coincide con el tipo seleccionado
     return this.nombreDeEventos.filter(
-      n => n.id_parametro_detalle === tipoId
+      (n) => n.id_parametro_detalle === tipoId
     );
   }
 
@@ -237,17 +285,21 @@ private snack = inject(SnackbarService);
     // nombreDeEventos viene del mock; filtramos por id_parametro_detalle (padre)
     console.log('📦 nombreDeEventos:', this.nombreDeEventos);
     this.eventosFiltrados = (this.nombreDeEventos || []).filter(
-      n => n.id_tipo_actividad === tipoId
+      (n) => n.id_tipo_actividad === tipoId
     );
   }
-
 
   // 🔹 Lógica para saber si nombreEvento es select o input
   esListaNombreEvento(): boolean {
     const tipoId = this.eventoForm.get('tipoEvento')?.value;
     // console.log('📦 tipoId:', tipoId);
-    const tipo = this.tiposDeActividad.find(t => t.id_tipo_actividad === tipoId)?.nombre.toUpperCase();
-    return tipo === 'Contenido del ciclo'.toUpperCase() || tipo === 'Actividad General'.toUpperCase();
+    const tipo = this.tiposDeActividad
+      .find((t) => t.id_tipo_actividad === tipoId)
+      ?.nombre.toUpperCase();
+    return (
+      tipo === 'Contenido del ciclo'.toUpperCase() ||
+      tipo === 'Actividad General'.toUpperCase()
+    );
   }
 
   cargarConfiguracionFormulario(parametros?: any): void {
@@ -268,37 +320,49 @@ private snack = inject(SnackbarService);
     }
 
     // Si no, carga los "globales" mock
-    this.eventService.obtenerConfiguracionEvento(idUsuario).subscribe(data => {
-      console.log('📦 datos de configuración:', data);
-      this.id_programa = data.id_programa;
-      console.log('📦 id_programa:', this.id_programa);
-      this.eventoForm.get('id_programa')?.setValue(this.id_programa);
-      this.sedes = data.sedes;
-      this.tiposDeActividad = data.tiposDeActividad;
-      this.aliados = data.aliados;
-      this.responsables = data.responsables;
-      this.nombreDeEventos = data.nombresDeActividad;
-      this.frecuencias = data.frecuencias;
-      console.log('📦 frecuencias:', this.frecuencias);
-      // actualizar eventos filtrados si ya hay un tipo seleccionado
+    this.eventService
+      .obtenerConfiguracionEvento(idUsuario)
+      .subscribe((data) => {
+        console.log('📦 datos de configuración:', data);
+        this.id_programa = data.id_programa;
+        console.log('📦 id_programa:', this.id_programa);
+        this.eventoForm.get('id_programa')?.setValue(this.id_programa);
+        this.sedes = data.sedes;
+        this.tiposDeActividad = data.tiposDeActividad;
+        this.aliados = data.aliados;
+        this.responsables = data.responsables;
+        this.nombreDeEventos = data.nombresDeActividad;
+        this.frecuencias = data.frecuencias;
+        console.log('📦 frecuencias:', this.frecuencias);
+        // actualizar eventos filtrados si ya hay un tipo seleccionado
 
+        // ✅ Lógica de sede
+        if (!this.estaEditando && this.sedes.length === 1) {
+          this.eventoForm.get('sede')?.enable({ emitEvent: false });
+          this.eventoForm
+            .get('sede')
+            ?.setValue(this.sedes[0].id_sede, { emitEvent: false });
+          this.eventoForm.get('sede')?.disable({ emitEvent: false });
+          console.log(
+            '✅ Sede única asignada:',
+            this.eventoForm.get('sede')?.value
+          );
+        } else {
+          this.eventoForm.get('sede')?.enable({ emitEvent: false });
+        }
 
-      // ✅ Lógica de sede
-      if (!this.estaEditando && this.sedes.length === 1) {
-        this.eventoForm.get('sede')?.enable({ emitEvent: false });
-        this.eventoForm.get('sede')?.setValue(this.sedes[0].id_sede, { emitEvent: false });
-        this.eventoForm.get('sede')?.disable({ emitEvent: false });
-        console.log('✅ Sede única asignada:', this.eventoForm.get('sede')?.value);
-      } else {
-        this.eventoForm.get('sede')?.enable({ emitEvent: false });
-      }
-
-      this.filtrarEventosPorTipo(this.eventoForm?.get('tipoEvento')?.value);
-    });
-    console.log('📦 configuración cargada:', this.sedes, this.tiposDeActividad, this.aliados, this.responsables, this.nombreDeEventos, this.frecuencias);
+        this.filtrarEventosPorTipo(this.eventoForm?.get('tipoEvento')?.value);
+      });
+    console.log(
+      '📦 configuración cargada:',
+      this.sedes,
+      this.tiposDeActividad,
+      this.aliados,
+      this.responsables,
+      this.nombreDeEventos,
+      this.frecuencias
+    );
   }
-
-
 
   id_programa: string | null = null;
 
@@ -334,7 +398,9 @@ private snack = inject(SnackbarService);
 
   // ⬇️⬇️⬇️ CAMBIO CLAVE: cuando hay id_actividad, traemos TODO del mock y recién precargamos
   cargarEdicionDesdeBackend(id_actividad: string): void {
-    this.eventService
+
+      try{
+      this.eventService
       .obtenerEventoPorId(id_actividad)
       .then((resp) => {
         console.log('📦 respuesta del backend:', resp);
@@ -374,23 +440,28 @@ private snack = inject(SnackbarService);
           (a) => a.id_aliado === resp.actividad.id_aliado
         );
         this.aliadoTexto = aliado?.nombre || '';
+
       })
       .catch((err) => {
         console.error('❌ Error al obtener evento:', err);
         this.snack.error('No fue posible cargar el evento');
       });
-  }
+    } finally {
+    }
 
+  }
 
   // ✅ Ajustado para aceptar tanto campos "id_*" del backend como los antiguos del mock
   precargarFormulario(evento: any): void {
+
     console.log('📦 evento para precargar:', evento);
     if (!this.eventoForm) return;
     console.log('📦 DESPUES DEL IF eventoForm:', this.eventoForm);
     this.eventoForm.patchValue({
-      institucional: typeof evento.institucional === 'string'
-        ? evento.institucional === 'S'
-        : !!evento.institucional,
+      institucional:
+        typeof evento.institucional === 'string'
+          ? evento.institucional === 'S'
+          : !!evento.institucional,
       sede: evento.id_sede || evento.sede,
       tipoEvento: evento.id_tipo_actividad || evento.tipoEvento,
       responsable: evento.id_responsable || evento.responsable,
@@ -400,7 +471,7 @@ private snack = inject(SnackbarService);
       fecha: evento.fecha_actividad || evento.fecha,
       horaInicio: evento.hora_inicio || evento.horaInicio,
       horaFin: evento.hora_fin || evento.horaFin,
-      frecuencia: evento.id_frecuencia || evento.frecuencia || 'no'
+      frecuencia: evento.id_frecuencia || evento.frecuencia || 'no',
     });
 
     // En edición, dejamos el form en solo lectura (si quieres permitir edición, comenta esto)
@@ -417,29 +488,31 @@ private snack = inject(SnackbarService);
     }
 
     this.sesiones.clear();
-    console.log("Justo antes de cargar las sesiones:", evento.sesiones);
+    console.log('Justo antes de cargar las sesiones:', evento.sesiones);
     if (evento.sesiones && Array.isArray(evento.sesiones)) {
       evento.sesiones.forEach((s: any) => {
-        this.sesiones.push(this.fb.group({
-          fecha: [s.fecha_sesion || s.fecha],
-          horaInicio: [s.hora_inicio || s.horaInicio],
-          horaFin: [s.hora_fin || s.horaFin],
-          id_sesion: [s.id_sesion],
-          id_actividad: [s.id_actividad],
-          asistentes_sesion: [s.asistentes_sesion ?? 0]   // 👈 nuevo
-        }));
+        this.sesiones.push(
+          this.fb.group({
+            fecha: [s.fecha_sesion || s.fecha],
+            horaInicio: [s.hora_inicio || s.horaInicio],
+            horaFin: [s.hora_fin || s.horaFin],
+            id_sesion: [s.id_sesion],
+            id_actividad: [s.id_actividad],
+            asistentes_sesion: [s.asistentes_sesion ?? 0], // 👈 nuevo
+          })
+        );
       });
     }
-    console.log("Justo despues de cargar las sesiones:", this.sesiones);
-
+    console.log('Justo despues de cargar las sesiones:', this.sesiones);
   }
-
 
   guardarEvento(): void {
     console.log('📦 eventoFormguardar:', this.eventoForm);
     if (this.eventoForm.invalid) {
       this.eventoForm.markAllAsTouched();
-      this.snack.error('Formulario inválido. Revisa los campos obligatorios.');
+      this.snack.error(
+        'Formulario no válido. Todos los campos son obligatorios.'
+      );
       return;
     }
     console.log('📦 esta editando:', this.estaEditando);
@@ -459,19 +532,32 @@ private snack = inject(SnackbarService);
     console.log('📋 Evento base:', evento);
 
     const fechaBase = new Date(evento.fecha);
-    const finMes = new Date(fechaBase.getFullYear(), fechaBase.getMonth() + 1, 0);
-    const [year, month, day] = evento.fecha.split("-").map(Number);
+    const finMes = new Date(
+      fechaBase.getFullYear(),
+      fechaBase.getMonth() + 1,
+      0
+    );
+    const [year, month, day] = evento.fecha.split('-').map(Number);
     const actual = new Date(year, month - 1, day);
     console.log('📋 actual:', actual);
 
-    const nombreFrecuencia = this.frecuencias.find(f => f.id_frecuencia === evento.frecuencia)?.nombre || '';
+    const nombreFrecuencia =
+      this.frecuencias.find((f) => f.id_frecuencia === evento.frecuencia)
+        ?.nombre || '';
 
     // Frecuencias
     console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
     if (nombreFrecuencia.toLowerCase() === 'a diario') {
       while (actual <= finMes) {
         if (actual.getDay() >= 1 && actual.getDay() <= 6) {
-          sesiones.push(this.crearSesion(this.formatearFechaLocal(actual), evento.horaInicio, evento.horaFin, evento));
+          sesiones.push(
+            this.crearSesion(
+              this.formatearFechaLocal(actual),
+              evento.horaInicio,
+              evento.horaFin,
+              evento
+            )
+          );
         }
         actual.setDate(actual.getDate() + 1);
       }
@@ -480,7 +566,14 @@ private snack = inject(SnackbarService);
     if (nombreFrecuencia.toLowerCase() === 'todos los días de la semana') {
       while (actual <= finMes) {
         if (actual.getDay() >= 1 && actual.getDay() <= 5) {
-          sesiones.push(this.crearSesion(this.formatearFechaLocal(actual), evento.horaInicio, evento.horaFin, evento));
+          sesiones.push(
+            this.crearSesion(
+              this.formatearFechaLocal(actual),
+              evento.horaInicio,
+              evento.horaFin,
+              evento
+            )
+          );
         }
         actual.setDate(actual.getDate() + 1);
       }
@@ -490,7 +583,14 @@ private snack = inject(SnackbarService);
       console.log('📋 entro a semanalmente:');
       while (actual <= finMes) {
         console.log('📋 fecha formateada:', this.formatearFechaLocal(actual));
-        sesiones.push(this.crearSesion(this.formatearFechaLocal(actual), evento.horaInicio, evento.horaFin, evento));
+        sesiones.push(
+          this.crearSesion(
+            this.formatearFechaLocal(actual),
+            evento.horaInicio,
+            evento.horaFin,
+            evento
+          )
+        );
 
         actual.setDate(actual.getDate() + 7);
         console.log('📋 fecha actual:', actual);
@@ -500,7 +600,7 @@ private snack = inject(SnackbarService);
 
     if (nombreFrecuencia.toLowerCase() === 'mensualmente') {
       for (let mes = fechaBase.getMonth(); mes <= 11; mes++) {
-        const [year, month, day] = evento.fecha.split("-").map(Number);
+        const [year, month, day] = evento.fecha.split('-').map(Number);
         console.log('📋 dia:', day);
         console.log('📋 mes:', month);
         console.log('📋 año:', year);
@@ -518,7 +618,7 @@ private snack = inject(SnackbarService);
     }
 
     // Evitar duplicados y solapamientos
-    this.sesiones.controls.forEach(control => {
+    this.sesiones.controls.forEach((control) => {
       const s = control.value;
       const nueva = this.crearSesion(s.fecha, s.horaInicio, s.horaFin, evento);
 
@@ -543,12 +643,16 @@ private snack = inject(SnackbarService);
     // Si estamos en modo lista (esListaNombreEvento) y el valor es un id,
     // buscar el objeto en eventosFiltrados por id_parametro_detalle y usar su nombre.
     if (this.esListaNombreEvento()) {
-      const seleccionado = this.eventosFiltrados.find(n => n.id_parametro_detalle === evento.nombreEvento);
+      const seleccionado = this.eventosFiltrados.find(
+        (n) => n.id_parametro_detalle === evento.nombreEvento
+      );
       if (seleccionado) {
         nombreActividad = seleccionado.nombre;
       } else {
         // fallback: si no está en eventosFiltrados intentar buscar en nombreDeEventos
-        const buscado = (this.nombreDeEventos || []).find(n => n.id_parametro_detalle === evento.nombreEvento);
+        const buscado = (this.nombreDeEventos || []).find(
+          (n) => n.id_parametro_detalle === evento.nombreEvento
+        );
         nombreActividad = buscado?.nombre ?? evento.nombreEvento;
       }
     }
@@ -566,68 +670,72 @@ private snack = inject(SnackbarService);
       fecha_actividad: evento.fecha,
       hora_inicio: evento.horaInicio,
       hora_fin: evento.horaFin,
-      id_usuario: '550e8400-e29b-41d4-a716-446655440006'
+      id_usuario: '550e8400-e29b-41d4-a716-446655440006',
     };
 
     console.log('📤 Enviando payload al back:', payload);
 
-    this.eventService.crearEvento(payload, sesiones)
-    .then((resp) => {
-      console.log('📥 Respuesta del back:', resp);
-      if (resp.exitoso === 'S') {
-        console.log('✅ Evento creado correctamente');
-        this.snack.success('Evento creado correctamente');
-        this.eventoGuardado.emit({
-          sesiones,
-          editarUna: false,
-          idSesionOriginal: null,
-        });
-        this.resetearFormulario();
-      } else {
-        console.error('❌ Error al crear evento:', resp.mensaje);
-        this.snack.error('Error al crear evento');
-      }
-    })
-    .catch((err) => {
-      console.error('❌ Excepción al crear evento:', err);
-      this.snack.error('Error inesperado al crear evento');
-    });
+    this.eventService
+      .crearEvento(payload, sesiones)
+      .then((resp) => {
+        console.log('📥 Respuesta del back:', resp);
+        if (resp.exitoso === 'S') {
+          console.log('✅ Evento creado correctamente');
+          this.snack.success('Evento creado correctamente');
+          this.eventoGuardado.emit({
+            sesiones,
+            editarUna: false,
+            idSesionOriginal: null,
+          });
+          this.resetearFormulario();
+        } else {
+          console.error('❌ Error al crear evento:', resp.mensaje);
+          this.snack.error('Error al crear evento');
+        }
+      })
+      .catch((err) => {
+        console.error('❌ Excepción al crear evento:', err);
+        this.snack.error('Error inesperado al crear evento');
+      });
   }
 
   async actualizarSesion() {
     // 🚨 Ahora usamos el snapshot del grid
     const payloadFinal = {
-
-      nuevos: this.cambiosSesionesSnapshot.nuevos.map(s => ({
+      nuevos: this.cambiosSesionesSnapshot.nuevos.map((s) => ({
         id_sesion: s.id_sesion,
         id_actividad: s.id_actividad,
         fecha_sesion: s.fecha_sesion,
         hora_inicio: s.hora_inicio,
-        hora_fin: s.hora_fin
+        hora_fin: s.hora_fin,
       })),
-      modificados: this.cambiosSesionesSnapshot.modificados.map(s => ({
+      modificados: this.cambiosSesionesSnapshot.modificados.map((s) => ({
         id_sesion: s.id_sesion,
         id_actividad: s.id_actividad,
         fecha_sesion: s.fecha_sesion,
         hora_inicio: s.hora_inicio,
-        hora_fin: s.hora_fin
+        hora_fin: s.hora_fin,
       })),
-      eliminados: this.cambiosSesionesSnapshot.eliminados.map(s => ({
-        id_sesion: s.id_sesion
-      }))
+      eliminados: this.cambiosSesionesSnapshot.eliminados.map((s) => ({
+        id_sesion: s.id_sesion,
+      })),
     };
 
     console.log('📦 Payload final a enviar al back:', payloadFinal);
 
     try {
-      const resp = await this.gridSesionesService.guardarCambiosSesiones(payloadFinal);
+      const resp = await this.gridSesionesService.guardarCambiosSesiones(
+        payloadFinal
+      );
       console.log('✅ Respuesta del back GRIID:', resp);
       if (resp.exitoso === 'S') {
         this.snack.success(resp.mensaje ?? 'Sesiones actualizadas');
         this.eventoEditado.emit(payloadFinal);
         this.cerrarFormulario.emit();
       } else {
-        this.snack.error(resp.mensaje ?? 'No se pudieron actualizar las sesiones');
+        this.snack.error(
+          resp.mensaje ?? 'No se pudieron actualizar las sesiones'
+        );
       }
     } catch (err) {
       console.error('❌ Error al guardar sesiones:', err);
@@ -644,10 +752,14 @@ private snack = inject(SnackbarService);
 
     // 👇 Aseguramos que todo quede habilitado para la próxima creación
     this.eventoForm.enable({ emitEvent: false });
-
   }
 
-  private crearSesion(fecha: string, horaInicio: string, horaFin: string, base: any) {
+  private crearSesion(
+    fecha: string,
+    horaInicio: string,
+    horaFin: string,
+    base: any
+  ) {
     const idGenerado = crypto.randomUUID();
     const sesion = {
       id_sesion: idGenerado,
@@ -655,7 +767,7 @@ private snack = inject(SnackbarService);
       fecha_actividad: fecha,
       hora_inicio: horaInicio,
       hora_fin: horaFin,
-      id_creado_por: this.authService.getUserUuid()
+      id_creado_por: this.authService.getUserUuid(),
     };
 
     console.log(`🆕 Crear sesión `, sesion);
@@ -663,27 +775,34 @@ private snack = inject(SnackbarService);
   }
 
   private haySuperposicion(sesiones: any[], nuevaSesion: any): boolean {
-    const nuevaInicio = new Date(`${nuevaSesion.fecha}T${nuevaSesion.horaInicio}`);
+    const nuevaInicio = new Date(
+      `${nuevaSesion.fecha}T${nuevaSesion.horaInicio}`
+    );
     const nuevaFin = new Date(`${nuevaSesion.fecha}T${nuevaSesion.horaFin}`);
 
-    return sesiones.some(ev => {
+    return sesiones.some((ev) => {
       const evInicio = new Date(`${ev.fecha}T${ev.horaInicio}`);
       const evFin = new Date(`${ev.fecha}T${ev.horaFin}`);
 
       return (
         nuevaSesion.fecha === ev.fecha &&
-        (
-          (nuevaInicio >= evInicio && nuevaInicio < evFin) ||
+        ((nuevaInicio >= evInicio && nuevaInicio < evFin) ||
           (nuevaFin > evInicio && nuevaFin <= evFin) ||
-          (nuevaInicio <= evInicio && nuevaFin >= evFin)
-        )
+          (nuevaInicio <= evInicio && nuevaFin >= evFin))
       );
     });
   }
 
   /** 🔹 Recibe cambios en tiempo real desde el grid */
-  onCambiosSesiones(payload: { nuevos: any[]; modificados: any[]; eliminados: any[] }) {
-    console.log('🧩 Cambios recibidos del grid (snapshot actualizado):', payload);
+  onCambiosSesiones(payload: {
+    nuevos: any[];
+    modificados: any[];
+    eliminados: any[];
+  }) {
+    console.log(
+      '🧩 Cambios recibidos del grid (snapshot actualizado):',
+      payload
+    );
     this.cambiosSesionesSnapshot = payload;
   }
 
@@ -697,12 +816,12 @@ private snack = inject(SnackbarService);
 
       return !isUppercase || !isWithinLimit
         ? {
-          uppercaseMaxLength: {
-            requiredUppercase: true,
-            requiredMaxLength: maxLength,
-            actualLength: value.length
+            uppercaseMaxLength: {
+              requiredUppercase: true,
+              requiredMaxLength: maxLength,
+              actualLength: value.length,
+            },
           }
-        }
         : null;
     };
   }

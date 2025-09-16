@@ -1,5 +1,5 @@
 import { indexDB } from '../services/database.service';
-import { Parametros_detalle } from '../interfaces/parametros_detalle';
+import { Parametros_detalle } from '../interfaces/parametros_detalle.interface';
 import { Injectable } from '@angular/core';
 
 @Injectable({

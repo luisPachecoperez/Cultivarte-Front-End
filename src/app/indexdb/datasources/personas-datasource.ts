@@ -1,5 +1,5 @@
 import { indexDB } from '../services/database.service';
-import { Personas } from '../interfaces/personas';
+import { Personas } from '../interfaces/personas.interface';
 import { Injectable } from '@angular/core';
 
 @Injectable({

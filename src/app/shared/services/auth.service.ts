@@ -3,7 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap, firstValueFrom } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Usuario } from '../interfaces/usuario.models';
+import { Usuario } from '../interfaces/usuario.interface';
 import * as CryptoJS from 'crypto-js';
 import { GraphQLService } from './graphql.service';
 import { environment } from '../../../environments/environment';

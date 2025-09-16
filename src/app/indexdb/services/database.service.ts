@@ -1,20 +1,20 @@
 import { Injectable } from '@angular/core';
 import Dexie, { Table } from 'dexie';
-import { Actividades } from '../interfaces/actividades';
-import { Aliados } from '../interfaces/aliados';
-import { Beneficiarios } from '../interfaces/beneficiarios';
+import { Actividades } from '../interfaces/actividades.interface';
+import { Aliados } from '../interfaces/aliados.interface';
+import { Beneficiarios } from '../interfaces/beneficiarios.interface';
 
-import { Asistencias } from '../interfaces/asistencias';
-import { Parametros_detalle } from '../interfaces/parametros_detalle';
-import { Parametros_generales } from '../interfaces/parametros_generales';
-import { Personas } from '../interfaces/personas';
-import { Personas_grupo_interes } from '../interfaces/personas_grupo_interes';
-import { Personas_programas } from '../interfaces/personas_programas';
-import { Personas_sedes } from '../interfaces/personas_sedes';
-import { Poblaciones } from '../interfaces/poblaciones';
-import { Sedes } from '../interfaces/sedes';
-import { Sesiones } from '../interfaces/sesiones';
-import { Sessions } from '../interfaces/sessions';
+import { Asistencias } from '../interfaces/asistencias.interface';
+import { Parametros_detalle } from '../interfaces/parametros_detalle.interface';
+import { Parametros_generales } from '../interfaces/parametros_generales.interface';
+import { Personas } from '../interfaces/personas.interface';
+import { Personas_grupo_interes } from '../interfaces/personas_grupo_interes.interface';
+import { Personas_programas } from '../interfaces/personas_programas.interface';
+import { Personas_sedes } from '../interfaces/personas_sedes.interface';
+import { Poblaciones } from '../interfaces/poblaciones.interface';
+import { Sedes } from '../interfaces/sedes.interface';
+import { Sesiones } from '../interfaces/sesiones.interface';
+import { Sessions } from '../interfaces/sessions.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -51,11 +51,6 @@ export class DatabaseService extends Dexie {
         'id_parametro_general, nombre_parametro, descripcion, estado, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
       personas:
         'id_persona, id_tipo_persona, id_colegio, id_sexo, id_ubicacion, id_pais, id_departamento, id_ciudad, id_tipo_identificacion, identificacion, nombres, apellidos, razon_social, fecha_nacimiento, nombre_acudiente, apellidos_acudiente, correo_acudiente, celular_acudiente, archivo_habeas_data, acepta_habeas_data, fecha_habeas_data, canal_habeas_data, soporte_habeas_data, dir_ip_habeas_data, email, email_contacto, telefono_movil_contacto, telefono_movil, eliminado, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
-      beneficiarios:
-        'id_persona, id_tipo_persona, id_colegio, id_sexo, id_ubicacion, id_pais, id_departamento, id_ciudad, id_tipo_identificacion, identificacion, nombres, apellidos, razon_social, fecha_nacimiento, nombre_acudiente, apellidos_acudiente, correo_acudiente, celular_acudiente, archivo_habeas_data, acepta_habeas_data, fecha_habeas_data, canal_habeas_data, soporte_habeas_data, dir_ip_habeas_data, email, email_contacto, telefono_movil_contacto, telefono_movil, eliminado, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
-      aliados:
-        'id_persona, id_tipo_persona, id_colegio, id_sexo, id_ubicacion, id_pais, id_departamento, id_ciudad, id_tipo_identificacion, identificacion, nombres, apellidos, razon_social, fecha_nacimiento, nombre_acudiente, apellidos_acudiente, correo_acudiente, celular_acudiente, archivo_habeas_data, acepta_habeas_data, fecha_habeas_data, canal_habeas_data, soporte_habeas_data, dir_ip_habeas_data, email, email_contacto, telefono_movil_contacto, telefono_movil, eliminado, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
-
       personas_grupo_interes:
         'id_personas_grupo_interes, id_persona, id_grupo_interes, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
       personas_programas:

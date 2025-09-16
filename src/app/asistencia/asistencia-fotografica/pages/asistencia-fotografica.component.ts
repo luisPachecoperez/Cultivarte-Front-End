@@ -2,8 +2,8 @@ import { Component, input, output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AsistenciaService } from '../../asistencia-lista/services/asistencia.service';
-import { PreAsistencia } from '../../../shared/interfaces/preasistencia.model';
-import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.model';
+import { PreAsistencia } from '../../../shared/interfaces/pre-asistencia.interface';
+import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.interface';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 
 // 🔹 Definimos tipos explícitos

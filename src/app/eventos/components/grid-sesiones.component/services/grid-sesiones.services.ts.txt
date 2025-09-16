@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { v4 as uuidv4 } from 'uuid';
 import { GraphQLService } from '../../../../shared/services/graphql.service';
-import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.model';
+import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.interface';
 import { AuthService } from '../../../../shared/services/auth.service';
 
 

@@ -12,15 +12,15 @@ import { switchMap } from 'rxjs/operators';
 import { GraphQLService } from '../../../../shared/services/graphql.service';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { ActividadesDataSource } from '../../../../indexdb/datasources/actividades-datasource';
-import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.model';
+import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.interface';
 import { SesionesDataSource } from '../../../../indexdb/datasources/sesiones-datasource';
-import { PreCreateActividad } from '../../../../indexdb/interfaces/pre-create-actividad';
+import { PreCreateActividad } from '../../../../shared/interfaces/pre-create-actividad.interface';
 import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';
-import { Sesiones } from '../../../../indexdb/interfaces/sesiones';
-import { Actividades } from '../../../../indexdb/interfaces/actividades';
+import { Sesiones } from '../../../../indexdb/interfaces/sesiones.interface';
+import { Actividades } from '../../../../indexdb/interfaces/actividades.interface';
 import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
 import { inject } from '@angular/core';
-
+import { LoadingService } from '../../../../shared/services/loading.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -140,17 +140,15 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
       }
     }
   `;
-  private http= inject(HttpClient);
-  private graphql= inject(GraphQLService);
-  private authService= inject( AuthService);
-  private actividadesDataSource= inject( ActividadesDataSource);
-  private sesionesDataSource= inject( SesionesDataSource);
-  private gridSesionesService= inject(GridSesionesService);
-  private loadIndexDBService= inject( LoadIndexDBService);
-
-  constructor(
-
-  ) {}
+  private http = inject(HttpClient);
+  private graphql = inject(GraphQLService);
+  private authService = inject(AuthService);
+  private actividadesDataSource = inject(ActividadesDataSource);
+  private sesionesDataSource = inject(SesionesDataSource);
+  private gridSesionesService = inject(GridSesionesService);
+  private loadIndexDBService = inject(LoadIndexDBService);
+  private loadingService = inject(LoadingService);
+  constructor() {}
 
   /**
    * 📡 Obtiene sesiones para mostrar en el calendario
@@ -165,6 +163,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
    */
 
   async obtenerEventoPorId(id_actividad: string): Promise<any> {
+    this.loadingService.show(); // 🔄 mostrar
     const id_usuario = this.authService.getUserUuid();
     console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
     return await firstValueFrom(
@@ -177,15 +176,17 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
                 id_usuario,
               })
               .pipe(
-                tap((res) =>
-                  console.log('📡 Respuesta cruda de GraphQL:', res)
-                ),
+                tap((res) => {
+                  console.log('📡 Respuesta cruda de GraphQL:', res);
+                  this.loadingService.hide();
+                }),
                 map((res) => res.getPreEditActividad),
                 catchError((err) => {
                   console.error(
                     '❌ Error GraphQL, usando fallback local:',
                     err
                   );
+                  this.loadingService.hide(); // 🔄 ocultar
                   return from(
                     this.actividadesDataSource.getPreEditActividad(
                       id_actividad,
@@ -195,6 +196,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
                 })
               );
           } else {
+            this.loadingService.hide(); // 🔄 ocultar
             return from(
               this.actividadesDataSource.getPreEditActividad(
                 id_actividad,
@@ -208,6 +210,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
   }
 
   obtenerConfiguracionEvento(id_usuario: string): Observable<any> {
+    this.loadingService.show(); // 🔄 mostrar
     console.log(
       '📡 Solicitando configuración de evento para usuario:',
       id_usuario
@@ -221,29 +224,37 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
               { id_usuario }
             )
             .pipe(
-              map((res) => res.getPreCreateActividad),
+              map((res) => {
+                this.loadingService.hide(); // 🔄 ocultar
+
+                res.getPreCreateActividad;
+              }),
               catchError((err) => {
                 console.error(
                   '❌ Error al consultar configuración de evento por GraphQL, usando fallback local:',
                   err
                 );
 
-                // 🔹 Fallback: usar IndexedDB
-                return from(
+                const preActividad$ = from(
                   this.actividadesDataSource.getPreCreateActividad(id_usuario)
                 );
+                this.loadingService.hide(); // 🔄 ocultar
+                return preActividad$;
               })
             );
         } else {
-          return from(
+          const preActividad$ = from(
             this.actividadesDataSource.getPreCreateActividad(id_usuario)
           );
+          this.loadingService.hide(); // 🔄 ocultar
+
+          return preActividad$;
         }
       }) // 👈 cierre del switchMap
     );
   }
 
- async  crearEvento(
+  async crearEvento(
     evento: any,
     sesiones: Sesiones[]
   ): Promise<GraphQLResponse<void>> {
@@ -298,100 +309,98 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
       s.deleted = false;
     });
     return await firstValueFrom(
-
-     this.loadIndexDBService.ping().pipe(
-      switchMap((ping) => {
-        if (ping === 'pong') {
-          console.log('✅ Crear evento Backend activo');
-          return this.graphql
-            .mutation<{ createActividad: GraphQLResponse<void> }>(
-              this.CREATE_ACTIVIDAD,
-              { data: payloadBackend }
-            )
-            .pipe(
-              switchMap((res) => {
-                const actividadResponse = res.createActividad;
-                console.log(
-                  'Despues de llamado a backend de actividad: ',
-                  actividadResponse
-                );
-                // guardar actividad en indexdb
-
-                if (actividadResponse?.exitoso === 'S') {
-                  // 👇 envolvemos la llamada async en from()
-
-                  const sesionesPayloadBackend: SesionesPayloadBackend[] =
-                    sesiones.map(({ syncStatus, deleted, ...rest }) => rest);
-                  const sesionesPayload = {
-                    nuevos: sesionesPayloadBackend,
-                    modificados: [],
-                    eliminados: [],
-                  };
-
-                  return from(
-                    this.gridSesionesService.guardarCambiosSesiones(
-                      sesionesPayload
-                    )
-                  ).pipe(
-                    tap((sesionesResponse) => {
-                      if (sesionesResponse?.exitoso === 'S') {
-                        this.actividadesDataSource.create(actividadPayload);
-
-
-                        sesiones.forEach((s: Sesiones) => {
-                          this.sesionesDataSource.create(s);
-                        });
-                      }
-                    }),
-                    map(() => actividadResponse)
+      this.loadIndexDBService.ping().pipe(
+        switchMap((ping) => {
+          if (ping === 'pong') {
+            console.log('✅ Crear evento Backend activo');
+            return this.graphql
+              .mutation<{ createActividad: GraphQLResponse<void> }>(
+                this.CREATE_ACTIVIDAD,
+                { data: payloadBackend }
+              )
+              .pipe(
+                switchMap((res) => {
+                  const actividadResponse = res.createActividad;
+                  console.log(
+                    'Despues de llamado a backend de actividad: ',
+                    actividadResponse
                   );
-                }
+                  // guardar actividad en indexdb
 
-                return of(actividadResponse);
-              }),
-              catchError((err) => {
-                console.error(
-                  '❌ Error al crear en GraphQL, usando solo IndexDB:',
-                  err
-                );
+                  if (actividadResponse?.exitoso === 'S') {
+                    // 👇 envolvemos la llamada async en from()
 
-                // Guardar en IndexDB como pendiente
-                actividadPayload.syncStatus = 'pending-create';
-                this.actividadesDataSource.create(actividadPayload);
+                    const sesionesPayloadBackend: SesionesPayloadBackend[] =
+                      sesiones.map(({ syncStatus, deleted, ...rest }) => rest);
+                    const sesionesPayload = {
+                      nuevos: sesionesPayloadBackend,
+                      modificados: [],
+                      eliminados: [],
+                    };
 
-                sesiones.forEach((s: Sesiones) => {
-                  this.sesionesDataSource.create({
-                    ...s,
-                    syncStatus: 'pending-create',
+                    return from(
+                      this.gridSesionesService.guardarCambiosSesiones(
+                        sesionesPayload
+                      )
+                    ).pipe(
+                      tap((sesionesResponse) => {
+                        if (sesionesResponse?.exitoso === 'S') {
+                          this.actividadesDataSource.create(actividadPayload);
+
+                          sesiones.forEach((s: Sesiones) => {
+                            this.sesionesDataSource.create(s);
+                          });
+                        }
+                      }),
+                      map(() => actividadResponse)
+                    );
+                  }
+
+                  return of(actividadResponse);
+                }),
+                catchError((err) => {
+                  console.error(
+                    '❌ Error al crear en GraphQL, usando solo IndexDB:',
+                    err
+                  );
+
+                  // Guardar en IndexDB como pendiente
+                  actividadPayload.syncStatus = 'pending-create';
+                  this.actividadesDataSource.create(actividadPayload);
+
+                  sesiones.forEach((s: Sesiones) => {
+                    this.sesionesDataSource.create({
+                      ...s,
+                      syncStatus: 'pending-create',
+                    });
                   });
-                });
 
-                return of({
-                  exitoso: 'S',
-                  mensaje: 'Registro guardado satisfactoriamente',
-                });
-              })
-            );
-        } else {
-          console.log('Crear evento backend inactivo');
-          // Guardar en IndexDB como pendiente
-          actividadPayload.syncStatus = 'pending-create';
-          this.actividadesDataSource.create(actividadPayload);
+                  return of({
+                    exitoso: 'S',
+                    mensaje: 'Registro guardado satisfactoriamente',
+                  });
+                })
+              );
+          } else {
+            console.log('Crear evento backend inactivo');
+            // Guardar en IndexDB como pendiente
+            actividadPayload.syncStatus = 'pending-create';
+            this.actividadesDataSource.create(actividadPayload);
 
-          sesiones.forEach((s: Sesiones) => {
-            this.sesionesDataSource.create({
-              ...s,
-              syncStatus: 'pending-create',
+            sesiones.forEach((s: Sesiones) => {
+              this.sesionesDataSource.create({
+                ...s,
+                syncStatus: 'pending-create',
+              });
             });
-          });
 
-          return of({
-            exitoso: 'S',
-            mensaje: 'Registro guardado satisfactoriamente',
-          });
-        }
-      }) // 👈 cierre del switchMap
-    )
-  );
+            return of({
+              exitoso: 'S',
+              mensaje: 'Registro guardado satisfactoriamente',
+            });
+          }
+        }) // 👈 cierre del switchMap
+      )
+    );
   }
 }

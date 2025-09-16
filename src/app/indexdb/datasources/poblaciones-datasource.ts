@@ -1,5 +1,5 @@
 import { indexDB } from '../services/database.service';
-import { Poblaciones } from '../interfaces/poblaciones';
+import { Poblaciones } from '../interfaces/poblaciones.interface';
 import { Injectable } from '@angular/core';
 
 @Injectable({

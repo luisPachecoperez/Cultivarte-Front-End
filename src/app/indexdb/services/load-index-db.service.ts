@@ -5,17 +5,17 @@ import { GraphQLService } from '../../shared/services/graphql.service';
 import { DatabaseService } from './database.service';
 
 // Interfaces
-import { Actividades } from '../interfaces/actividades';
-import { Asistencias } from '../interfaces/asistencias';
-import { Personas } from '../interfaces/personas';
-import { Personas_grupo_interes } from '../interfaces/personas_grupo_interes';
-import { Personas_programas } from '../interfaces/personas_programas';
-import { Personas_sedes } from '../interfaces/personas_sedes';
-import { Poblaciones } from '../interfaces/poblaciones';
-import { Sedes } from '../interfaces/sedes';
-import { Sesiones } from '../interfaces/sesiones';
-import { Parametros_generales } from '../interfaces/parametros_generales';
-import { Parametros_detalle } from '../interfaces/parametros_detalle';
+import { Actividades } from '../interfaces/actividades.interface';
+import { Asistencias } from '../interfaces/asistencias.interface';
+import { Personas } from '../interfaces/personas.interface';
+import { Personas_grupo_interes } from '../interfaces/personas_grupo_interes.interface';
+import { Personas_programas } from '../interfaces/personas_programas.interface';
+import { Personas_sedes } from '../interfaces/personas_sedes.interface';
+import { Poblaciones } from '../interfaces/poblaciones.interface';
+import { Sedes } from '../interfaces/sedes.interface';
+import { Sesiones } from '../interfaces/sesiones.interface';
+import { Parametros_generales } from '../interfaces/parametros_generales.interface';
+import { Parametros_detalle } from '../interfaces/parametros_detalle.interface';
 import { Parametros_generalesDataSource } from '../datasources/parametros_generales-datasource';
 import { Parametros_detalleDataSource } from '../datasources/parametros_detalle-datasource';
 import { PersonasDataSource } from '../datasources/personas-datasource';
