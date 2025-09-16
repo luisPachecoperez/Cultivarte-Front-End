@@ -111,11 +111,11 @@ export class GridSesionesComponent {
   eliminarSesion(index: number): void {
 
     if (this.soloLectura()) return;
-    console.log("El array; ", this.formArray());
+    //console.log("El array; ", this.formArray());
     const fg = this.formArray().at(index) as FormGroup;
     const sesion = fg.getRawValue();
-    console.log('sesion a eliminar:', sesion);
-    console.log('asistentes sesión:', sesion.asistentes_sesion);
+    //console.log('sesion a eliminar:', sesion);
+    //console.log('asistentes sesión:', sesion.asistentes_sesion);
 
     if (sesion.asistentes_sesion && sesion.asistentes_sesion > 0) {
       this.snack.error(`No se puede eliminar: ${sesion.asistentes_sesion} asistentes`);
@@ -175,9 +175,9 @@ export class GridSesionesComponent {
     const nuevos = todos.filter(s => s.metaEstado === 'nuevo').map(s => this.mapSesionDTO(s, true));
     const modificados = todos.filter(s => s.metaEstado === 'modificado').map(s => this.mapSesionDTO(s, false));
     const eliminados = [...this.eliminadosBuffer];
-    console.log('nuevos:', nuevos);
-    console.log('modificados:', modificados);
-    console.log('eliminados:', eliminados);
+    //console.log('nuevos:', nuevos);
+    //console.log('modificados:', modificados);
+    //console.log('eliminados:', eliminados);
     return { nuevos, modificados, eliminados };
   }
 

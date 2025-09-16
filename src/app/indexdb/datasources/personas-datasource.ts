@@ -27,7 +27,7 @@ export class PersonasDataSource {
     await indexDB.personas.clear();
   }
 
-  async getAliados(
+  async  getAliados(
     idUsuario: string
   ): Promise<{ id_aliado: string; nombre: string }[]> {
     // 1. Buscar las sedes del usuario
@@ -69,7 +69,7 @@ export class PersonasDataSource {
       .where('id_grupo_interes')
       .equals(paramAliadoCultivarte.id_parametro_detalle)
       .toArray();
-
+   //console.log('Personas Grupo Interes Aliados:', personasGrupoInteres);
     const idsPersonasAliados = personasGrupoInteres.map(
       (pgi) => pgi.id_persona
     );

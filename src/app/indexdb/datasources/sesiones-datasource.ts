@@ -23,8 +23,22 @@ export class SesionesDataSource {
       // ✅ Caso fecha tipo string con guiones → convertir a timestamp
       data.fecha_actividad = String(new Date(data.fecha_actividad).getTime());
     }
+    if (
+      typeof data.fecha_creacion === 'string' &&
+      data.fecha_creacion.includes('-')
+    ) {
+      // ✅ Caso fecha tipo string con guiones → convertir a timestamp
+      data.fecha_creacion = String(new Date(data.fecha_creacion).getTime());
+    }
+    if (
+      typeof data.fecha_modificacion === 'string' &&
+      data.fecha_modificacion.includes('-')
+    ) {
+      // ✅ Caso fecha tipo string con guiones → convertir a timestamp
+      data.fecha_modificacion = String(new Date(data.fecha_modificacion).getTime());
+    }
 
-    console.log('adicionando sesion al index:', data);
+    //console.log('adicionando sesion al index:', data);
     await indexDB.sesiones.add(data);
     return {
       exitoso: 'S',

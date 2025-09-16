@@ -166,7 +166,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
    */
   // obtenerEventoPorId(id_actividad: string) {
   //   const id_usuario = this.authService.getUserUuid();
-  //   console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
+  //   //console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
   //   return this.graphql
   //     .query<{ getPreEditActividad: ActividadSesiones }>(this.GET_EVENTO, {
   //       id_actividad,
@@ -174,7 +174,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
   //     })
   //     .pipe(
   //       tap((res) =>
-  //         console.log('📡 Respuesta cruda de GraphQL:', res.actividad)
+  //         //console.log('📡 Respuesta cruda de GraphQL:', res.actividad)
   //       ),
   //       map((res) => res.getPreEditActividad),
   //       catchError((err) => {
@@ -245,7 +245,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
   // }
   obtenerEventoPorId(id_actividad: string): Observable<any> {
     const id_usuario = this.authService.getUserUuid();
-    console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
+    //console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
 
     return this.graphql
       .query<any>(this.GET_EVENTO, {
@@ -254,7 +254,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
       })
       .pipe(
         tap((res) =>
-          console.log('📡 Respuesta cruda de GraphQL:', res)
+          //console.log('📡 Respuesta cruda de GraphQL:', res)
         ),
         map((res) => res.getPreEditActividad)
       );
@@ -263,7 +263,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
 
 
   obtenerConfiguracionEvento(id_usuario: string): Observable<any> {
-    console.log('📡 Solicitando configuración de evento para usuario:', id_usuario);
+    //console.log('📡 Solicitando configuración de evento para usuario:', id_usuario);
     return this.graphql
       .query<{ getPreCreateActividad: PreCreateActividad }>(
         this.GET_PRE_CREATE_ACTIVIDAD,
@@ -287,8 +287,8 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
   }
 
   crearEvento(evento: any, sesiones: Sesiones[]): Observable<OperacionResponse> {
-    console.log('📤 Enviando evento al back:', evento);
-    console.log('📤 Enviando sesiones al back:', sesiones);
+    //console.log('📤 Enviando evento al back:', evento);
+    //console.log('📤 Enviando sesiones al back:', sesiones);
     const hoy = new Date().toISOString().split('T')[0];
 
     // 🔹 Construcción del payload de la actividad
@@ -326,7 +326,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
     // this.actividadesDataSource.create(actividadPayload);
 
     // 🔹 Intentar sincronizar con backend
-    console.log('📤 Enviando actividad al back:', actividadPayload);
+    //console.log('📤 Enviando actividad al back:', actividadPayload);
     return this.graphql
       .mutation<{ createActividad: OperacionResponse }>(
         this.CREATE_ACTIVIDAD,

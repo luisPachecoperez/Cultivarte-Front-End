@@ -39,7 +39,7 @@ export class DatabaseService extends Dexie {
 
   constructor() {
     super('CultivarteAppIndexDB');
-    console.log('Crea base de datos si no existe');
+    //console.log('Crea base de datos si no existe');
     this.version(1).stores({
       actividades:
         'id_actividad, id_programa, id_tipo_actividad, id_responsable, id_aliado, id_sede, id_frecuencia, institucional, nombre_actividad, descripcion, fecha_actividad_desde, fecha_actividad_hasta, plazo_asistencia, estado, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
@@ -67,7 +67,7 @@ export class DatabaseService extends Dexie {
       sessions:
         'session_id, user_id, user_email, user_name, created_at, expires_at, revoked',
     });
-    console.log('Base de datos lista para usarse');
+    //console.log('Base de datos lista para usarse');
   }
 }
 

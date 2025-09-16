@@ -68,7 +68,7 @@ export class DataSyncService {
    * Inicia el proceso de sincronización en background
    */
   async startSync() {
-    console.log('Inicia sincronizacion:', new Date());
+    //console.log('Inicia sincronizacion:', new Date());
     await this.syncPending();
     interval(1000 * 60)
       .pipe(switchMap(() => from(this.syncPending())))
@@ -79,16 +79,16 @@ export class DataSyncService {
    * Revisa si hay datos pendientes y los sincroniza con el backend
    */
   private async syncPending() {
-    console.log('🔍 Revisando datos pendientes en IndexedDB...');
+    //console.log('🔍 Revisando datos pendientes en IndexedDB...');
 
     // 1. Verificar si backend responde
     const backendActivo = await this.pingBackend();
-    console.log('resultado ping:', backendActivo, 'hora:', new Date());
+    //console.log('resultado ping:', backendActivo, 'hora:', new Date());
     if (!backendActivo) {
       console.warn('⚠️ Backend inactivo, no se sincroniza todavía');
       return;
     }
-    console.log('Backend activo inicia sincronizacion');
+    //console.log('Backend activo inicia sincronizacion');
     //Buscar las actividades, sesiones y asistencias pendientes
     this.syncActividadesPendientes();
     this.syncSesionesPendientes();
@@ -114,7 +114,7 @@ export class DataSyncService {
       )
       .toArray();
 
-    console.log('Actividades pendientes: ', actividadesPendientes);
+    //console.log('Actividades pendientes: ', actividadesPendientes);
     for (const act of actividadesPendientes) {
       await this.crearActividades(act.id_actividad);
     }
@@ -153,7 +153,7 @@ export class DataSyncService {
       descripcion: actividad.descripcion ?? null,
     };
 
-    console.log('Actividad a crear:', input);
+    //console.log('Actividad a crear:', input);
     try {
       // 3. Ejecutar GraphQL usando el servicio centralizado
       const resp = await firstValueFrom(
@@ -163,7 +163,7 @@ export class DataSyncService {
       );
 
       const result = resp.createActividad;
-      console.log(`📤 Respuesta createActividad (${id_actividad}):`, result);
+      //console.log(`📤 Respuesta createActividad (${id_actividad}):`, result);
 
       // 4. Si fue exitoso → actualizar en indexDB
       if (result.exitoso === 'S') {
@@ -172,7 +172,7 @@ export class DataSyncService {
           syncStatus: 'synced',
           deleted: false,
         });
-        console.log(`✅ Actividad ${id_actividad} sincronizada`);
+        //console.log(`✅ Actividad ${id_actividad} sincronizada`);
       } else {
         console.warn(
           `❌ Actividad ${id_actividad} no sincronizada:`,
@@ -203,7 +203,7 @@ export class DataSyncService {
       }
     }
 
-    console.log('Sesiones pendientes: ', sesionesPendientes);
+    //console.log('Sesiones pendientes: ', sesionesPendientes);
     for (const ses of sesionesPendientes) {
       switch (ses.syncStatus) {
         case 'pending-create':
@@ -219,9 +219,7 @@ export class DataSyncService {
           break;
 
         default:
-          console.log(
-            `⚠️ Sesión ${ses.id_sesion} con syncStatus desconocido: ${ses.syncStatus}`
-          );
+          //console.log(`⚠️ Sesión ${ses.id_sesion} con syncStatus desconocido: ${ses.syncStatus}`);
       }
     }
   }
@@ -252,7 +250,7 @@ export class DataSyncService {
       descripcion: sesion.descripcion ?? null,
     };
 
-    console.log('Sesión a crear:', input);
+    //console.log('Sesión a crear:', input);
 
     try {
       // 3. Ejecutar GraphQL usando el servicio centralizado
@@ -263,7 +261,7 @@ export class DataSyncService {
       );
 
       const result = resp.createSesion;
-      console.log(`📤 Respuesta createSesion (${id_sesion}):`, result);
+      //console.log(`📤 Respuesta createSesion (${id_sesion}):`, result);
 
       // 4. Si fue exitoso → actualizar en indexDB
       if (result.exitoso === 'S') {
@@ -272,7 +270,7 @@ export class DataSyncService {
           syncStatus: 'synced',
           deleted: false,
         });
-        console.log(`✅ Sesión ${id_sesion} sincronizada`);
+        //console.log(`✅ Sesión ${id_sesion} sincronizada`);
       } else {
         console.warn(`❌ Sesión ${id_sesion} no sincronizada:`, result.mensaje);
       }
@@ -308,7 +306,7 @@ export class DataSyncService {
       descripcion: sesion.descripcion ?? null,
     };
 
-    console.log('Sesión a actualizar:', input);
+    //console.log('Sesión a actualizar:', input);
 
     try {
       // 3. Ejecutar GraphQL usando el servicio centralizado
@@ -319,7 +317,7 @@ export class DataSyncService {
       );
 
       const result = resp.updateSesion;
-      console.log(`📤 Respuesta updateSesion (${id_sesion}):`, result);
+      //console.log(`📤 Respuesta updateSesion (${id_sesion}):`, result);
 
       // 4. Si fue exitoso → actualizar en indexDB
       if (result.exitoso === 'S') {
@@ -328,7 +326,7 @@ export class DataSyncService {
           syncStatus: 'synced',
           deleted: false,
         });
-        console.log(`✅ Sesión ${id_sesion} actualizada y sincronizada`);
+        //console.log(`✅ Sesión ${id_sesion} actualizada y sincronizada`);
       } else {
         console.warn(`❌ Sesión ${id_sesion} no sincronizada:`, result.mensaje);
       }
@@ -348,11 +346,11 @@ export class DataSyncService {
       .toArray();
 
     if (asistenciasPendientes.length === 0) {
-      console.log('✅ No hay asistencias pendientes');
+      //console.log('✅ No hay asistencias pendientes');
       return;
     }
 
-    console.log('Asistencias pendientes:', asistenciasPendientes);
+    //console.log('Asistencias pendientes:', asistenciasPendientes);
 
     // 🔹 Agrupar por id_sesion
     const grupos = asistenciasPendientes.reduce((map, asis) => {
@@ -385,7 +383,7 @@ export class DataSyncService {
         descripcion: null,
       };
 
-      console.log(`📤 Payload UpdateAsistencias (sesión ${idSesion}):`, input);
+      //console.log(`📤 Payload UpdateAsistencias (sesión ${idSesion}):`, input);
 
       try {
         const resp = await firstValueFrom(
@@ -395,10 +393,7 @@ export class DataSyncService {
         );
 
         const result = resp.updateAsistencias;
-        console.log(
-          `📥 Respuesta updateAsistencias (sesión ${idSesion}):`,
-          result
-        );
+        //console.log(`📥 Respuesta updateAsistencias (sesión ${idSesion}):`,result );
 
         if (result.exitoso === 'S') {
           for (const asis of asistenciasDeSesion) {
@@ -408,9 +403,7 @@ export class DataSyncService {
               deleted: false,
             });
           }
-          console.log(
-            `✅ ${asistenciasDeSesion.length} asistencias sincronizadas (sesión ${idSesion})`
-          );
+          //console.log(`✅ ${asistenciasDeSesion.length} asistencias sincronizadas (sesión ${idSesion})`);
         } else {
           console.warn(
             `❌ Asistencias no sincronizadas (sesión ${idSesion}):`,
@@ -436,12 +429,12 @@ export class DataSyncService {
       );
 
       const result = resp.deleteSesion;
-      console.log(`📤 Respuesta deleteSesion (${id_sesion}):`, result);
+      //console.log(`📤 Respuesta deleteSesion (${id_sesion}):`, result);
 
       // 2. Si fue exitoso → eliminar de indexDB
       if (result.exitoso === 'S') {
         await indexDB.sesiones.delete(id_sesion);
-        console.log(`🗑️ Sesión ${id_sesion} eliminada en indexDB y backend`);
+        //console.log(`🗑️ Sesión ${id_sesion} eliminada en indexDB y backend`);
       } else {
         console.warn(`❌ Sesión ${id_sesion} no eliminada:`, result.mensaje);
       }
@@ -457,7 +450,7 @@ export class DataSyncService {
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
-          console.log('ping en update sesiones:', ping);
+          //console.log('ping en update sesiones:', ping);
           return of(ping === 'pong'); // 👈 devolvemos un observable de boolean
         })
       )

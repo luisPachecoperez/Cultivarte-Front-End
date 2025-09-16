@@ -33,7 +33,7 @@ export class Parametros_detalleDataSource {
       ...item,
       syncStatus: item.syncStatus ?? 'synced'
     }));
-    console.log('Response Parámetros Detalle:', withSyncStatus);
+    //console.log('Response Parámetros Detalle:', withSyncStatus);
 
     await indexDB.parametros_detalle.bulkAdd(withSyncStatus);
   }

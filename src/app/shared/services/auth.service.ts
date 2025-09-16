@@ -45,7 +45,7 @@ export class AuthService {
       // 🔓 Descifrar cookie
       const bytes = CryptoJS.AES.decrypt(encrypted, this.secret);
       const decoded = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-      console.log('✅ Usuario autenticado:', decoded);
+      //console.log('✅ Usuario autenticado:', decoded);
 
       if (!decoded) {
         console.warn('❌ Cookie vacía o corrupta');
@@ -81,7 +81,7 @@ export class AuthService {
     //   const bytes = CryptoJS.AES.decrypt(encrypted, this.secret);
     //   const decoded = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
     //   user_uuid=decoded.user_uuid;
-    //   console.log('✅ Usuario autenticado:',user_uuid);
+    //   //console.log('✅ Usuario autenticado:',user_uuid);
     //   if (!decoded) {
     //     console.warn('❌ Cookie vacía o corrupta');
     //     return user_uuid ;
@@ -154,7 +154,7 @@ export class AuthService {
       );
 
       if (result.logout.success) {
-        console.log("✅ Logout backend:", result.logout.message);
+        //console.log("✅ Logout backend:", result.logout.message);
       } else {
         console.warn("⚠️ Logout backend fallido:", result.logout.message);
       }

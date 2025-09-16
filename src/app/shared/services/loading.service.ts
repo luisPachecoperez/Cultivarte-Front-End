@@ -9,7 +9,7 @@ export class LoadingService {
   readonly loading$: Observable<boolean> = this._loading.asObservable();
 
   show(): void {
-    console.log('LoadingService: show() called');
+    //console.log('LoadingService: show() called');
     this._requests++;
     if (this._requests === 1) {
       this._loading.next(true); // solo muestra si es el primer request
@@ -17,7 +17,7 @@ export class LoadingService {
   }
 
   hide(): void {
-    console.log('LoadingService: hide() called');
+    //console.log('LoadingService: hide() called');
     if (this._requests > 0) {
       this._requests--;
     }

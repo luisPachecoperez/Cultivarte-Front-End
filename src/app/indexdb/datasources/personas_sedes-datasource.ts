@@ -33,7 +33,7 @@ export class Personas_sedesDataSource {
       ...item,
       syncStatus: item.syncStatus ?? 'synced'
     }));
-    console.log('Bulk adding personas_sedes:', withSyncStatus);
+    //console.log('Bulk adding personas_sedes:', withSyncStatus);
     await indexDB.personas_sedes.bulkAdd(withSyncStatus);
   }
 

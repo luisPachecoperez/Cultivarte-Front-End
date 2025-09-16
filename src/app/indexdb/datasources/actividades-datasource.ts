@@ -20,19 +20,12 @@ import { inject } from '@angular/core';
 @Injectable({
   providedIn: 'root',
 })
-
-
-
-
 export class ActividadesDataSource {
-
   private personasSedesDataSource = inject(Personas_sedesDataSource);
-  private personasDataSource= inject( PersonasDataSource);
-  private sesionesDataSource= inject( SesionesDataSource);
+  private personasDataSource = inject(PersonasDataSource);
+  private sesionesDataSource = inject(SesionesDataSource);
 
-  constructor(
-
-  ) {}
+  constructor() {}
   async getAll(): Promise<Actividades[]> {
     return await indexDB.actividades.toArray();
   }
@@ -42,6 +35,29 @@ export class ActividadesDataSource {
   }
 
   async create(data: Actividades): Promise<GraphQLResponse> {
+    if (
+      typeof data.fecha_actividad === 'string' &&
+      data.fecha_actividad.includes('-')
+    ) {
+      // ✅ Caso fecha tipo string con guiones → convertir a timestamp
+      data.fecha_actividad = String(new Date(data.fecha_actividad).getTime());
+    }
+    if (
+      typeof data.fecha_creacion === 'string' &&
+      data.fecha_creacion.includes('-')
+    ) {
+      // ✅ Caso fecha tipo string con guiones → convertir a timestamp
+      data.fecha_creacion = String(new Date(data.fecha_creacion).getTime());
+    }
+    if (
+      typeof data.fecha_modificacion === 'string' &&
+      data.fecha_modificacion.includes('-')
+    ) {
+      // ✅ Caso fecha tipo string con guiones → convertir a timestamp
+      data.fecha_modificacion = String(new Date(data.fecha_modificacion).getTime());
+    }
+
+    console.log("Creando actividad: ",data)
     try {
       await indexDB.actividades.add(data);
       return {
@@ -91,12 +107,22 @@ export class ActividadesDataSource {
       .where('id_actividad')
       .equals(id)
       .toArray();
+    const actividad: Actividades | undefined=await this.getById(id)
+
+    if (actividad && actividad.syncStatus === 'pending-create')
+      soft = false; // Si la actividad no se ha sincronizado, hacer hard delete
 
     if (soft) {
       // 🔹 2a. Soft delete → marcar actividad y sesiones como eliminadas
-      await indexDB.actividades.update(id, { deleted: true, syncStatus: 'pending-delete' });
+      await indexDB.actividades.update(id, {
+        deleted: true,
+        syncStatus: 'pending-delete',
+      });
       for (const ses of sesiones) {
-        await indexDB.sesiones.update(ses.id_sesion, { deleted: true, syncStatus: 'pending-delete' });
+        await indexDB.sesiones.update(ses.id_sesion, {
+          deleted: true,
+          syncStatus: 'pending-delete',
+        });
       }
     } else {
       // 🔹 2b. Hard delete → borrar actividad y sesiones de indexDB
@@ -106,7 +132,7 @@ export class ActividadesDataSource {
       }
     }
 
-    console.log(`Borrada la actividad ${id} y sus sesiones (soft=${soft})`);
+    //console.log(`Borrada la actividad ${id} y sus sesiones (soft=${soft})`);
 
     return {
       exitoso: 'S',
@@ -117,7 +143,7 @@ export class ActividadesDataSource {
   }
 
   async bulkAdd(data: Actividades[]): Promise<void> {
-    console.log('Bulk add Actividades:', data);
+    //console.log('Bulk add Actividades:', data);
     this.deleteFull();
     const withSyncStatus = data.map((item) => ({
       ...item,
@@ -167,19 +193,48 @@ export class ActividadesDataSource {
     const parametrosDetalle =
       (await indexDB.parametros_detalle.toArray()) as Parametros_detalle[];
 
+    // ✅ Optimización: Preprocesar mapas para búsquedas rápidas
+    const mapaGenerales = new Map<string, Parametros_generales>();
+    parametrosGenerales.forEach((pg) =>
+      mapaGenerales.set(pg.nombre_parametro, pg)
+    );
+
+    const detallesPorGeneral = new Map<
+      string,
+      Array<{ id_parametro_detalle: string; nombre: string; valores: string }>
+    >();
+    parametrosDetalle.forEach((pd) => {
+      const item = {
+        id_parametro_detalle: pd.id_parametro_detalle,
+        nombre: pd.nombre,
+        valores: pd.valores,
+      };
+      if (!detallesPorGeneral.has(pd.id_parametro_general)) {
+        detallesPorGeneral.set(pd.id_parametro_general, []);
+      }
+      detallesPorGeneral.get(pd.id_parametro_general)!.push(item);
+    });
+
+    const cache = new Map<
+      string,
+      Array<{ id_parametro_detalle: string; nombre: string }>
+    >();
+
     const getDetalle = (nombreGeneral: string) => {
-      const general = parametrosGenerales.find(
-        (pg) => pg.nombre_parametro === nombreGeneral
-      );
-      if (!general) return [];
-      return parametrosDetalle
-        .filter(
-          (pd) => pd.id_parametro_general === general.id_parametro_general
-        )
-        .map((pd) => ({
-          id_parametro_detalle: pd.id_parametro_detalle,
-          nombre: pd.nombre,
-        }));
+      if (cache.has(nombreGeneral)) {
+        return cache.get(nombreGeneral)!;
+      }
+
+      const general = mapaGenerales.get(nombreGeneral);
+      if (!general) {
+        cache.set(nombreGeneral, []);
+        return [];
+      }
+
+      const resultado =
+        detallesPorGeneral.get(general.id_parametro_general) || [];
+      cache.set(nombreGeneral, resultado);
+      return resultado;
     };
 
     const tiposDeActividad = getDetalle('TIPO_ACTIVIDAD_CULTIVARTE');
@@ -188,83 +243,81 @@ export class ActividadesDataSource {
 
     // 4. NombreEventos (split de valores)
     let nombreEventos: { id_parametro_detalle: string; nombre: string }[] = [];
-    const generalTipoActividad = parametrosGenerales.find(
-      (pg) => pg.nombre_parametro === 'TIPO_ACTIVIDAD_CULTIVARTE'
-    );
+    const generalTipoActividad = mapaGenerales.get('TIPO_ACTIVIDAD_CULTIVARTE');
     if (generalTipoActividad) {
-      const detalles = parametrosDetalle.filter(
-        (pd) =>
-          pd.id_parametro_general === generalTipoActividad.id_parametro_general
-      );
-      for (const det of detalles) {
-        if (det.valores) {
-          const valores = det.valores.split(',').map((v) => v.trim());
-          valores.forEach((val) => {
-            nombreEventos.push({
+      const detalles =
+        detallesPorGeneral.get(generalTipoActividad.id_parametro_general) || [];
+
+      nombreEventos = detalles.flatMap((det) =>
+        det.valores
+          ? det.valores.split(',').map((val) => ({
               id_parametro_detalle: det.id_parametro_detalle,
-              nombre: val,
-            });
-          });
-        }
-      }
+              nombre: val.trim(),
+            }))
+          : []
+      );
     }
 
     // 5. Sedes y Aliados filtrados por usuario
     const sedesUsuario = await this.personasSedesDataSource.getSedesByUsuario(
       id_usuario
     );
-    let sedes: Sedes[];
-    let aliados: { id_aliado: string; nombre: string }[];
 
-    // -- Buscar id_tipo_persona para "Natural" y "Jurídica"
-    const paramGeneralTipoPersona = (
-      await indexDB.parametros_generales.toArray()
-    ).find((pg) => pg.nombre_parametro.toUpperCase() === 'TIPO_PERSONA');
+    const paramGeneralTipoPersona = await indexDB.parametros_generales
+      .where('nombre_parametro')
+      .equalsIgnoreCase('TIPO_PERSONA')
+      .first();
 
     let idNatural: string | null = null;
     let idJuridica: string | null = null;
 
     if (paramGeneralTipoPersona) {
-      const detallesTipoPersona = await indexDB.parametros_detalle
-        .where('id_parametro_general')
-        .equals(paramGeneralTipoPersona.id_parametro_general)
-        .toArray();
+      const detallesTipoPersona =
+        detallesPorGeneral.get(paramGeneralTipoPersona.id_parametro_general) ||
+        [];
 
-      const natural = detallesTipoPersona.find(
-        (pd) => pd.nombre.toUpperCase() === 'NATURAL'
-      );
-      const juridica = detallesTipoPersona.find(
-        (pd) => pd.nombre.toUpperCase() === 'JURÍDICA'
-      );
+      let natural = null;
+      let juridica = null;
+
+      for (const pd of detallesTipoPersona) {
+        // 🔹 Normaliza a mayúsculas sin tildes
+        const nombreUpper = pd.nombre
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toUpperCase();
+
+        if (nombreUpper === 'NATURAL') {
+          natural = pd;
+          if (juridica) break;
+        } else if (nombreUpper === 'JURIDICA') {
+          juridica = pd;
+          if (natural) break;
+        }
+      }
 
       idNatural = natural?.id_parametro_detalle ?? null;
       idJuridica = juridica?.id_parametro_detalle ?? null;
     }
+    let sedes: Sedes[];
+    let aliados: { id_aliado: string; nombre: string }[];
 
-    if (!sedesUsuario || sedesUsuario.length === 0) {
-      sedes = await indexDB.sedes.toArray();
-      aliados = (await indexDB.aliados.toArray()).map((a) => ({
-        id_aliado: a.id_persona,
-        nombre:
-          a.id_tipo_persona === idNatural
-            ? `${a.nombres} ${a.apellidos}`.trim()
-            : a.razon_social,
-      }));
-    } else {
-      sedes = await indexDB.sedes
-        .where('id_sede')
-        .anyOf(sedesUsuario)
-        .toArray();
-      aliados = (
-        await indexDB.aliados.where('id_sede').anyOf(sedesUsuario).toArray()
-      ).map((a) => ({
-        id_aliado: a.id_persona,
-        nombre:
-          a.id_tipo_persona === idNatural
-            ? `${a.nombres} ${a.apellidos}`.trim()
-            : a.razon_social,
-      }));
-    }
+    sedes =
+      !sedesUsuario || sedesUsuario.length === 0
+        ? await indexDB.sedes.toArray()
+        : await indexDB.sedes.where('id_sede').anyOf(sedesUsuario).toArray();
+
+    const aliadosQuery =
+      !sedesUsuario || sedesUsuario.length === 0
+        ? indexDB.aliados.toArray()
+        : indexDB.aliados.where('id_sede').anyOf(sedesUsuario).toArray();
+
+    aliados = (await aliadosQuery).map((a) => ({
+      id_aliado: a.id_persona,
+      nombre:
+        a.id_tipo_persona === idNatural
+          ? `${a.nombres} ${a.apellidos}`.trim()
+          : a.razon_social,
+    }));
 
     // 6. Construir objeto final estilo GraphQL
     return {
@@ -280,15 +333,15 @@ export class ActividadesDataSource {
   }
 
   async getPreCreateActividad(id_usuario: string): Promise<PreCreateActividad> {
-    console.log('Obteniendo datos para PreCreateActividad IndexDB');
+    //console.log('Obteniendo datos para PreCreateActividad IndexDB');
     // 1. Obtener parámetros generales y detalle
     const parametrosGenerales =
       (await indexDB.parametros_generales.toArray()) as Parametros_generales[];
     const parametrosDetalle =
       (await indexDB.parametros_detalle.toArray()) as Parametros_detalle[];
 
-    console.log('PreCreateActividad ParamGenerales:', parametrosGenerales);
-    console.log('PreCreateActividad ParamDetalle:', parametrosDetalle);
+    //console.log('PreCreateActividad ParamGenerales:', parametrosGenerales);
+    //console.log('PreCreateActividad ParamDetalle:', parametrosDetalle);
 
     const getDetalle = (
       nombreGeneral: string,
@@ -312,30 +365,30 @@ export class ActividadesDataSource {
     // 2. Tipos de actividad, responsables y frecuencias, programa
 
     const programas = getDetalle('Programa', 'id_programa', 'nombre');
-    console.log('PreCreateActividad Programas:', programas);
+    //console.log('PreCreateActividad Programas:', programas);
     const programa = programas.filter(
       (a: any) => a.nombre.toUpperCase() === 'CULTIVARTE'
     )[0].id_programa;
-    console.log('PreCreateActividad Programa: ', programa);
+    //console.log('PreCreateActividad Programa: ', programa);
 
     const tiposDeActividad = getDetalle(
       'TIPO_ACTIVIDAD_CULTIVARTE',
       'id_tipo_actividad',
       'nombre'
     );
-    console.log('PreCreateActividad Tipos de Actividad:', tiposDeActividad);
+    //console.log('PreCreateActividad Tipos de Actividad:', tiposDeActividad);
     const responsables = getDetalle(
       'RESPONSABLE_CULTIVARTE',
       'id_responsable',
       'nombre'
     );
-    console.log('PreCreateActividad Responsables:', responsables);
+    //console.log('PreCreateActividad Responsables:', responsables);
     const frecuencias = getDetalle(
       'FRECUENCIA_CULTIVARTE',
       'id_frecuencia',
       'nombre'
     );
-    console.log('PreCreateActividad Frecuencias:', frecuencias);
+    //console.log('PreCreateActividad Frecuencias:', frecuencias);
 
     // 3. nombreDeActividades (array plano con split de valores)
     let nombresDeActividad: { id_tipo_actividad: string; nombre: string }[] =
@@ -343,20 +396,17 @@ export class ActividadesDataSource {
     const generalTipoActividad = parametrosGenerales.find(
       (pg) => pg.nombre_parametro === 'TIPO_ACTIVIDAD_CULTIVARTE'
     );
-    console.log(
-      'PreCreateActividad General Tipo Actividad:',
-      generalTipoActividad
-    );
+    //console.log('PreCreateActividad General Tipo Actividad:',generalTipoActividad );
     if (generalTipoActividad) {
       const detalles = parametrosDetalle.filter(
         (pd) =>
           pd.id_parametro_general === generalTipoActividad.id_parametro_general
       );
-      console.log('Tipos de actividad con valores:', detalles);
+      //console.log('Tipos de actividad con valores:', detalles);
       for (const det of detalles) {
         if (det.valores) {
           const valores = det.valores.split(',').map((v) => v.trim());
-          console.log('Nombres de actividades de ', det.nombre, ' ', valores);
+          //console.log('Nombres de actividades de ', det.nombre, ' ', valores);
           valores.forEach((val) => {
             nombresDeActividad.push({
               id_tipo_actividad: det.id_parametro_detalle,
@@ -366,28 +416,22 @@ export class ActividadesDataSource {
         }
       }
     }
-    console.log(
-      'PreCreateActividad Nombre de Actividades:',
-      nombresDeActividad
-    );
+    //console.log('PreCreateActividad Nombre de Actividades:',nombresDeActividad);
     // 4. Sedes y Aliados filtrados por usuario
     const aliados: { id_aliado: string; nombre: string }[] =
       await this.personasDataSource.getAliados(id_usuario);
-    console.log('PreCreateActividad Aliados:', aliados);
+    //console.log('PreCreateActividad Aliados:', aliados);
     const sedesUsuario = await this.personasSedesDataSource.getSedesByUsuario(
       id_usuario
     );
-    console.log('PreCreateActividad Sedes del usuario:', sedesUsuario);
+    //console.log('PreCreateActividad Sedes del usuario:', sedesUsuario);
     let sedes: { id_sede: string; nombre: string }[];
 
     // -- Buscar id_tipo_persona para "Natural"
     const paramGeneralTipoPersona = parametrosGenerales.find(
       (pg) => pg.nombre_parametro.toUpperCase() === 'TIPO_PERSONA'
     );
-    console.log(
-      'PreCreateActividad Param General Tipo Persona:',
-      paramGeneralTipoPersona
-    );
+    //console.log('PreCreateActividad Param General Tipo Persona:',paramGeneralTipoPersona );
     let idNatural: string | null = null;
     if (paramGeneralTipoPersona) {
       const detallesTipoPersona = parametrosDetalle.filter(
@@ -400,7 +444,7 @@ export class ActividadesDataSource {
       );
       idNatural = natural?.id_parametro_detalle ?? null;
     }
-    console.log('PreCreateActividad Id Natural:', idNatural);
+    //console.log('PreCreateActividad Id Natural:', idNatural);
     if (!sedesUsuario || sedesUsuario.length === 0) {
       sedes = (await indexDB.sedes.toArray()).map((s) => ({
         id_sede: s.id_sede,
@@ -414,7 +458,7 @@ export class ActividadesDataSource {
         nombre: s.nombre,
       }));
     }
-    console.log('PreCreateActividad Sedes:', sedes);
+    //console.log('PreCreateActividad Sedes:', sedes);
     const respuesta: any = {
       id_programa: programa,
       sedes,
@@ -424,21 +468,21 @@ export class ActividadesDataSource {
       nombresDeActividad,
       frecuencias,
     };
-    console.log('PreCreateActividad IndexDB:', respuesta);
+    //console.log('PreCreateActividad IndexDB:', respuesta);
     // 5. Construir objeto final estilo GraphQL
     return respuesta;
   }
 
   async getPreEditActividad(id_actividad: string, id_usuario: string) {
-    console.log('Obteniendo datos para PreEditActividad IndexDB');
+    //console.log('Obteniendo datos para PreEditActividad IndexDB');
     // 1. Obtener parámetros generales y detalle
     const parametrosGenerales =
       (await indexDB.parametros_generales.toArray()) as Parametros_generales[];
     const parametrosDetalle =
       (await indexDB.parametros_detalle.toArray()) as Parametros_detalle[];
 
-    console.log('PreEditActividad ParamGenerales:', parametrosGenerales);
-    console.log('PreEditActividad ParamDetalle:', parametrosDetalle);
+    //console.log('PreEditActividad ParamGenerales:', parametrosGenerales);
+    //console.log('PreEditActividad ParamDetalle:', parametrosDetalle);
 
     const getDetalle = (
       nombreGeneral: string,
@@ -462,30 +506,30 @@ export class ActividadesDataSource {
     // 2. Tipos de actividad, responsables y frecuencias, programa
 
     const programas = getDetalle('Programa', 'id_programa', 'nombre');
-    console.log('PreEditActividad Programas:', programas);
+    //console.log('PreEditActividad Programas:', programas);
     const programa = programas.filter(
       (a: any) => a.nombre.toUpperCase() === 'CULTIVARTE'
     )[0].id_programa;
-    console.log('PreEditActividad Programa: ', programa);
+    //console.log('PreEditActividad Programa: ', programa);
 
     const tiposDeActividad = getDetalle(
       'TIPO_ACTIVIDAD_CULTIVARTE',
       'id_tipo_actividad',
       'nombre'
     );
-    console.log('PreEditActividad Tipos de Actividad:', tiposDeActividad);
+    //console.log('PreEditActividad Tipos de Actividad:', tiposDeActividad);
     const responsables = getDetalle(
       'RESPONSABLE_CULTIVARTE',
       'id_responsable',
       'nombre'
     );
-    console.log('PreEditActividad Responsables:', responsables);
+    //console.log('PreEditActividad Responsables:', responsables);
     const frecuencias = getDetalle(
       'FRECUENCIA_CULTIVARTE',
       'id_frecuencia',
       'nombre'
     );
-    console.log('PreEditActividad Frecuencias:', frecuencias);
+    //console.log('PreEditActividad Frecuencias:', frecuencias);
 
     // 3. nombreDeActividades (array plano con split de valores)
     let nombresDeActividad: { id_tipo_actividad: string; nombre: string }[] =
@@ -493,20 +537,17 @@ export class ActividadesDataSource {
     const generalTipoActividad = parametrosGenerales.find(
       (pg) => pg.nombre_parametro === 'TIPO_ACTIVIDAD_CULTIVARTE'
     );
-    console.log(
-      'PreEditActividad General Tipo Actividad:',
-      generalTipoActividad
-    );
+    //console.log('PreEditActividad General Tipo Actividad:',generalTipoActividad);
     if (generalTipoActividad) {
       const detalles = parametrosDetalle.filter(
         (pd) =>
           pd.id_parametro_general === generalTipoActividad.id_parametro_general
       );
-      console.log('Tipos de actividad con valores:', detalles);
+      //console.log('Tipos de actividad con valores:', detalles);
       for (const det of detalles) {
         if (det.valores) {
           const valores = det.valores.split(',').map((v) => v.trim());
-          console.log('Nombres de actividades de ', det.nombre, ' ', valores);
+          //console.log('Nombres de actividades de ', det.nombre, ' ', valores);
           valores.forEach((val) => {
             nombresDeActividad.push({
               id_tipo_actividad: det.id_parametro_detalle,
@@ -516,25 +557,22 @@ export class ActividadesDataSource {
         }
       }
     }
-    console.log('PreEditActividad Nombre de Actividades:', nombresDeActividad);
+    //console.log('PreEditActividad Nombre de Actividades:', nombresDeActividad);
     // 4. Sedes y Aliados filtrados por usuario
     const aliados: { id_aliado: string; nombre: string }[] =
       await this.personasDataSource.getAliados(id_usuario);
-    console.log('PreEditActividad Aliados:', aliados);
+    //console.log('PreEditActividad Aliados:', aliados);
     const sedesUsuario = await this.personasSedesDataSource.getSedesByUsuario(
       id_usuario
     );
-    console.log('PreEditActividad Sedes del usuario:', sedesUsuario);
+    //console.log('PreEditActividad Sedes del usuario:', sedesUsuario);
     let sedes: { id_sede: string; nombre: string }[];
 
     // -- Buscar id_tipo_persona para "Natural"
     const paramGeneralTipoPersona = parametrosGenerales.find(
       (pg) => pg.nombre_parametro.toUpperCase() === 'TIPO_PERSONA'
     );
-    console.log(
-      'PreEditActividad Param General Tipo Persona:',
-      paramGeneralTipoPersona
-    );
+    //console.log('PreEditActividad Param General Tipo Persona:',paramGeneralTipoPersona);
     let idNatural: string | null = null;
     if (paramGeneralTipoPersona) {
       const detallesTipoPersona = parametrosDetalle.filter(
@@ -547,7 +585,7 @@ export class ActividadesDataSource {
       );
       idNatural = natural?.id_parametro_detalle ?? null;
     }
-    console.log('PreEditActividad Id Natural:', idNatural);
+    //console.log('PreEditActividad Id Natural:', idNatural);
     if (!sedesUsuario || sedesUsuario.length === 0) {
       sedes = (await indexDB.sedes.toArray()).map((s) => ({
         id_sede: s.id_sede,
@@ -561,7 +599,7 @@ export class ActividadesDataSource {
         nombre: s.nombre,
       }));
     }
-    console.log('PreEditActividad Sedes:', sedes);
+    //console.log('PreEditActividad Sedes:', sedes);
 
     const actividad = await this.getById(id_actividad);
     const sesiones = (
@@ -591,7 +629,7 @@ export class ActividadesDataSource {
       actividad,
       sesiones,
     };
-    console.log('PreEditActividad IndexDB:', respuesta);
+    //console.log('PreEditActividad IndexDB:', respuesta);
     // 5. Construir objeto final estilo GraphQL
     return respuesta;
   }
@@ -600,7 +638,7 @@ export class ActividadesDataSource {
     fechaFin: Date,
     idUsuario: string
   ): Promise<any[]> {
-    /*console.log('Buscando sesiones en rango:', {
+    /*//console.log('Buscando sesiones en rango:', {
       fechaInicio,
       fechaFin,
       idUsuario,
@@ -615,10 +653,10 @@ export class ActividadesDataSource {
     if (actividades.length === 0) return [];
 
     const idsActividades = actividades.map((a) => a.id_actividad);
-    console.log('IdsActividades en las sedes del usuario:', idsActividades);
+    //console.log('IdsActividades en las sedes del usuario:', idsActividades);
     const ss = await indexDB.sesiones.toArray();
-    console.log('Todas_las sesiones en IndexDB:', ss);
-    // console.log('Las fechas en timestamp:', {inicio: fechaInicio.getTime(), fin: fechaFin.getTime()    });
+    //console.log('Todas_las sesiones en IndexDB:', ss);
+    // //console.log('Las fechas en timestamp:', {inicio: fechaInicio.getTime(), fin: fechaFin.getTime()    });
     // 3. Filtrar sesiones en esas actividades y en el rango de fechas
     const sesiones = await indexDB.sesiones
       .where('fecha_actividad')
@@ -643,7 +681,7 @@ export class ActividadesDataSource {
       sesion.nombre_actividad = actividad?.nombre_actividad || '';
     }
 
-    console.log('IndexDB Sesiones encontradas:', sesiones);
+    //console.log('IndexDB Sesiones encontradas:', sesiones);
 
     const mappedSesiones = sesiones.map((s: Sesiones) => {
       const fecha = new Date(Number(s.fecha_actividad));
@@ -664,7 +702,7 @@ export class ActividadesDataSource {
         },
       };
     });
-    console.log('Sesiones calendario:', mappedSesiones);
+    //console.log('Sesiones calendario:', mappedSesiones);
     return mappedSesiones;
   }
 
@@ -674,7 +712,7 @@ export class ActividadesDataSource {
     if (!sesion) {
       throw new Error(`Sesión ${id_sesion} no encontrada en IndexedDB`);
     }
-    console.log("Sesion preasistencias:",id_sesion);
+    //console.log('Sesion preasistencias:', id_sesion);
 
     const sedes: Sedes[] = await indexDB.sedes.toArray();
 
@@ -687,14 +725,14 @@ export class ActividadesDataSource {
     }
 
     const paramTipoActividad = await indexDB.parametros_detalle
-    .filter((pd) => pd.id_parametro_detalle === actividad.id_tipo_actividad)
-    .first();
+      .filter((pd) => pd.id_parametro_detalle === actividad.id_tipo_actividad)
+      .first();
 
-  const tipo_actividad: string = paramTipoActividad?.nombre ?? '';
-  console.log("Tipo de Actividad:",tipo_actividad);
+    const tipo_actividad: string = paramTipoActividad?.nombre ?? '';
+    //console.log('Tipo de Actividad:', tipo_actividad);
     const foto =
-    tipo_actividad?.toUpperCase() === 'ACTIVIDAD INSTITUCIONAL' ||
-    tipo_actividad?.toUpperCase() === 'LUDOTECA VIAJERA'
+      tipo_actividad?.toUpperCase() === 'ACTIVIDAD INSTITUCIONAL' ||
+      tipo_actividad?.toUpperCase() === 'LUDOTECA VIAJERA'
         ? 'S'
         : 'N';
 
@@ -718,7 +756,7 @@ export class ActividadesDataSource {
         )
         .first();
 
-    console.log('GrupoBeneficiarioCultivarte:', grupoBeneficiarioCultivarte);
+    //console.log('GrupoBeneficiarioCultivarte:', grupoBeneficiarioCultivarte);
 
     const beneficiariosGruposInteres: Personas_grupo_interes[] | undefined =
       await indexDB.personas_grupo_interes
@@ -728,34 +766,33 @@ export class ActividadesDataSource {
             grupoBeneficiarioCultivarte?.id_parametro_detalle
         )
         .toArray();
-    console.log('benefiricariosGruposInteres:', grupoBeneficiarioCultivarte);
+    //console.log('benefiricariosGruposInteres:', grupoBeneficiarioCultivarte);
     const idsPersonasGrupo: string[] = beneficiariosGruposInteres.map(
       (pgi) => pgi.id_persona
     );
 
     const ps: Personas_sedes[] = await indexDB.personas_sedes.toArray();
-    console.log("Personas sedes:",ps);
+    //console.log('Personas sedes:', ps);
 
-    console.log('idsPersonasGrupo:', idsPersonasGrupo);
+    //console.log('idsPersonasGrupo:', idsPersonasGrupo);
 
     // 2. Traer todas las personas de una sola
     const personasBeneficiariosGrupo: (Personas | undefined)[] =
       await indexDB.personas.bulkGet(idsPersonasGrupo);
 
-    console.log('personasBeneficiariosGrupo:', personasBeneficiariosGrupo);
+    //console.log('personasBeneficiariosGrupo:', personasBeneficiariosGrupo);
 
     const idsBeneficiarios = personasBeneficiariosGrupo
       .filter((p): p is Personas => !!p) // eliminar undefined
       .map((p) => p.id_persona);
 
-    console.log('idsBeneficiarios:', idsBeneficiarios);
-
+    //console.log('idsBeneficiarios:', idsBeneficiarios);
 
     const personasSedes: Personas_sedes[] = await indexDB.personas_sedes
-    .where('id_persona')
-    .anyOf(idsBeneficiarios)
-    .toArray();
-    console.log('personasSedes:', personasSedes);
+      .where('id_persona')
+      .anyOf(idsBeneficiarios)
+      .toArray();
+    //console.log('personasSedes:', personasSedes);
 
     const beneficiarios = personasBeneficiariosGrupo
       .filter((p): p is Personas => !!p)
@@ -769,19 +806,19 @@ export class ActividadesDataSource {
           id_sede: sedePersona?.id_sede ?? '', // 👈 fallback vacío
         };
       });
-    console.log('beneficiarios:', beneficiarios);
+    //console.log('beneficiarios:', beneficiarios);
 
     // 5. Asistentes a sesiones anteriores
 
     const asistentes: Asistencias[] = [];
 
-    console.log("Asistencias totales")
+    //console.log('Asistencias totales');
     const asistenciasSesion = await indexDB.asistencias
       .where('id_sesion')
       .equals(id_sesion)
       .toArray();
 
-      console.log("Asistencias sesion:",asistenciasSesion);
+    //console.log('Asistencias sesion:', asistenciasSesion);
 
     if (asistenciasSesion.length > 0) {
       // Caso 1: la sesión YA tiene asistencias → devolverlas con eliminar = 'N'
@@ -849,7 +886,7 @@ export class ActividadesDataSource {
         eliminar: a.eliminar,
       })),
     };
-    console.log('actividades-datasource:Preasistencia:', preAsistencia);
+    //console.log('actividades-datasource:Preasistencia:', preAsistencia);
     return preAsistencia;
   }
 }

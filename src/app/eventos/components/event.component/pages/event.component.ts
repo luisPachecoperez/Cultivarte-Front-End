@@ -83,10 +83,10 @@ export class EventComponent implements OnInit, OnChanges {
     // Effect: cambios en evento seleccionado
     effect(() => {
       const evento = this.eventoSeleccionado();
-      console.log('📦 evento seleccionado3:', evento);
-      console.log('📦 eventoForm efect:', this.eventoForm);
+      //console.log('📦 evento seleccionado3:', evento);
+      //console.log('📦 eventoForm efect:', this.eventoForm);
       if (evento && this.eventoForm) {
-        console.log('entro');
+        //console.log('entro');
         // 🔴 ANTES: precargábamos directo con lo que venía del calendario (incompleto)
         // ✅ AHORA: si viene id_actividad, consultamos al "backend" mock y luego precargamos
         if (evento.id_actividad) {
@@ -216,7 +216,7 @@ export class EventComponent implements OnInit, OnChanges {
         ],
         sesiones: this.fb.array([]),
       });
-      console.log('📦 eventoForm ngOnInit:', this.eventoForm);
+      //console.log('📦 eventoForm ngOnInit:', this.eventoForm);
 
       // 🔹 Cargar datos desde el backend simulado
       this.cargarConfiguracionFormulario();
@@ -228,7 +228,7 @@ export class EventComponent implements OnInit, OnChanges {
 
       // Pre-cargar si es edición (si llega algo ya en el primer render)
       const evento = this.eventoSeleccionado();
-      console.log('📦 evento seleccionado:', evento);
+      //console.log('📦 evento seleccionado:', evento);
       if (evento) {
         this.eventoParaEditar = evento;
         if (evento.id_actividad) {
@@ -277,13 +277,13 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   private filtrarEventosPorTipo(tipoId: string | null | undefined): void {
-    console.log('📦 tipoId filtrarEventosPorTipo:', tipoId);
+    //console.log('📦 tipoId filtrarEventosPorTipo:', tipoId);
     if (!tipoId) {
       this.eventosFiltrados = [];
       return;
     }
     // nombreDeEventos viene del mock; filtramos por id_parametro_detalle (padre)
-    console.log('📦 nombreDeEventos:', this.nombreDeEventos);
+    //console.log('📦 nombreDeEventos:', this.nombreDeEventos);
     this.eventosFiltrados = (this.nombreDeEventos || []).filter(
       (n) => n.id_tipo_actividad === tipoId
     );
@@ -292,7 +292,7 @@ export class EventComponent implements OnInit, OnChanges {
   // 🔹 Lógica para saber si nombreEvento es select o input
   esListaNombreEvento(): boolean {
     const tipoId = this.eventoForm.get('tipoEvento')?.value;
-    // console.log('📦 tipoId:', tipoId);
+    // //console.log('📦 tipoId:', tipoId);
     const tipo = this.tiposDeActividad
       .find((t) => t.id_tipo_actividad === tipoId)
       ?.nombre.toUpperCase();
@@ -307,7 +307,7 @@ export class EventComponent implements OnInit, OnChanges {
 
     // 👇 Si ya vienen parámetros desde la consulta de edición, úsalos
     if (parametros) {
-      console.log('📦 viene con parametros:', parametros);
+      //console.log('📦 viene con parametros:', parametros);
       this.sedes = parametros.sedes || [];
       this.tiposDeActividad = parametros.tiposDeActividad || [];
       this.aliados = parametros.aliados || [];
@@ -325,7 +325,7 @@ export class EventComponent implements OnInit, OnChanges {
       .subscribe((data) => {
         console.log('📦 datos de configuración:', data);
         this.id_programa = data.id_programa;
-        console.log('📦 id_programa:', this.id_programa);
+        //console.log('📦 id_programa:', this.id_programa);
         this.eventoForm.get('id_programa')?.setValue(this.id_programa);
         this.sedes = data.sedes;
         this.tiposDeActividad = data.tiposDeActividad;
@@ -333,7 +333,7 @@ export class EventComponent implements OnInit, OnChanges {
         this.responsables = data.responsables;
         this.nombreDeEventos = data.nombresDeActividad;
         this.frecuencias = data.frecuencias;
-        console.log('📦 frecuencias:', this.frecuencias);
+        //console.log('📦 frecuencias:', this.frecuencias);
         // actualizar eventos filtrados si ya hay un tipo seleccionado
 
         // ✅ Lógica de sede
@@ -343,25 +343,14 @@ export class EventComponent implements OnInit, OnChanges {
             .get('sede')
             ?.setValue(this.sedes[0].id_sede, { emitEvent: false });
           this.eventoForm.get('sede')?.disable({ emitEvent: false });
-          console.log(
-            '✅ Sede única asignada:',
-            this.eventoForm.get('sede')?.value
-          );
+          //console.log('✅ Sede única asignada:',this.eventoForm.get('sede')?.value);
         } else {
           this.eventoForm.get('sede')?.enable({ emitEvent: false });
         }
 
         this.filtrarEventosPorTipo(this.eventoForm?.get('tipoEvento')?.value);
       });
-    console.log(
-      '📦 configuración cargada:',
-      this.sedes,
-      this.tiposDeActividad,
-      this.aliados,
-      this.responsables,
-      this.nombreDeEventos,
-      this.frecuencias
-    );
+    //console.log('📦 configuración cargada:',this.sedes,this.tiposDeActividad,this.aliados,this.responsables,this.nombreDeEventos,this.frecuencias);
   }
 
   id_programa: string | null = null;
@@ -378,10 +367,10 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   onAccionSeleccionado(accion: 'editar' | 'asistencia') {
-    console.log('🎯 Accion seleccionada:', accion);
+    //console.log('🎯 Accion seleccionada:', accion);
     if (accion === 'editar') {
       this.eventoParaEditar = this.eventoSeleccionado;
-      console.log('Editar evento', this.eventoParaEditar);
+      //console.log('Editar evento', this.eventoParaEditar);
       if (this.eventoParaEditar?.id_actividad) {
         this.cargarEdicionDesdeBackend(this.eventoParaEditar.id_actividad);
       } else {
@@ -390,7 +379,7 @@ export class EventComponent implements OnInit, OnChanges {
     }
 
     if (accion === 'asistencia') {
-      console.log('Tomar asistencia aún no implementado');
+      //console.log('Tomar asistencia aún no implementado');
     }
 
     this.limpiarEventoSeleccionado.emit();
@@ -403,7 +392,7 @@ export class EventComponent implements OnInit, OnChanges {
       this.eventService
       .obtenerEventoPorId(id_actividad)
       .then((resp) => {
-        console.log('📦 respuesta del backend:', resp);
+        //console.log('📦 respuesta del backend:', resp);
         this.cargarConfiguracionFormulario(resp);
 
         const eventoAdaptado = {
@@ -429,7 +418,7 @@ export class EventComponent implements OnInit, OnChanges {
           })),
         };
 
-        console.log('✅ Evento adaptado:', eventoAdaptado);
+        //console.log('✅ Evento adaptado:', eventoAdaptado);
         this.eventoParaEditar = eventoAdaptado;
 
         // 3) pintar formulario
@@ -454,9 +443,9 @@ export class EventComponent implements OnInit, OnChanges {
   // ✅ Ajustado para aceptar tanto campos "id_*" del backend como los antiguos del mock
   precargarFormulario(evento: any): void {
 
-    console.log('📦 evento para precargar:', evento);
+    //console.log('📦 evento para precargar:', evento);
     if (!this.eventoForm) return;
-    console.log('📦 DESPUES DEL IF eventoForm:', this.eventoForm);
+    //console.log('📦 DESPUES DEL IF eventoForm:', this.eventoForm);
     this.eventoForm.patchValue({
       institucional:
         typeof evento.institucional === 'string'
@@ -488,7 +477,7 @@ export class EventComponent implements OnInit, OnChanges {
     }
 
     this.sesiones.clear();
-    console.log('Justo antes de cargar las sesiones:', evento.sesiones);
+    //console.log('Justo antes de cargar las sesiones:', evento.sesiones);
     if (evento.sesiones && Array.isArray(evento.sesiones)) {
       evento.sesiones.forEach((s: any) => {
         this.sesiones.push(
@@ -503,11 +492,11 @@ export class EventComponent implements OnInit, OnChanges {
         );
       });
     }
-    console.log('Justo despues de cargar las sesiones:', this.sesiones);
+    //console.log('Justo despues de cargar las sesiones:', this.sesiones);
   }
 
   guardarEvento(): void {
-    console.log('📦 eventoFormguardar:', this.eventoForm);
+    //console.log('📦 eventoFormguardar:', this.eventoForm);
     if (this.eventoForm.invalid) {
       this.eventoForm.markAllAsTouched();
       this.snack.error(
@@ -515,8 +504,8 @@ export class EventComponent implements OnInit, OnChanges {
       );
       return;
     }
-    console.log('📦 esta editando:', this.estaEditando);
-    console.log('📦 evento para editar:', this.eventoParaEditar?.id);
+    //console.log('📦 esta editando:', this.estaEditando);
+    //console.log('📦 evento para editar:', this.eventoParaEditar?.id);
 
     if (this.estaEditando && this.eventoParaEditar?.id) {
       this.actualizarSesion();
@@ -529,7 +518,7 @@ export class EventComponent implements OnInit, OnChanges {
     const evento = this.eventoForm.getRawValue();
     let sesiones: any[] = [];
 
-    console.log('📋 Evento base:', evento);
+    //console.log('📋 Evento base:', evento);
 
     const fechaBase = new Date(evento.fecha);
     const finMes = new Date(
@@ -539,14 +528,14 @@ export class EventComponent implements OnInit, OnChanges {
     );
     const [year, month, day] = evento.fecha.split('-').map(Number);
     const actual = new Date(year, month - 1, day);
-    console.log('📋 actual:', actual);
+    //console.log('📋 actual:', actual);
 
     const nombreFrecuencia =
       this.frecuencias.find((f) => f.id_frecuencia === evento.frecuencia)
         ?.nombre || '';
 
     // Frecuencias
-    console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
+    //console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
     if (nombreFrecuencia.toLowerCase() === 'a diario') {
       while (actual <= finMes) {
         if (actual.getDay() >= 1 && actual.getDay() <= 6) {
@@ -580,9 +569,9 @@ export class EventComponent implements OnInit, OnChanges {
     }
 
     if (nombreFrecuencia.toLowerCase() === 'semanalmente') {
-      console.log('📋 entro a semanalmente:');
+      //console.log('📋 entro a semanalmente:');
       while (actual <= finMes) {
-        console.log('📋 fecha formateada:', this.formatearFechaLocal(actual));
+        //console.log('📋 fecha formateada:', this.formatearFechaLocal(actual));
         sesiones.push(
           this.crearSesion(
             this.formatearFechaLocal(actual),
@@ -593,17 +582,17 @@ export class EventComponent implements OnInit, OnChanges {
         );
 
         actual.setDate(actual.getDate() + 7);
-        console.log('📋 fecha actual:', actual);
-        console.log('📋 fecha fin de mes:', finMes);
+        //console.log('📋 fecha actual:', actual);
+        //console.log('📋 fecha fin de mes:', finMes);
       }
     }
 
     if (nombreFrecuencia.toLowerCase() === 'mensualmente') {
       for (let mes = fechaBase.getMonth(); mes <= 11; mes++) {
         const [year, month, day] = evento.fecha.split('-').map(Number);
-        console.log('📋 dia:', day);
-        console.log('📋 mes:', month);
-        console.log('📋 año:', year);
+        //console.log('📋 dia:', day);
+        //console.log('📋 mes:', month);
+        //console.log('📋 año:', year);
         const nuevaFecha = new Date(year, month - 1, day); // clonamos la fecha base
         nuevaFecha.setMonth(mes); // solo cambiamos el mes
         sesiones.push(
@@ -633,10 +622,10 @@ export class EventComponent implements OnInit, OnChanges {
       // }
     });
 
-    console.log('📦 Sesiones creadas:', sesiones);
+    //console.log('📦 Sesiones creadas:', sesiones);
 
     // 📤 Construir payload para el back
-    console.log('📦 Evento basessssss:', evento);
+    //console.log('📦 Evento basessssss:', evento);
     // traducir nombreEvento si vino como id desde la lista
     let nombreActividad = evento.nombreEvento;
 
@@ -670,17 +659,17 @@ export class EventComponent implements OnInit, OnChanges {
       fecha_actividad: evento.fecha,
       hora_inicio: evento.horaInicio,
       hora_fin: evento.horaFin,
-      id_usuario: '550e8400-e29b-41d4-a716-446655440006',
+      id_usuario: this.authService.getUserUuid(),
     };
 
-    console.log('📤 Enviando payload al back:', payload);
+    //console.log('📤 Enviando payload al back:', payload);
 
     this.eventService
       .crearEvento(payload, sesiones)
       .then((resp) => {
-        console.log('📥 Respuesta del back:', resp);
+        //console.log('📥 Respuesta del back:', resp);
         if (resp.exitoso === 'S') {
-          console.log('✅ Evento creado correctamente');
+          //console.log('✅ Evento creado correctamente');
           this.snack.success('Evento creado correctamente');
           this.eventoGuardado.emit({
             sesiones,
@@ -721,13 +710,13 @@ export class EventComponent implements OnInit, OnChanges {
       })),
     };
 
-    console.log('📦 Payload final a enviar al back:', payloadFinal);
+    //console.log('📦 Payload final a enviar al back:', payloadFinal);
 
     try {
       const resp = await this.gridSesionesService.guardarCambiosSesiones(
         payloadFinal
       );
-      console.log('✅ Respuesta del back GRIID:', resp);
+      //console.log('✅ Respuesta del back GRIID:', resp);
       if (resp.exitoso === 'S') {
         this.snack.success(resp.mensaje ?? 'Sesiones actualizadas');
         this.eventoEditado.emit(payloadFinal);
@@ -770,7 +759,7 @@ export class EventComponent implements OnInit, OnChanges {
       id_creado_por: this.authService.getUserUuid(),
     };
 
-    console.log(`🆕 Crear sesión `, sesion);
+    //console.log(`🆕 Crear sesión `, sesion);
     return sesion;
   }
 
@@ -799,10 +788,7 @@ export class EventComponent implements OnInit, OnChanges {
     modificados: any[];
     eliminados: any[];
   }) {
-    console.log(
-      '🧩 Cambios recibidos del grid (snapshot actualizado):',
-      payload
-    );
+    //console.log('🧩 Cambios recibidos del grid (snapshot actualizado):',payload);
     this.cambiosSesionesSnapshot = payload;
   }
 

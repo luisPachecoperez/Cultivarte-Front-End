@@ -62,14 +62,14 @@ export class GridSesionesService {
         eliminados: eliminados,
       },
     };
-    console.log('📤 llamado a update de sesiones al back:', payload);
+    //console.log('📤 llamado a update de sesiones al back:', payload);
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
-          console.log('ping en update sesiones:', ping);
+          //console.log('ping en update sesiones:', ping);
 
           if (ping === 'pong') {
-            console.log('Update sesiones backend activo');
+            //console.log('Update sesiones backend activo');
 
             return this.graphQLService
               .mutation<{ updateSesiones: GraphQLResponse<any> }>(
@@ -78,7 +78,7 @@ export class GridSesionesService {
               )
               .pipe(
                 map((res) => {
-                  console.log('✅ updateSesiones OK:', res);
+                  //console.log('✅ updateSesiones OK:', res);
 
                   // Nuevos -> synced
                   nuevos.forEach((s: Sesiones) => {
@@ -134,7 +134,7 @@ export class GridSesionesService {
                 })
               );
           } else {
-            console.log('Update sesiones backend inactivo');
+            //console.log('Update sesiones backend inactivo');
 
             // Nuevos -> pending
             nuevos.forEach((s: Sesiones) => {

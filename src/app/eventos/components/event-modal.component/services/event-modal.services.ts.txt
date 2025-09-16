@@ -26,14 +26,14 @@ private graphQLService = inject(GraphQLService);
    * 🗑️ Elimina un evento (solo si asistentes_evento == 0)
    */
   eliminarEvento(id_actividad: string) {
-    console.log('📤 Enviando mutación de eliminar evento al backend:', id_actividad);
+    //console.log('📤 Enviando mutación de eliminar evento al backend:', id_actividad);
 
     return this.graphQLService.mutation<{ deleteActividad: { exitoso: string; mensaje: string } }>(
       this.DELETE_ACTIVIDAD,
       { id_actividad }
     ).pipe(
       map(resp => resp.deleteActividad), // 👈 devolvemos directamente el objeto { exitoso, mensaje }
-      tap(resp => console.log('📥 Respuesta backend:', resp)),
+      tap(resp => //console.log('📥 Respuesta backend:', resp)),
       catchError(err => {
         console.error('❌ Error al eliminar evento:', err);
         return throwError(() => ({

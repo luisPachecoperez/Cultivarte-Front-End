@@ -92,10 +92,10 @@ private graphQLService= inject(GraphQLService);
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
-          console.log('ping en update sesiones:', ping);
+          //console.log('ping en update sesiones:', ping);
 
           if (ping === 'pong') {
-            console.log('Update sesiones backend activo');
+            //console.log('Update sesiones backend activo');
 
             return this.graphQLService
               .query<{ getPreAsistencia: any }>(
@@ -105,7 +105,7 @@ private graphQLService= inject(GraphQLService);
               .pipe(
                 map((res) => {
                   const preAsistencia = res.getPreAsistencia;
-                  console.log('👉 preAsistencia desde backend:', preAsistencia);
+                  //console.log('👉 preAsistencia desde backend:', preAsistencia);
                   return preAsistencia;
                 })
               );
@@ -113,11 +113,11 @@ private graphQLService= inject(GraphQLService);
           } else {
             return from(
               this.actividadesDataSource.getPreAsistencia(id_sesion)
-            ).pipe(
+            )/*.pipe(
               tap((preAsistencia) =>
                 console.log('👉 preAsistencia calculada (offline):', preAsistencia)
               )
-            );
+            )*/;
           }
         })
       )
@@ -129,10 +129,10 @@ private graphQLService= inject(GraphQLService);
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
-          console.log('ping en update asistencias:', ping);
+          //console.log('ping en update asistencias:', ping);
 
           if (ping === 'pong') {
-            console.log('✅ Backend activo: enviando asistencias');
+            //console.log('✅ Backend activo: enviando asistencias');
 
             return this.graphQLService
               .mutation<{ updateAsistencias: { exitoso: string; mensaje: string } }>(
@@ -142,7 +142,7 @@ private graphQLService= inject(GraphQLService);
               .pipe(
                 map((res) => {
                   const result = res.updateAsistencias;
-                  console.log('✅ updateAsistencias OK:', result);
+                  //console.log('✅ updateAsistencias OK:', result);
 
                   // Nuevas -> synced
                   input.nuevos.forEach((a: Asistencias) => {
@@ -173,7 +173,7 @@ private graphQLService= inject(GraphQLService);
               );
 
           } else {
-            console.log('⚠️ Backend inactivo: guardando offline');
+            //console.log('⚠️ Backend inactivo: guardando offline');
 
             // Nuevas -> pending
             input.nuevos.forEach((a: Asistencias) => {
@@ -195,7 +195,7 @@ private graphQLService= inject(GraphQLService);
   }
 
   async guardarAsistenciaFotografica(input: any): Promise<GraphQLResponse> {
-    console.log("Evidencia fotográfica:", input);
+    //console.log("Evidencia fotográfica:", input);
 
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
@@ -222,7 +222,7 @@ private graphQLService= inject(GraphQLService);
                         })
                       ).pipe(
                         map(() => {
-                          console.log('📥 Sesión actualizada en IndexedDB (synced)');
+                          //console.log('📥 Sesión actualizada en IndexedDB (synced)');
                           return res.updateAsistencias;
                         })
                       )
@@ -245,7 +245,7 @@ private graphQLService= inject(GraphQLService);
                   })
                 ).pipe(
                   map(() => {
-                    console.log('⚠️ Asistencia marcada como pendiente');
+                    //console.log('⚠️ Asistencia marcada como pendiente');
                     return {
                       exitoso: 'S',
                       mensaje: 'Asistencia actualizada correctamente (offline)',

@@ -165,7 +165,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
   async obtenerEventoPorId(id_actividad: string): Promise<any> {
     this.loadingService.show(); // 🔄 mostrar
     const id_usuario = this.authService.getUserUuid();
-    console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
+    //console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
@@ -177,7 +177,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
               })
               .pipe(
                 tap((res) => {
-                  console.log('📡 Respuesta cruda de GraphQL:', res);
+                  //console.log('📡 Respuesta cruda de GraphQL:', res);
                   this.loadingService.hide();
                 }),
                 map((res) => res.getPreEditActividad),
@@ -211,10 +211,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
 
   obtenerConfiguracionEvento(id_usuario: string): Observable<any> {
     this.loadingService.show(); // 🔄 mostrar
-    console.log(
-      '📡 Solicitando configuración de evento para usuario:',
-      id_usuario
-    );
+    //console.log('📡 Solicitando configuración de evento para usuario:',id_usuario);
     return this.loadIndexDBService.ping().pipe(
       switchMap((ping) => {
         if (ping === 'pong') {
@@ -226,8 +223,9 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
             .pipe(
               map((res) => {
                 this.loadingService.hide(); // 🔄 ocultar
-
+                console.log('📡 Respuesta cruda de GraphQL:', res);
                 res.getPreCreateActividad;
+                return res.getPreCreateActividad;
               }),
               catchError((err) => {
                 console.error(
@@ -298,7 +296,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
     delete (payloadBackend as any).deleted;
     delete (payloadBackend as any).plazo_asistencia;
 
-    console.log('📤 Enviando actividad al back:', payloadBackend);
+    //console.log('📤 Enviando actividad al back:', payloadBackend);
 
     // Ajustar las sesiones
     sesiones.forEach((s: Sesiones) => {
@@ -312,7 +310,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
           if (ping === 'pong') {
-            console.log('✅ Crear evento Backend activo');
+            //console.log('✅ Crear evento Backend activo');
             return this.graphql
               .mutation<{ createActividad: GraphQLResponse<void> }>(
                 this.CREATE_ACTIVIDAD,
@@ -321,10 +319,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
               .pipe(
                 switchMap((res) => {
                   const actividadResponse = res.createActividad;
-                  console.log(
-                    'Despues de llamado a backend de actividad: ',
-                    actividadResponse
-                  );
+                  //console.log('Despues de llamado a backend de actividad: ',actividadResponse);
                   // guardar actividad en indexdb
 
                   if (actividadResponse?.exitoso === 'S') {
@@ -382,7 +377,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
                 })
               );
           } else {
-            console.log('Crear evento backend inactivo');
+            //console.log('Crear evento backend inactivo');
             // Guardar en IndexDB como pendiente
             actividadPayload.syncStatus = 'pending-create';
             this.actividadesDataSource.create(actividadPayload);

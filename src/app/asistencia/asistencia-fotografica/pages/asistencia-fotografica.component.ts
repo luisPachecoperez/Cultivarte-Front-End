@@ -68,7 +68,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
     this.asistenciaService
   .obtenerDetalleAsistencia(ev.id_sesion)
   .then((data: PreAsistencia) => {
-    console.log('📥 Detalle asistencia fotográfica:', data);
+    //console.log('📥 Detalle asistencia fotográfica:', data);
 
     // ✅ Guardamos sedes del backend/mock
     this.sedes = data.sedes || [];
@@ -139,12 +139,12 @@ export class AsistenciaFotograficaComponent implements OnInit {
       nuevos: [] as never[]
     };
 
-    console.log('📤 Enviando asistencia fotográfica (payload JSON):', payload);
+    //console.log('📤 Enviando asistencia fotográfica (payload JSON):', payload);
 
     try {
       const resp = await this.asistenciaService.guardarAsistenciaFotografica(payload);
 
-      console.log('✅ Respuesta del back (fotográfica):', resp);
+      //console.log('✅ Respuesta del back (fotográfica):', resp);
 
       if (resp.exitoso === 'S') {
         this.asistenciaGuardada.emit(payload); // avisamos al padre que se guardó

@@ -45,7 +45,7 @@ export class SnackbarYesNoService {
       horizontalPosition: 'center',
       verticalPosition: 'top',
     });
-    console.log("Presiono algo");
+    //console.log("Presiono algo");
     return this.confirmResult$.asObservable().pipe(take(1));
   }
 

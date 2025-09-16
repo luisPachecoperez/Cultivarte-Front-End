@@ -44,7 +44,7 @@ private loadIndexDBService= inject( LoadIndexDBService);
      this.loadIndexDBService.ping().pipe(
       switchMap((ping) => {
         if (ping === 'pong') {
-          console.log('✅ Backend activo');
+          //console.log('✅ Backend activo');
           return this.graphqlService
             .query<{ consultarFechaCalendario: Sesiones[] }>(this.GET_SESIONES, {
               input: {
@@ -55,7 +55,7 @@ private loadIndexDBService= inject( LoadIndexDBService);
             })
             .pipe(
               tap((response) => {
-                console.log('Obtuvo sesiones del servicio del graphql', response);
+                //console.log('Obtuvo sesiones del servicio del graphql', response);
               }),
               map((response) =>
                 (response?.consultarFechaCalendario || []).map((s) => ({
@@ -78,7 +78,7 @@ private loadIndexDBService= inject( LoadIndexDBService);
               })
             );
         } else {
-          console.log('❌ Backend inactivo → usando IndexedDB');
+          //console.log('❌ Backend inactivo → usando IndexedDB');
           return from(
             this.actividadesDataSource.consultarFechaCalendario(
               new Date(fechaInicio),

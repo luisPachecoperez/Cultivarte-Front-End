@@ -79,7 +79,7 @@ export class LoadIndexDBService {
         return res.ping.ping;
       }),
       catchError((err) => {
-        console.error('❌ Error en ping:', err);
+        //console.error('❌ Error en ping:', err);
         return of('error');
       })
     );
@@ -204,7 +204,7 @@ export class LoadIndexDBService {
 
     await this.personasDataSource.bulkAdd(personas);
 
-    console.log(`✅ Personas cargadas: ${personas.length}`);
+    //console.log(`✅ Personas cargadas: ${personas.length}`);
   }
 
   // ==========================
@@ -291,7 +291,7 @@ export class LoadIndexDBService {
     const response = await firstValueFrom(
       this.graphql.query<{ getPersonasSedes: Personas_sedes[] }>(query)
     );
-    console.log('Response getPersonasSedes:', response);
+    //console.log('Response getPersonasSedes:', response);
 
     const data =
       response?.getPersonasSedes?.map((p) => ({
@@ -300,7 +300,7 @@ export class LoadIndexDBService {
       })) ?? [];
 
     await this.personas_sedesDataSource.bulkAdd(data);
-    console.log(`✅ PersonasSedes cargadas: ${data.length}`);
+    //console.log(`✅ PersonasSedes cargadas: ${data.length}`);
   }
 
   async loadPersonaProgramas(): Promise<void> {
@@ -466,7 +466,7 @@ export class LoadIndexDBService {
   // SESIONES POR USUARIO
   // ==========================
   async loadSesionesSede(id_usuario: string): Promise<void> {
-    console.log("Cargando SesionesSedes");
+    //console.log("Cargando SesionesSedes");
     const query = `
     query ($id_usuario: ID!, $fecha_inicio: String!, $fecha_fin: String!) {
       getSesionesSedes(
@@ -499,7 +499,7 @@ export class LoadIndexDBService {
     const response = await firstValueFrom(
       this.graphql.query<{ getSesionesSedes: Sesiones[] }>(query, variables)
     );
-    console.log('Respuesta getSesionesSedes:', response);
+    //console.log('Respuesta getSesionesSedes:', response);
 
     const sesiones =
       response?.getSesionesSedes?.map((s) => ({
@@ -507,7 +507,7 @@ export class LoadIndexDBService {
         deleted: false,
         syncStatus: 'synced',
       })) ?? [];
-    console.log('Sesiones cargadas a indexdb:', sesiones);
+    //console.log('Sesiones cargadas a indexdb:', sesiones);
     await this.sesionesDataSource.bulkAdd(sesiones);
     //console.log(`✅ Sesiones cargadas: ${sesiones.length}`);
   }
@@ -516,7 +516,7 @@ export class LoadIndexDBService {
   // ORQUESTADOR DE CARGA
   // ==========================
   async cargarDatosIniciales(id_usuario: string): Promise<void> {
-    console.log("Inicia carga de datos iniciales");
+    //console.log("Inicia carga de datos iniciales");
     from(this.ping()).pipe(
       // solo seguimos si devuelve "pong"
       filter(p => p.trim() === "pong"),

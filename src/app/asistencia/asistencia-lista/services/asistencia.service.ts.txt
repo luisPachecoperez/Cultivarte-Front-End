@@ -103,7 +103,7 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
   // 🔹 Guardar asistencia fotográfica
   guardarAsistenciaFotografica(input: AsistenciaInput):  Observable<{ exitoso: string; mensaje: string }>  {
 
-    console.log('📤 Enviando asistencia EN EL SERVICES:', input);
+    //console.log('📤 Enviando asistencia EN EL SERVICES:', input);
 
 
     return this.http.post<{ data: { updateAsistencias: AsistenciaResponse } }>(this.apiUrl, {

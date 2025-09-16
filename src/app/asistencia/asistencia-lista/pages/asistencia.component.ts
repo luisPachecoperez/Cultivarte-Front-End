@@ -84,7 +84,7 @@ export class AsistenciaComponent implements OnInit {
     this.asistenciaService
       .obtenerDetalleAsistencia(ev.id_sesion)
       .then((data: PreAsistencia) => {
-        console.log('📥 Llega desde Promise:', data);
+        //console.log('📥 Llega desde Promise:', data);
 
         this.beneficiariosBD = data.beneficiarios || [];
         this.asistentes = (data.asistentes_sesiones || []).map((asis: any) => {
@@ -136,7 +136,7 @@ export class AsistenciaComponent implements OnInit {
     if (
       !this.asistentes.find((a) => a.id_persona === beneficiario.id_persona)
     ) {
-      console.log('Agregar asistente:', beneficiario);
+      //console.log('Agregar asistente:', beneficiario);
 
       // al guardarlo en asistentes debemos "convertirlo" a Asistente
       const nuevoAsistente: Asistente = {
@@ -183,13 +183,13 @@ export class AsistenciaComponent implements OnInit {
       })),
     };
 
-    console.log('📤 Enviando asistencia normal:', payload);
+    //console.log('📤 Enviando asistencia normal:', payload);
 
     // 🔹 Aquí conectamos con el servicio
     try {
       const resp = await this.asistenciaService.guardarAsistencia(payload);
 
-      console.log('✅ Respuesta del back:', resp);
+      //console.log('✅ Respuesta del back:', resp);
 
       if (resp.exitoso === 'S') {
         // éxito → cerramos modal

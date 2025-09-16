@@ -44,7 +44,7 @@ export class GridSesionesService {
     modificados: SesionDTO[];
     nuevos: SesionDTO[];
   }): Promise<GraphQLResponse<{ exitoso: string; mensaje?: string }>> {
-    console.log('📤 Payload de sesiones al back:', payload);
+    //console.log('📤 Payload de sesiones al back:', payload);
 
     const { nuevos, modificados, eliminados } = payload;
 

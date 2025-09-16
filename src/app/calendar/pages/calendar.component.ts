@@ -169,10 +169,7 @@ export class CalendarComponent {
       this.ultimaFechaInicio = dateInfo.start.toISOString().split('T')[0];
       this.ultimaFechaFin = dateInfo.end.toISOString().split('T')[0];
 
-      console.log('📅 Vista del calendario:', {
-        fechaInicio: this.ultimaFechaInicio,
-        fechaFin: this.ultimaFechaFin,
-      });
+      //console.log('📅 Vista del calendario:', {fechaInicio: this.ultimaFechaInicio,fechaFin: this.ultimaFechaFin,});
 
       this.cargarSesiones();
     } finally {
@@ -196,34 +193,34 @@ export class CalendarComponent {
         };
       })
       .catch((err) => {
-        console.log('No fue posible cargar las sesiones');
+        //console.log('No fue posible cargar las sesiones');
       });
   }
 
   handleDateClick(arg: DateClickMinimal) {
-    console.log('📌 Click en fecha:', arg.dateStr);
+    //console.log('📌 Click en fecha:', arg.dateStr);
     this.fechaSeleccionada = arg.dateStr;
     this.eventoSeleccionado = null;
     this.mostrarFormulario = true;
   }
 
   handleEventClick(arg: EventClickArg): void {
-    console.log('🟢 Click en evento del calendario');
-    console.log('arg.event html', arg.event);
+    //console.log('🟢 Click en evento del calendario');
+    //console.log('arg.event html', arg.event);
 
     const event = arg.event;
     // startStr y endStr son strings; preferibles a event.start (Date | null)
     const startStr = event.startStr ?? '';
     const endStr = event.endStr ?? '';
     const nombreSesion = event.title ?? '';
-    console.log('nombreSesion', nombreSesion);
-    console.log('calendar options', this.calendarOptions.events);
+    //console.log('nombreSesion', nombreSesion);
+    //console.log('calendar options', this.calendarOptions.events);
 
     const eventosRelacionados = (
       this.calendarOptions.events as EventoCalendario[]
     ).filter((e) => e.title === nombreSesion);
 
-    console.log('eventosRelacionados', eventosRelacionados);
+    //console.log('eventosRelacionados', eventosRelacionados);
 
     const sesiones: SesionCorta[] = eventosRelacionados.map((e) => {
       // e.start tiene formato ISO 'YYYY-MM-DDTHH:mm' (tal como lo mapeamos en el service)
@@ -236,7 +233,7 @@ export class CalendarComponent {
       };
     });
 
-    console.log('arg.event', arg.event);
+    //console.log('arg.event', arg.event);
     // si el evento puntual tiene extendedProps.desde/hasta (strings 'YYYY-MM-DD HH:mm:ss'):
     const ext = event.extendedProps as Partial<
       EventoCalendario['extendedProps']
@@ -259,10 +256,7 @@ export class CalendarComponent {
       horaFin: (horaFin ?? sesiones[0]?.horaFin ?? '') as string,
     };
 
-    console.log(
-      '🎯 Evento seleccionado para acciones:',
-      this.eventoSeleccionado
-    );
+    //console.log('🎯 Evento seleccionado para acciones:',this.eventoSeleccionado);
     this.mostrarModalAcciones = true;
   }
 
@@ -285,7 +279,7 @@ export class CalendarComponent {
       };
     });
 
-    console.log('🎯 Evento seleccionado para edición:', eventoCalendario.event);
+    //console.log('🎯 Evento seleccionado para edición:', eventoCalendario.event);
 
     this.eventoSeleccionado = {
       id_actividad: eventoCalendario.event.extendedProps.id_actividad ?? '',
@@ -304,7 +298,7 @@ export class CalendarComponent {
   }
 
   agregarOActualizarEvento(evento: EventoActualizarPayload): void {
-    console.log('agregar o actualizar:');
+    //console.log('agregar o actualizar:');
     const { sesiones, editarUna, idSesionOriginal } = evento;
 
     if (!Array.isArray(sesiones) || sesiones.length === 0) {
@@ -313,10 +307,10 @@ export class CalendarComponent {
     }
 
     const nombreSesion = sesiones[0].nombreSesion;
-    console.log('🔁 Procesando sesiones para:', nombreSesion);
+    //console.log('🔁 Procesando sesiones para:', nombreSesion);
 
     if (editarUna && idSesionOriginal) {
-      console.log('🛠 Editando solo una sesión:', idSesionOriginal);
+      //console.log('🛠 Editando solo una sesión:', idSesionOriginal);
 
       this.eventosCalendario = this.eventosCalendario.filter(
         (ev) => ev.id !== idSesionOriginal
@@ -325,14 +319,14 @@ export class CalendarComponent {
         this.calendarOptions.events as EventoCalendario[]
       ).filter((ev) => ev.id !== idSesionOriginal);
 
-      console.log('🗑️ Eliminada sesión con ID:', idSesionOriginal);
+      //console.log('🗑️ Eliminada sesión con ID:', idSesionOriginal);
     } else if (!editarUna) {
-      console.log('🧹 Reemplazando todas las sesiones de:', nombreSesion);
+      //console.log('🧹 Reemplazando todas las sesiones de:', nombreSesion);
 
       const eliminadas = this.eventosCalendario.filter(
         (ev) => ev.title === nombreSesion
       );
-      eliminadas.forEach((ev) => console.log('🗑️ Eliminada:', ev.id));
+      //eliminadas.forEach((ev) => //console.log('🗑️ Eliminada:', ev.id));
 
       this.eventosCalendario = this.eventosCalendario.filter(
         (ev) => ev.title !== nombreSesion
@@ -344,7 +338,7 @@ export class CalendarComponent {
 
     // Agregar las nuevas sesiones
     sesiones.forEach((e, i) => {
-      console.log('Agregar sesion', e);
+      //console.log('Agregar sesion', e);
       const eventoFormateado: EventoCalendario = {
         id: e.id, // ✅ Usamos el id único recibido
         title: e.nombreSesion,
@@ -353,7 +347,7 @@ export class CalendarComponent {
         extendedProps: { ...e },
       };
 
-      console.log(`➕ Agregando sesión #${i + 1}:`, eventoFormateado);
+      //console.log(`➕ Agregando sesión #${i + 1}:`, eventoFormateado);
 
       this.eventosCalendario.push(eventoFormateado);
     });
@@ -368,14 +362,8 @@ export class CalendarComponent {
     this.fechaSeleccionada = null;
     this.mostrarFormulario = false;
 
-    console.log(
-      '✅ Sesiones actualizadas. Total en calendario:',
-      this.eventosCalendario.length
-    );
-    console.log(
-      '✅ Sesiones actualizadas. Total en calendario:',
-      this.eventosCalendario
-    );
+    //console.log('✅ Sesiones actualizadas. Total en calendario:',this.eventosCalendario.length);
+    //console.log('✅ Sesiones actualizadas. Total en calendario:',this.eventosCalendario);
   }
 
   eliminarSesionDelCalendario(id: string) {
@@ -383,19 +371,19 @@ export class CalendarComponent {
     const esUUID = /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(id);
 
     if (esUUID) {
-      console.log('🗑️ Eliminando sesión individual:', id);
+      //console.log('🗑️ Eliminando sesión individual:', id);
       this.eventosCalendario = this.eventosCalendario.filter(
         (ev) => ev.id !== id
       );
     } else {
-      console.log('🧹 Eliminando todas las sesiones con nombre:', id);
+      //console.log('🧹 Eliminando todas las sesiones con nombre:', id);
       this.eventosCalendario = this.eventosCalendario.filter(
         (ev) => ev.title !== id
       );
     }
 
     this.calendarOptions.events = [...this.eventosCalendario];
-    console.log('📆 Sesión(es) eliminada(s). Calendario actualizado.');
+    //console.log('📆 Sesión(es) eliminada(s). Calendario actualizado.');
   }
 
   // ✅ Recargar sesiones al cerrar formularios o modales
@@ -423,8 +411,8 @@ export class CalendarComponent {
 
   // 🔹 Aquí es donde decidimos si abrir normal o fotográfica
   onAccionSeleccionada(accion: 'editar' | 'asistencia') {
-    console.log('🎯 evento seleccionado 1:', this.eventoSeleccionado);
-    console.log('🎯 Accion seleccionadaaaaaaa:', accion);
+    //console.log('🎯 evento seleccionado 1:', this.eventoSeleccionado);
+    //console.log('🎯 Accion seleccionadaaaaaaa:', accion);
     if (accion === 'editar') {
       if (this.eventoSeleccionado?.id_actividad) {
         this.eventoComponent.cargarEdicionDesdeBackend(
@@ -458,7 +446,7 @@ export class CalendarComponent {
           .obtenerDetalleAsistencia(this.eventoSeleccionado.id_sesion)
           .then((respuesta: PreAsistencia) => {
             // Guardamos la respuesta en el evento
-            console.log('calendar.component preasistencia:', respuesta);
+            //console.log('calendar.component preasistencia:', respuesta);
             // merge seguro: garantizamos strings y arrays
             const merged: EventoSeleccionado = {
               id_actividad: this.eventoSeleccionado?.id_actividad ?? '', // si tu backend no manda id_actividad, mantiene '' por seguridad

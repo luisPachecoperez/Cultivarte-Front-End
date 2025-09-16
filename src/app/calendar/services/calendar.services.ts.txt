@@ -63,7 +63,7 @@ export class CalendarService {
    * @param idUsuario string
    */
   obtenerSesiones(fechaInicio: string, fechaFin: string, idUsuario: string): Observable<EventoCalendario[]> {
-    console.log('📤 Enviando al backend:', { fechaInicio, fechaFin, idUsuario });
+    //console.log('📤 Enviando al backend:', { fechaInicio, fechaFin, idUsuario });
 
     return this.graphql
       .query<{ consultarFechaCalendario: SesionResponse[] }>(this.GET_SESIONES, {
@@ -75,9 +75,9 @@ export class CalendarService {
       })
       .pipe(
         tap((response) => {
-          console.log('Obtuvo sesiones del servicio del graphql', response);
+          //console.log('Obtuvo sesiones del servicio del graphql', response);
           if (response) {
-            console.log('Obtuvo sesiones del servicio');
+            //console.log('Obtuvo sesiones del servicio');
           }
         }),
         map((response) =>
@@ -97,8 +97,8 @@ export class CalendarService {
           }))
         ),
         catchError((error) => {
-          console.log('Error en GraphQL:', error);
-          console.log('Cargando sesiones desde IndexedDB...');
+          //console.log('Error en GraphQL:', error);
+          //console.log('Cargando sesiones desde IndexedDB...');
           return from(
             this.sesionesDataSource.getByRange(
               new Date(fechaInicio),

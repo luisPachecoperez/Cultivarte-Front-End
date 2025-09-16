@@ -31,10 +31,7 @@ private graphQLService= inject(GraphQLService);
    * 🗑️ Elimina un evento (solo si asistentes_evento == 0)
    */
   async eliminarEvento(id_actividad: string): Promise<GraphQLResponse> {
-    console.log(
-      '📤 Enviando mutación de eliminar evento al backend:',
-      id_actividad
-    );
+    //console.log('📤 Enviando mutación de eliminar evento al backend:',id_actividad );
 
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(

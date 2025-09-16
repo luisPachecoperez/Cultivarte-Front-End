@@ -19,14 +19,14 @@ export class GraphQLService {
   ) { }
 
   private getCookie(name: string): string | null {
-   // console.log("Buscando cookie: " + name);
+   // //console.log("Buscando cookie: " + name);
     const match = this.document.cookie
       ?.split(';')
       .map(c => c.trim())
       .find(c => c.startsWith(name + '='));
     if (!match) return null;
     try {
-     // console.log("Encontrada cookie: " + decodeURIComponent(match.split('=')[1]));
+     // //console.log("Encontrada cookie: " + decodeURIComponent(match.split('=')[1]));
       return decodeURIComponent(match.split('=')[1]);
     } catch {
       return match.split('=')[1] ?? null;
@@ -57,7 +57,7 @@ export class GraphQLService {
   }
   private authHeaders(): HttpHeaders {
     const token = this.getBearerFromCookie('session_auth');
-  //  console.log("El token: " + token);
+  //  //console.log("El token: " + token);
     const base = { 'Content-Type': 'application/json' } as Record<string, string>;
     if (token) base['Authorization'] = `Bearer ${token}`;
     return new HttpHeaders(base);

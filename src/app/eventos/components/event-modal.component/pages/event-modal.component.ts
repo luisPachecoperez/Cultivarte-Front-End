@@ -46,16 +46,16 @@ export class EventModalComponent implements AfterViewInit {
   async eliminarEvento() {
     const e = this.evento();
     if (!e) return;
-    console.log("Evento a eliminar:",this.evento());
+    //console.log("Evento a eliminar:",this.evento());
     const ok = await firstValueFrom(
       this.snack.confirm(`¿Deseas eliminar el Evento "${e?.nombreSesion ?? 'sin nombre'}"?`)
     );
-    console.log("Resultado ok:", ok);
+    //console.log("Resultado ok:", ok);
     if (!ok) return;
 
     try {
       const res = await this.eventModalService.eliminarEvento(e.id_actividad);
-      console.log("REspuesta de elminar evento:", res);
+      //console.log("REspuesta de elminar evento:", res);
       const success = res.exitoso === 'S';
       if (success) {
         this.snack.success(res.mensaje ?? 'Eliminado correctamente');
