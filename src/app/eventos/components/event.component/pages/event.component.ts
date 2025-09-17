@@ -1,7 +1,6 @@
 import { GridSesionesComponent } from './../../grid-sesiones.component/pages/grid-sesiones.component';
 import {
   Component,
-  EventEmitter,
   input,
   OnInit,
   output,
@@ -12,7 +11,6 @@ import {
   HostListener
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Injectable } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -28,10 +26,7 @@ import { GridSesionesService } from '../../grid-sesiones.component/services/grid
 import { AuthService } from '../../../../shared/services/auth.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../../../shared/services/snackbar.service';
-
-@Injectable({
-  providedIn: 'root'
-})
+import { EventoFormulario, CambiosSesionesSnapshot, CambiosSesionesPayload, Sede, TipoActividad, Aliado, NombreEvento, Frecuencia, EventoFiltrado, Responsable, AliadoFiltrado, ConfiguracionEvento, EventoBackendResponse, SesionBackend, SesionFormulario, EventoPrecargado, EventoFormValue, SesionBasica, CambiosSesiones} from '../interfaces/event.interface';
 
 @Component({
   selector: 'app-event',
@@ -42,27 +37,27 @@ import { SnackbarService } from '../../../../shared/services/snackbar.service';
 })
 export class EventComponent implements OnInit, OnChanges {
   // Inputs convertidos a señales
-  eventoSeleccionado = input<any>(null);
+  eventoSeleccionado = input<EventoFormulario | null>(null);
   fechaPreseleccionada = input<string | null>(null);
   mostrarFormulario = input<boolean>(false);
 
   private _fechaPreseleccionada: string | null = null;
-  actualizarSesionEnCalendario: any;
+  actualizarSesionEnCalendario!: (evento: EventoFormulario) => void;
 
   /** 🔹 Guardamos el snapshot del grid */
-  private cambiosSesionesSnapshot: { nuevos: any[]; modificados: any[]; eliminados: any[] } = {
+  private cambiosSesionesSnapshot: CambiosSesionesSnapshot = {
     nuevos: [],
     modificados: [],
     eliminados: []
   };
+  // ✅ dependencias con inject()
+  private fb = inject(FormBuilder);
+  private eventService = inject(EventService);
+  private gridSesionesService = inject(GridSesionesService);
+  private authService = inject(AuthService);
+  private snack = inject(SnackbarService);
 
-  constructor(
-    private fb: FormBuilder,
-    private eventService: EventService,
-    private gridSesionesService: GridSesionesService,
-    private authService: AuthService,
-    private snack: SnackbarService
-  ) {
+  constructor() {
     // Effect: cambios en fecha preseleccionada
     effect(() => {
       const fecha = this.fechaPreseleccionada();
@@ -108,22 +103,22 @@ export class EventComponent implements OnInit, OnChanges {
   eventoParaEditar: any = null;
 
   // 🔹 Listas desde el servicio
-  sedes: any[] = [];
-  tiposDeActividad: any[] = [];
-  aliados: any[] = [];
-  responsables: any[] = [];
-  nombreDeEventos: any[] = [];
-  frecuencias: any[] = [];
-  eventosFiltrados: any[] = [];
+  sedes: Sede[] = [];
+  tiposDeActividad: TipoActividad[] = [];
+  aliados: Aliado[] = [];
+  responsables: Responsable[] = [];
+  nombreDeEventos: NombreEvento[] = [];
+  frecuencias: Frecuencia[] = [];
+  eventosFiltrados: EventoFiltrado[] = [];
 
   // Variables para el autocomplete de aliados
   aliadoTexto: string = '';
-  aliadosFiltrados: any[] = [];
+  aliadosFiltrados: AliadoFiltrado[] = [];
   mostrarSugerencias: boolean = false;
 
   // Filtra aliados cada vez que el usuario escribe
-  onAliadoInput(event: any) {
-    const texto = event.target.value.toLowerCase();
+  onAliadoInput(event: Event) {
+    const texto = (event.target as HTMLInputElement).value.toLowerCase();
     this.aliadoTexto = texto;
 
     // Filtra por coincidencia en nombre
@@ -136,7 +131,7 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   // Selecciona un aliado de la lista
-  seleccionarAliado(aliado: any) {
+  seleccionarAliado(aliado: Aliado) {
     this.aliadoTexto = aliado.nombre;
     this.eventoForm.patchValue({ aliado: aliado.id_aliado });
     this.mostrarSugerencias = false;
@@ -217,7 +212,7 @@ export class EventComponent implements OnInit, OnChanges {
     }
   }
 
-  get nombresFiltrados(): any[] {
+  get nombresFiltrados(): NombreEvento[] {
     const tipoId = this.eventoForm.get('tipoEvento')?.value;
     if (!tipoId) return [];
 
@@ -233,7 +228,7 @@ export class EventComponent implements OnInit, OnChanges {
       this.eventosFiltrados = [];
       return;
     }
-    // nombreDeEventos viene del mock; filtramos por id_parametro_detalle
+    // nombreDeEventos viene del mock; filtramos por id_parametro_detalle (padre)
     console.log('📦 nombreDeEventos:', this.nombreDeEventos);
     this.eventosFiltrados = (this.nombreDeEventos || []).filter(
       n => n.id_tipo_actividad === tipoId
@@ -249,10 +244,9 @@ export class EventComponent implements OnInit, OnChanges {
     return tipo === 'Contenido del ciclo'.toUpperCase() || tipo === 'Actividad General'.toUpperCase();
   }
 
-  cargarConfiguracionFormulario(parametros?: any): void {
+  cargarConfiguracionFormulario(parametros?: ConfiguracionEvento): void {
     const idUsuario = this.authService.getUserUuid(); // por ahora fijo
 
-    // 👇 Si ya vienen parámetros desde la consulta de edición, úsalos
     if (parametros) {
       console.log('📦 viene con parametros:', parametros);
       this.sedes = parametros.sedes || [];
@@ -261,41 +255,36 @@ export class EventComponent implements OnInit, OnChanges {
       this.responsables = parametros.responsables || [];
       this.nombreDeEventos = parametros.nombresDeActividad || [];
       this.frecuencias = parametros.frecuencias || [];
-      // si ya hay un tipo seleccionado, actualizamos la lista filtrada
       this.filtrarEventosPorTipo(this.eventoForm?.get('tipoEvento')?.value);
       return;
     }
 
     // Si no, carga los "globales" mock
-    this.eventService.obtenerConfiguracionEvento(idUsuario).subscribe(data => {
+    this.eventService.obtenerConfiguracionEvento(idUsuario).subscribe((data: ConfiguracionEvento & { id_programa: string }) => {
       console.log('📦 datos de configuración:', data);
       this.id_programa = data.id_programa;
-      console.log('📦 id_programa:', this.id_programa);
       this.eventoForm.get('id_programa')?.setValue(this.id_programa);
+
       this.sedes = data.sedes;
       this.tiposDeActividad = data.tiposDeActividad;
       this.aliados = data.aliados;
       this.responsables = data.responsables;
       this.nombreDeEventos = data.nombresDeActividad;
       this.frecuencias = data.frecuencias;
-      console.log('📦 frecuencias:', this.frecuencias);
-      // actualizar eventos filtrados si ya hay un tipo seleccionado
 
-
-      // ✅ Si hay exactamente una sede y estamos creando (no editando)
+      // lógica de sede
       if (!this.estaEditando && this.sedes.length === 1) {
-        this.eventoForm.patchValue({
-          sede: this.sedes[0].id_sede
-        });
-        // 👇 deshabilitar el select para que no se pueda cambiar
+        this.eventoForm.get('sede')?.enable({ emitEvent: false });
+        this.eventoForm.get('sede')?.setValue(this.sedes[0].id_sede, { emitEvent: false });
         this.eventoForm.get('sede')?.disable({ emitEvent: false });
+        console.log('✅ Sede única asignada:', this.eventoForm.get('sede')?.value);
       } else {
-        // 👇 asegurar que el select quede habilitado en caso contrario
         this.eventoForm.get('sede')?.enable({ emitEvent: false });
       }
 
       this.filtrarEventosPorTipo(this.eventoForm?.get('tipoEvento')?.value);
     });
+
     console.log('📦 configuración cargada:', this.sedes, this.tiposDeActividad, this.aliados, this.responsables, this.nombreDeEventos, this.frecuencias);
   }
 
@@ -335,15 +324,14 @@ export class EventComponent implements OnInit, OnChanges {
 
   // ⬇️⬇️⬇️ CAMBIO CLAVE: cuando hay id_actividad, traemos TODO del mock y recién precargamos
   cargarEdicionDesdeBackend(id_actividad: string): void {
-    this.eventService.obtenerEventoPorId(id_actividad).subscribe(resp => {
+    this.eventService.obtenerEventoPorId(id_actividad).subscribe((resp: EventoBackendResponse) => {
       // 1) listas / parámetros
       console.log('📦 respuesta del backend:', resp);
       this.cargarConfiguracionFormulario(resp);
 
       // 2) armar objeto "eventoParaEditar" con ids del backend (y boolean institucional)
-      // const eventoBackend = resp;
-      // const sesionesBackend = resp.sesiones || [];
       console.log('📦 id_actividad:', resp.actividad.id_actividad);
+
       const eventoAdaptado = {
         id: resp.actividad.id_actividad,
         institucional: resp.actividad.institucional === 'S',
@@ -357,7 +345,7 @@ export class EventComponent implements OnInit, OnChanges {
         fecha_actividad: resp.actividad.fecha_actividad,
         hora_inicio: resp.actividad.hora_inicio,
         hora_fin: resp.actividad.hora_fin,
-        sesiones: resp.sesiones.map((s: any) => ({
+        sesiones: resp.sesiones.map((s: SesionBackend) => ({
           id_sesion: s.id_sesion,
           id_actividad: resp.actividad.id_actividad,
           fecha: s.fecha_actividad,
@@ -368,7 +356,6 @@ export class EventComponent implements OnInit, OnChanges {
       };
 
       this.eventoParaEditar = eventoAdaptado;
-
 
       // 3) pintar formulario
       this.precargarFormulario(eventoAdaptado);
@@ -381,10 +368,10 @@ export class EventComponent implements OnInit, OnChanges {
 
 
   // ✅ Ajustado para aceptar tanto campos "id_*" del backend como los antiguos del mock
-  precargarFormulario(evento: any): void {
+  precargarFormulario(evento: EventoPrecargado): void {
     console.log('📦 evento para precargar:', evento);
     if (!this.eventoForm) return;
-    console.log('📦 DESPUES DEL IF eventoForm:', this.eventoForm);
+
     this.eventoForm.patchValue({
       institucional: typeof evento.institucional === 'string'
         ? evento.institucional === 'S'
@@ -401,37 +388,31 @@ export class EventComponent implements OnInit, OnChanges {
       frecuencia: evento.id_frecuencia || evento.frecuencia || 'no'
     });
 
-    // En edición, dejamos el form en solo lectura (si quieres permitir edición, comenta esto)
     if (this.estaEditando) {
       this.eventoForm.disable();
-    }
-
-    // FORZAR bloqueo del control 'aliado' cuando estamos en modo edición
-    if (this.estaEditando) {
       this.eventoForm.get('aliado')?.disable({ emitEvent: false });
     } else {
-      // por si acaso: en creación dejamos el control habilitado
       this.eventoForm.get('aliado')?.enable({ emitEvent: false });
     }
 
     this.sesiones.clear();
     console.log("Justo antes de cargar las sesiones:", evento.sesiones);
+
     if (evento.sesiones && Array.isArray(evento.sesiones)) {
-      evento.sesiones.forEach((s: any) => {
+      evento.sesiones.forEach((s: SesionFormulario) => {
         this.sesiones.push(this.fb.group({
-          fecha: [s.fecha_sesion || s.fecha],
-          horaInicio: [s.hora_inicio || s.horaInicio],
-          horaFin: [s.hora_fin || s.horaFin],
+          fecha: [s.fecha],
+          horaInicio: [s.horaInicio],
+          horaFin: [s.horaFin],
           id_sesion: [s.id_sesion],
           id_actividad: [s.id_actividad],
-          asistentes_sesion: [s.asistentes_sesion ?? 0]   // 👈 nuevo
+          asistentes_sesion: [s.asistentes_sesion ?? 0]
         }));
       });
     }
+
     console.log("Justo despues de cargar las sesiones:", this.sesiones);
-
   }
-
 
   guardarEvento(): void {
     console.log('📦 eventoFormguardar:', this.eventoForm);
@@ -451,7 +432,7 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   private crearEvento(): void {
-    const evento = this.eventoForm.value;
+    const evento = this.eventoForm.getRawValue();
     let sesiones: any[] = [];
 
     console.log('📋 Evento base:', evento);
@@ -535,6 +516,22 @@ export class EventComponent implements OnInit, OnChanges {
 
     // 📤 Construir payload para el back
     console.log('📦 Evento basessssss:', evento);
+    // traducir nombreEvento si vino como id desde la lista
+    let nombreActividad = evento.nombreEvento;
+
+    // Si estamos en modo lista (esListaNombreEvento) y el valor es un id,
+    // buscar el objeto en eventosFiltrados por id_parametro_detalle y usar su nombre.
+    if (this.esListaNombreEvento()) {
+      const seleccionado = this.eventosFiltrados.find(n => n.id_parametro_detalle === evento.nombreEvento);
+      if (seleccionado) {
+        nombreActividad = seleccionado.nombre;
+      } else {
+        // fallback: si no está en eventosFiltrados intentar buscar en nombreDeEventos
+        const buscado = (this.nombreDeEventos || []).find(n => n.id_parametro_detalle === evento.nombreEvento);
+        nombreActividad = buscado?.nombre ?? evento.nombreEvento;
+      }
+    }
+
     const payload = {
       id_programa: evento.id_programa, // esto vendrá del back en producción
       institucional: evento.institucional ? 'S' : 'N',
@@ -543,7 +540,7 @@ export class EventComponent implements OnInit, OnChanges {
       id_aliado: evento.aliado,
       id_sede: evento.sede,
       id_frecuencia: evento.frecuencia,
-      nombre_actividad: evento.nombreEvento,
+      nombre_actividad: nombreActividad,
       descripcion: evento.descripcionGrupo,
       fecha_actividad: evento.fecha,
       hora_inicio: evento.horaInicio,
@@ -568,9 +565,7 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   async actualizarSesion() {
-    // 🚨 Ahora usamos el snapshot del grid
-    const payloadFinal = {
-
+    const payloadFinal: CambiosSesionesPayload = {
       nuevos: this.cambiosSesionesSnapshot.nuevos.map(s => ({
         id_sesion: s.id_sesion,
         id_actividad: s.id_actividad,
@@ -594,10 +589,9 @@ export class EventComponent implements OnInit, OnChanges {
 
     try {
       const resp = await this.gridSesionesService.guardarCambiosSesiones(payloadFinal);
-      console.log('✅ Respuesta del back GRIID:', resp);
       if (resp.exitoso === 'S') {
         this.snack.success(resp.mensaje ?? 'Sesiones actualizadas');
-        this.eventoEditado.emit(payloadFinal);
+        this.eventoEditado.emit(payloadFinal); // ✅ ahora tipado correctamente
         this.cerrarFormulario.emit();
       } else {
         this.snack.error(resp.mensaje ?? 'No se pudieron actualizar las sesiones');
@@ -608,15 +602,20 @@ export class EventComponent implements OnInit, OnChanges {
     }
   }
 
+
   private resetearFormulario(): void {
     this.eventoForm.reset();
     this.sesiones.clear();
     this.eventoParaEditar = null;
     this.cerrarFormulario.emit();
     this.limpiarEventoSeleccionado.emit();
+
+    // 👇 Aseguramos que todo quede habilitado para la próxima creación
+    this.eventoForm.enable({ emitEvent: false });
+
   }
 
-  private crearSesion(fecha: string, horaInicio: string, horaFin: string, base: any) {
+  private crearSesion(fecha: string, horaInicio: string, horaFin: string, base: EventoFormValue) {
     const idGenerado = crypto.randomUUID();
     const sesion = {
       id_sesion: idGenerado,
@@ -631,7 +630,7 @@ export class EventComponent implements OnInit, OnChanges {
     return sesion;
   }
 
-  private haySuperposicion(sesiones: any[], nuevaSesion: any): boolean {
+  private haySuperposicion(sesiones: SesionBasica[], nuevaSesion: SesionBasica): boolean {
     const nuevaInicio = new Date(`${nuevaSesion.fecha}T${nuevaSesion.horaInicio}`);
     const nuevaFin = new Date(`${nuevaSesion.fecha}T${nuevaSesion.horaFin}`);
 

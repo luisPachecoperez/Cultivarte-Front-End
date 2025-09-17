@@ -1,8 +1,15 @@
-import { Component, input, output, OnInit } from '@angular/core';
+import { Component, input, output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AsistenciaService } from '../../asistencia-lista/services/asistencia.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
+import {
+  EventoAsistencia,
+  DetalleAsistencia,
+  PayloadAsistencia,
+  AsistenciaResponse
+} from './interfaces/asistencia-fotografica.interface';
+
 
 
 @Component({
@@ -14,17 +21,22 @@ import { SnackbarService } from '../../../shared/services/snackbar.service';
 })
 export class AsistenciaFotograficaComponent implements OnInit {
   // 🔹 Datos que vienen del calendario al abrir el modal
-  evento = input<any>(null);
+  evento = input<EventoAsistencia | null>(null);
   cerrar = output<void>();
-  asistenciaGuardada = output<any>();
+  asistenciaGuardada = output<PayloadAsistencia>();
   bloqueado = false;
 
   asistenciaForm: FormGroup;
   imagenPrevia: string | null = null;
   imagenBase64: string | null = null; // ✅ para almacenar la foto en Base64
-  sedes: any[] = []; // ✅ lista de sedes que viene del back/mock
+  sedes: { id: string; nombre: string }[] = []; // ✅ lista de sedes que viene del back/mock
 
-  constructor(private fb: FormBuilder, private asistenciaService: AsistenciaService, private snack: SnackbarService) {
+  // ✅ usar inject()
+  private fb = inject(FormBuilder);
+  private asistenciaService = inject(AsistenciaService);
+  private snack = inject(SnackbarService);
+
+  constructor() {
     this.asistenciaForm = this.fb.group({
       numeroAsistentes: ['', [Validators.required, Validators.min(1)]],
       descripcion: ['', Validators.required],
@@ -37,7 +49,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
     if (!ev) return;
 
     // 🚀 Llamamos al servicio para obtener detalle de asistencia
-    this.asistenciaService.obtenerDetalleAsistencia(ev.id_sesion).subscribe((data) => {
+    this.asistenciaService.obtenerDetalleAsistencia(ev.id_sesion).subscribe((data:DetalleAsistencia) => {
       console.log('📥 Detalle asistencia fotográfica:', data);
 
       // ✅ Guardamos sedes del backend/mock
@@ -64,7 +76,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
       }
 
       // 🔒 Si hay cualquier dato, bloqueamos el formulario completo
-      if (data.numero_asistentes > 0 || data.descripcion || data.imagen) {
+      if ((data.numero_asistentes ?? 0) > 0 || data.descripcion || data.imagen) {
         this.bloqueado = true;
         this.asistenciaForm.disable();
       }
@@ -72,8 +84,9 @@ export class AsistenciaFotograficaComponent implements OnInit {
     });
   }
 
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (file) {
       this.asistenciaForm.patchValue({ foto: file });
       const reader = new FileReader();
@@ -108,7 +121,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
 
     // 🔹 Aquí conectamos directamente al service
     this.asistenciaService.guardarAsistenciaFotografica(payload).subscribe({
-      next: (resp) => {
+      next: (resp:AsistenciaResponse) => {
         console.log('✅ Respuesta del back (fotográfica):', resp);
         if (resp.exitoso === 'S') {
           this.asistenciaGuardada.emit(payload); // avisamos al padre que se guardó

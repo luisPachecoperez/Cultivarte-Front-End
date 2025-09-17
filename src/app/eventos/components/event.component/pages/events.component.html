@@ -81,36 +81,26 @@
           <!-- Nombre del evento -->
           <div class="row g-2 mb-3">
             <div class="col">
-              <label class="form-label">Nombre del evento</label>
+              <label for="nombreEvento">Nombre del Evento</label>
 
-              @if (esListaNombreEvento() && eventosFiltrados.length > 0) {
+              @if (esListaNombreEvento()) {
                 <select class="form-control" formControlName="nombreEvento">
-                  <option value="" disabled>Selecciona nombre</option>
-                  @for (n of eventosFiltrados; track n.id_parametro_detalle) {
-                    <option [value]="n.id_parametro_detalle">{{ n.nombre }}</option>
+                  <option value="" disabled selected>Seleccione un nombre</option>
+                  @for (n of eventosFiltrados; track n.nombre) {
+                    <!-- Guardamos directamente el nombre -->
+                    <option [value]="n.nombre">{{ n.nombre }}</option>
                   }
                 </select>
-              }
-
-              <!-- Si corresponde mostrar lista pero NO hay items -->
-              @if (esListaNombreEvento() && (!eventosFiltrados || eventosFiltrados.length === 0)) {
-              <select class="form-control" disabled>
-                <option value="">No hay nombres disponibles para este tipo</option>
-              </select>
-              }
-              <!-- Input libre si la lógica no requiere lista -->
-              @if (!esListaNombreEvento()) {
-              <input type="text" class="form-control" formControlName="nombreEvento" placeholder="Nombre del evento" />
-              }
-
-              @if (eventoForm.get('nombreEvento')?.invalid && eventoForm.get('nombreEvento')?.touched) {
-              <div class="text-danger mt-1">
-                @if (eventoForm.get('nombreEvento')?.errors?.['required']) {
-                <small>El nombre es obligatorio.</small>
-                }
-              </div>
+              } @else {
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="nombreEvento"
+                  placeholder="Escriba el nombre del evento"
+                />
               }
             </div>
+
 
             <!-- Sede -->
             <div class="col-4">
@@ -159,8 +149,10 @@
 
         <!-- Grid de sesiones -->
         @if (estaEditando) {
-        <app-grid-sesiones [formArray]="sesiones" [soloLectura]="modoSoloLectura"
-          [idEvento]="eventoParaEditar?.id || eventoSeleccionado()?.idEvento || null"
+          <app-grid-sesiones
+          [formArray]="sesiones"
+          [soloLectura]="modoSoloLectura"
+          [idEvento]="eventoParaEditar?.id || eventoSeleccionado()?.id_actividad || null"
           (cambios)="onCambiosSesiones($event)">
         </app-grid-sesiones>
         }

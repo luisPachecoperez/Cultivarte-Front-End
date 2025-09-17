@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
-import { CalendarOptions } from '@fullcalendar/core';
+import { Component, inject, viewChild } from '@angular/core';
+import { CalendarOptions, EventInput, DatesSetArg, EventClickArg } from '@fullcalendar/core';
 import { EventComponent } from "../../eventos/components/event.component/pages/event.component";
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
 import { CommonModule } from '@angular/common';
 import { EventModalComponent } from "../../eventos/components/event-modal.component/pages/event-modal.component";
@@ -14,6 +14,13 @@ import { AsistenciaFotograficaComponent } from "../../asistencia/asistencia-foto
 import { AsistenciaService } from '../../asistencia/asistencia-lista/services/asistencia.service';
 import { SnackbarService } from '../../shared/services/snackbar.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import {
+  SesionCalendario,
+  EventoFormPayload,
+  EventoCalendarioWrapper,
+  EventoCalendario,
+  EventoSeleccionado,
+} from '../interfaces/calendar.interface';
 
 @Component({
   selector: 'app-calendar',
@@ -23,13 +30,20 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
   styleUrls: ['./calendar.component.css'],
 })
 export class CalendarComponent {
-  constructor(private calendarService: CalendarService, private asistenciaService: AsistenciaService, private eventoComponent: EventComponent, private snack: SnackbarService) {}
 
-  eventosCalendario: any[] = [];
+  private calendarService = inject(CalendarService);
+  private asistenciaService = inject(AsistenciaService);
+  // private eventoComponent = inject(EventComponent);
+  private snack = inject(SnackbarService);
+
+  // ✅ Nuevo API Angular 17+
+  eventoComponent = viewChild(EventComponent);
+
+  eventosCalendario: EventoCalendario[] = [];
   fechaSeleccionada: string | null = null;
-  eventoEditando: any = null;
+  eventoEditando: EventoCalendario | null = null;
 
-  eventoSeleccionado: any = null;
+  eventoSeleccionado: EventoSeleccionado | null = null;
   mostrarModalAcciones: boolean = false;
   mostrarFormulario: boolean = false;
   mostrarAsistencia: boolean = false;
@@ -68,7 +82,7 @@ export class CalendarComponent {
     datesSet: this.onDatesSet.bind(this)
   };
 
-  onDatesSet(dateInfo: any) {
+  onDatesSet(dateInfo: DatesSetArg) {
     this.ultimaFechaInicio = dateInfo.start.toISOString().split('T')[0];
     this.ultimaFechaFin = dateInfo.end.toISOString().split('T')[0];
 
@@ -86,103 +100,150 @@ export class CalendarComponent {
     const idUsuario = '1b1a3c6e-1d54-4eae-bbbf-277d74a6493a'; // 🔹 Temporal
 
     this.calendarService.obtenerSesiones(this.ultimaFechaInicio, this.ultimaFechaFin, idUsuario)
-    .subscribe({
-      next: sesionesFormateadas => {
-        this.eventosCalendario = sesionesFormateadas;
-        this.calendarOptions = {
-          ...this.calendarOptions,
-          events: [...this.eventosCalendario]
-        };
-        // this.snack.success('Sesiones cargadas');
-      },
-      error: err => {
-        this.snack.error('No fue posible cargar las sesiones');
-      }
-    });
+      .subscribe({
+        next: (sesionesFormateadas: EventoCalendario[]) => {
+          this.eventosCalendario = sesionesFormateadas;
+
+          // 👇 transformamos a EventInput[]
+          const eventosCalendar: EventInput[] = this.eventosCalendario.map(ev => ({
+            id: ev.id,
+            title: ev.title ?? '',
+            start: ev.start ?? undefined,
+            end: ev.end ?? undefined,
+            extendedProps: ev.extendedProps
+          }));
+
+          this.calendarOptions = {
+            ...this.calendarOptions,
+            events: eventosCalendar
+          };
+        },
+        error: err => {
+          console.error('❌ Error al cargar sesiones:', err);
+          this.snack.error('No fue posible cargar las sesiones');
+        }
+      });
   }
 
-  handleDateClick(arg: any) {
+
+  handleDateClick(arg: DateClickArg) {
     console.log('📌 Click en fecha:', arg.dateStr);
     this.fechaSeleccionada = arg.dateStr;
     this.eventoSeleccionado = null;
     this.mostrarFormulario = true;
   }
 
-  handleEventClick(arg: any): void {
+  private normalizarFechaHora(
+    input: string | Date | number | number[] | null | undefined
+  ): { fecha: string; hora: string } {
+    if (!input) {
+      return { fecha: '', hora: '' };
+    }
+
+    let date: Date;
+
+    if (input instanceof Date) {
+      date = input;
+    } else if (typeof input === 'number') {
+      date = new Date(input); // timestamp
+    } else if (Array.isArray(input)) {
+      // [YYYY, M, D] → OJO: meses en JS empiezan en 0
+      const [year, month, day] = input;
+      date = new Date(year, month - 1, day);
+    } else {
+      // asumimos string
+      date = new Date(input);
+    }
+
+    const iso = date.toISOString();
+    const [fecha, horaCompleta] = iso.split('T');
+    return {
+      fecha,
+      hora: horaCompleta?.substring(0, 5) ?? ''
+    };
+  }
+
+
+
+
+  handleEventClick(arg: EventClickArg): void {
     console.log('🟢 Click en evento del calendario');
     console.log('arg.event html', arg.event);
 
     const nombreSesion = arg.event.title;
-    console.log('nombreSesion', nombreSesion);
-    console.log('calendar options', this.calendarOptions.events);
+    const eventosRelacionados = (this.calendarOptions.events as EventInput[])
+      .filter(e => e.title === nombreSesion);
 
-    const eventosRelacionados = (this.calendarOptions.events as any[]).filter(
-      e => e.title === nombreSesion
-    );
+    // 👇 añadimos id y nombreSesion para que cumpla con `SesionCalendario`
+    const sesiones = eventosRelacionados.map((e, idx) => {
+      const inicio = this.normalizarFechaHora(e.start);
+      const fin = this.normalizarFechaHora(e.end);
 
-    console.log('eventosRelacionados', eventosRelacionados);
+      return {
+        id: e.id ?? `tmp-${idx}`,
+        nombreSesion: e.title ?? '',
+        fecha: inicio.fecha,
+        horaInicio: inicio.hora,
+        horaFin: fin.hora,
+      };
+    });
 
-    const sesiones = eventosRelacionados.map(e => ({
-      fecha: e.start.split(' ')[0],
-      horaInicio: e.start.split(' ')[1].substring(0, 5),
-      horaFin: e.end.split(' ')[1].substring(0, 5)
-    }));
+    // 👇 preferimos start/end, pero si no están usamos extendedProps
+    const inicioEvento = this.normalizarFechaHora(arg.event.start);
+    const finEvento = this.normalizarFechaHora(arg.event.end);
 
-    const primeraSesion = sesiones[0] || { fecha: '', horaInicio: '', horaFin: '' };
-    console.log('arg.event', arg.event);
-    const desde = arg.event.extendedProps.desde; // "2025-09-13 14:00:00"
-    const hasta = arg.event.extendedProps.hasta; // "2025-09-13 16:00:00"
-
-    // ⚡ Separamos fecha y hora
-    const [fechaDesde, horaInicio] = desde.split(' ');
-    const [, horaFin] = hasta.split(' ');
     this.eventoSeleccionado = {
-      // 👇 forzamos incluir los campos que vienen desde CalendarService
-      id_actividad: arg.event.extendedProps.id_actividad,
+      id_actividad: arg.event.extendedProps['id_actividad'],
       id_sesion: arg.event.id,
-      asistentes_evento: arg.event.extendedProps.asistentes_evento,
-      // tipo_evento: arg.event.extendedProps.tipo_evento,
+      asistentes_evento: arg.event.extendedProps['asistentes_evento'],
       nombreSesion,
       sesiones,
-      fecha: fechaDesde,
-      horaInicio: horaInicio,
-      horaFin: horaFin
+      fecha: inicioEvento.fecha,
+      horaInicio: inicioEvento.hora,
+      horaFin: finEvento.hora
     };
 
     console.log('🎯 Evento seleccionado para acciones:', this.eventoSeleccionado);
     this.mostrarModalAcciones = true;
   }
 
-  abrirEdicion(eventoCalendario: any) {
-    const nombreSesion = eventoCalendario.event.title;
-    const eventosRelacionados = (this.calendarOptions.events as any[]).filter(e => e.title === nombreSesion);
 
-    const sesiones = eventosRelacionados.map(e => ({
-      fecha: e.start.split(' ')[0],
-      horaInicio: e.start.split(' ')[1].substring(0, 5),
-      horaFin: e.end.split(' ')[1].substring(0, 5)
+  abrirEdicion(eventoCalendario: EventoCalendarioWrapper) {
+    const nombreSesion = eventoCalendario.event.title ?? '';
+
+    const eventosRelacionados = (this.calendarOptions.events as EventInput[]).filter(
+      e => e.title === nombreSesion
+    );
+
+    const sesiones: SesionCalendario[] = eventosRelacionados.map((e, idx) => ({
+      id: e.id ?? `tmp-${idx}`,
+      nombreSesion: e.title ?? '',
+      fecha: (e.start as string).split('T')[0],
+      horaInicio: (e.start as string).split('T')[1].substring(0, 5),
+      horaFin: (e.end as string).split('T')[1].substring(0, 5),
     }));
-    console.log('🎯 Evento seleccionado para edicion:2', eventoCalendario.event);
+
+    console.log('🎯 Evento seleccionado para edición:', eventoCalendario.event);
+
     this.eventoSeleccionado = {
-      id_actividad: eventoCalendario.event.extendedProps.id_actividad,
-      id_sesion: eventoCalendario.event.extendedProps.id_sesion,
-      asistentes_evento: eventoCalendario.event.extendedProps.asistentes_evento,
-      tipo_evento: eventoCalendario.event.extendedProps.tipo_evento,
+      id_actividad: eventoCalendario.event.extendedProps?.['id_actividad'],
+      id_sesion: eventoCalendario.event.extendedProps?.['id_sesion'],
+      asistentes_evento: eventoCalendario.event.extendedProps?.['asistentes_evento'],
+      tipo_evento: eventoCalendario.event.extendedProps?.['tipo_evento'],
       nombreSesion,
       sesiones,
       fecha: sesiones[0]?.fecha || '',
       horaInicio: sesiones[0]?.horaInicio || '',
-      horaFin: sesiones[0]?.horaFin || ''
+      horaFin: sesiones[0]?.horaFin || '',
     };
 
     this.mostrarFormulario = true;
   }
 
 
-  agregarOActualizarEvento(evento: any): void {
-    console.log('agregar o actualizar:');
+  agregarOActualizarEvento(evento: EventoFormPayload): void {
+    console.log('agregar o actualizar:', evento);
     const { sesiones, editarUna, idSesionOriginal } = evento;
-
 
     if (!Array.isArray(sesiones) || sesiones.length === 0) {
       console.warn('⚠️ No hay sesiones para agregar o actualizar.');
@@ -196,7 +257,8 @@ export class CalendarComponent {
       console.log('🛠 Editando solo una sesión:', idSesionOriginal);
 
       this.eventosCalendario = this.eventosCalendario.filter(ev => ev.id !== idSesionOriginal);
-      this.calendarOptions.events = (this.calendarOptions.events as any[]).filter(ev => ev.id !== idSesionOriginal);
+      this.calendarOptions.events = (this.calendarOptions.events as EventInput[])
+        .filter(ev => ev.id !== idSesionOriginal);
 
       console.log('🗑️ Eliminada sesión con ID:', idSesionOriginal);
     } else if (!editarUna) {
@@ -206,30 +268,51 @@ export class CalendarComponent {
       eliminadas.forEach(ev => console.log('🗑️ Eliminada:', ev.id));
 
       this.eventosCalendario = this.eventosCalendario.filter(ev => ev.title !== nombreSesion);
-      this.calendarOptions.events = (this.calendarOptions.events as any[]).filter(ev => ev.title !== nombreSesion);
+      this.calendarOptions.events = (this.calendarOptions.events as EventInput[])
+        .filter(ev => ev.title !== nombreSesion);
     }
-
 
     // Agregar las nuevas sesiones
     sesiones.forEach((e, i) => {
       console.log('Agregar sesion', e);
-      const eventoFormateado = {
-        id: e.id, // ✅ Usamos el id único recibido
-        title: e.nombreSesion,
+      const eventoFormateado: EventoCalendario = {
+        id: e.id ?? `tmp-${i}`,
+        title: e.nombreSesion ?? '',
         start: `${e.fecha}T${e.horaInicio}`,
         end: `${e.fecha}T${e.horaFin}`,
-        extendedProps: { ...e }
+        extendedProps: {
+          id: e.id ?? `tmp-${i}`,
+          nombreSesion: e.nombreSesion ?? '',
+          fecha: e.fecha,
+          horaInicio: e.horaInicio,
+          horaFin: e.horaFin,
+          id_actividad: e.id_actividad,
+          id_sesion: e.id_sesion,
+          asistentes_evento: e.asistentes_evento,
+          tipo_evento: e.tipo_evento
+        }
       };
+
+      this.calendarOptions.events = (this.calendarOptions.events as EventInput[])
+        .filter(ev => ev.id !== idSesionOriginal);
 
       console.log(`➕ Agregando sesión #${i + 1}:`, eventoFormateado);
 
       this.eventosCalendario.push(eventoFormateado);
     });
 
-    // Refrescar el calendario
+    // ✅ Refrescar el calendario con EventInput[]
+    const eventosCalendar: EventInput[] = this.eventosCalendario.map(ev => ({
+      id: ev.id,
+      title: ev.title ?? '',
+      start: ev.start ?? undefined,
+      end: ev.end ?? undefined,
+      extendedProps: ev.extendedProps
+    }));
+
     this.calendarOptions = {
       ...this.calendarOptions,
-      events: [...this.eventosCalendario]
+      events: eventosCalendar
     };
 
     this.eventoEditando = null;
@@ -238,14 +321,9 @@ export class CalendarComponent {
 
     console.log('✅ Sesiones actualizadas. Total en calendario:', this.eventosCalendario.length);
     console.log('✅ Sesiones actualizadas. Total en calendario:', this.eventosCalendario);
-    // console.table(this.eventosCalendario.map(ev => ({
-    //   ID: ev.id,
-    //   Fecha: ev.start.split('T')[0],
-    //   HoraInicio: ev.start.split('T')[1].substring(0, 5),
-    //   HoraFin: ev.end.split('T')[1].substring(0, 5),
-    //   Nombre: ev.title
-    // })));
   }
+
+
   eliminarSesionDelCalendario(id: string) {
     // Si es UUID asumimos que es una sesión individual
     const esUUID = /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(id);
@@ -258,49 +336,62 @@ export class CalendarComponent {
       this.eventosCalendario = this.eventosCalendario.filter(ev => ev.title !== id);
     }
 
-    this.calendarOptions.events = [...this.eventosCalendario];
+    // ✅ Convertimos a EventInput[] antes de asignar a calendarOptions
+    const eventosCalendar: EventInput[] = this.eventosCalendario.map(ev => ({
+      id: ev.id,
+      title: ev.title ?? '',
+      start: ev.start ?? undefined, // 👈 null → undefined
+      end: ev.end ?? undefined,
+      extendedProps: ev.extendedProps
+    }));
+
+    this.calendarOptions = {
+      ...this.calendarOptions,
+      events: eventosCalendar
+    };
+
     console.log('📆 Sesión(es) eliminada(s). Calendario actualizado.');
   }
 
- // ✅ Recargar sesiones al cerrar formularios o modales
- cerrarFormulario() {
-  this.mostrarFormulario = false;
-  this.eventoSeleccionado = null;
-  this.cargarSesiones();
-}
+  // ✅ Recargar sesiones al cerrar formularios o modales
+  cerrarFormulario() {
+    this.mostrarFormulario = false;
+    this.eventoSeleccionado = null;
+    this.cargarSesiones();
+  }
 
-cerrarModalAcciones() {
-  this.mostrarModalAcciones = false;
-  this.cargarSesiones();
-}
+  cerrarModalAcciones() {
+    this.mostrarModalAcciones = false;
+    this.cargarSesiones();
+  }
 
-cerrarAsistencia() {
-  this.mostrarAsistencia = false;
-  this.cargarSesiones();
-}
+  cerrarAsistencia() {
+    this.mostrarAsistencia = false;
+    this.cargarSesiones();
+  }
 
-cerrarAsistenciaFotografica() { // 👈 nuevo
-  this.mostrarAsistenciaFotografica = false;
-  this.cargarSesiones();
-}
+  cerrarAsistenciaFotografica() { // 👈 nuevo
+    this.mostrarAsistenciaFotografica = false;
+    this.cargarSesiones();
+  }
 
-   // 🔹 Aquí es donde decidimos si abrir normal o fotográfica
-   onAccionSeleccionada(accion: 'editar' | 'asistencia') {
+  // 🔹 Aquí es donde decidimos si abrir normal o fotográfica
+  onAccionSeleccionada(accion: 'editar' | 'asistencia') {
+    if (!this.eventoSeleccionado) {
+      console.warn('⚠️ No hay evento seleccionado');
+      return;
+    }
+
     console.log('🎯 evento seleccionado 1:', this.eventoSeleccionado);
     console.log('🎯 Accion seleccionadaaaaaaa:', accion);
+
     if (accion === 'editar') {
-      if (this.eventoSeleccionado?.id_actividad) {
-        this.eventoComponent.cargarEdicionDesdeBackend(this.eventoSeleccionado.id_actividad);
+      if (this.eventoSeleccionado.id_actividad) {
+        this.eventoComponent()?.cargarEdicionDesdeBackend(this.eventoSeleccionado.id_actividad);
       } else {
-        this.eventoComponent.precargarFormulario(this.eventoSeleccionado);
+        this.eventoComponent()?.precargarFormulario(this.eventoSeleccionado);
       }
       this.mostrarFormulario = true;
-      // this.abrirEdicion({
-      //   event: {
-      //     extendedProps: this.eventoSeleccionado,
-      //     title: this.eventoSeleccionado?.nombreSesion
-      //   }
-      // });
       this.mostrarModalAcciones = false;
       return;
     }
@@ -309,20 +400,16 @@ cerrarAsistenciaFotografica() { // 👈 nuevo
       this.mostrarFormulario = false;
       this.mostrarModalAcciones = false;
 
-      this.asistenciaService.obtenerDetalleAsistencia(this.eventoSeleccionado.id_sesion)
+      this.asistenciaService.obtenerDetalleAsistencia(this.eventoSeleccionado.id_sesion!)
         .subscribe((respuesta) => {
           console.log('📥 Respuesta detalle asistencia:', respuesta);
 
-          // Guardamos la respuesta en el evento
-          this.eventoSeleccionado = { ...this.eventoSeleccionado, ...respuesta };
-
-          // Definir el tipo de asistencia
+          this.eventoSeleccionado = { ...this.eventoSeleccionado!, ...respuesta };
           this.tipoAsistencia = respuesta.foto === 'S' ? 'fotografica' : 'normal';
-
-          // Mostrar modal
           this.mostrarAsistencia = true;
         });
     }
   }
+
 }
 

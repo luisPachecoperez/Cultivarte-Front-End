@@ -1,9 +1,17 @@
-import { Component, input, output, OnInit } from '@angular/core';
+import { Component, input, output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { AsistenciaService } from '../services/asistencia.service';
 import { v4 as uuidv4 } from 'uuid';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
+import {
+  EventoAsistenciaNormal,
+  Beneficiario,
+  AsistenteConDetalle,
+  DetalleAsistenciaNormal,
+  PayloadAsistenciaNormal,
+  AsistenciaResponse
+} from '../interfaces/asistencia.interface';
 
 @Component({
   selector: 'app-asistencia',
@@ -13,21 +21,22 @@ import { SnackbarService } from '../../../shared/services/snackbar.service';
   styleUrls: ['./asistencia.component.css']
 })
 export class AsistenciaComponent implements OnInit {
-  evento = input<any>(null);
+  evento = input<EventoAsistenciaNormal | null>(null);
   cerrar = output<void>();
 
-  beneficiariosBD: any[] = [];
-  asistentes: any[] = [];
+  beneficiariosBD: Beneficiario[] = [];
+  asistentes: AsistenteConDetalle[] = [];
   filtro = new FormControl('');
 
-  sedes: any[] = []; // ✅ ahora las sedes vienen del servicio
+  sedes: { id_sede: string; nombre: string }[] = [];// ✅ ahora las sedes vienen del servicio
   asistenciaForm: FormGroup;
 
-  constructor(
-    private asistenciaService: AsistenciaService,
-    private fb: FormBuilder,
-    private snack: SnackbarService
-  ) {
+   // ✅ usar inject en vez de constructor
+   private asistenciaService = inject(AsistenciaService);
+   private fb = inject(FormBuilder);
+   private snack = inject(SnackbarService);
+
+  constructor() {
     this.asistenciaForm = this.fb.group({
       id_sede: ['', Validators.required],
       descripcion: [''] // se deja por consistencia con fotográfica
@@ -39,14 +48,14 @@ export class AsistenciaComponent implements OnInit {
     if (!ev) return;
 
     // 🚀 Cargar detalle desde el servicio
-    this.asistenciaService.obtenerDetalleAsistencia(ev.id_sesion).subscribe((data) => {
+    this.asistenciaService.obtenerDetalleAsistencia(ev.id_sesion).subscribe((data: DetalleAsistenciaNormal) => {
       console.log('📥 Detalle asistencia normallll:', data);
 
       // ✅ Guardamos todos los beneficiarios que vienen del back
       this.beneficiariosBD = data.beneficiarios || [];
       // ✅ Beneficiarios
       // ✅ Reconstruimos los asistentes con datos completos
-      this.asistentes = (data.asistentes_sesiones || []).map((asis: any) => {
+      this.asistentes = (data.asistentes_sesiones || []).map((asis) => {
         const beneficiario = this.beneficiariosBD.find(b => b.id_persona === asis.id_persona);
         return {
           id_persona: asis.id_persona,
@@ -91,10 +100,13 @@ export class AsistenciaComponent implements OnInit {
   }
 
 
-  agregarAsistente(beneficiario: any) {
+  agregarAsistente(beneficiario: Beneficiario) {
     if (!this.asistentes.find(a => a.id_persona === beneficiario.id_persona)) {
       console.log('Agregar asistente:', beneficiario);
-      this.asistentes.push({ ...beneficiario });
+      this.asistentes.push({
+        ...beneficiario,
+        eliminar: 'S'
+      });
     }
   }
 
@@ -116,7 +128,7 @@ export class AsistenciaComponent implements OnInit {
 
     const ev = this.evento();
 
-    const payload = {
+    const payload: PayloadAsistenciaNormal = {
       id_actividad: '',
       id_sesion: '',
       imagen: '', // vacío en asistencia normal
@@ -124,7 +136,7 @@ export class AsistenciaComponent implements OnInit {
       descripcion: '', // vacío si no aplica
       nuevos: this.asistentes.map(a => ({
         id_persona: a.id_persona,
-        id_sesion: ev?.id_sesion,
+        id_sesion: ev!.id_sesion,
         id_asistencia: uuidv4(),
       }))
     };
@@ -133,7 +145,7 @@ export class AsistenciaComponent implements OnInit {
 
     // 🔹 Aquí conectamos con el servicio
     this.asistenciaService.guardarAsistencia(payload).subscribe({
-      next: (resp) => {
+      next: (resp:AsistenciaResponse) => {
         console.log('✅ Respuesta del back:', resp);
         if (resp.exitoso === 'S') {
           // éxito → cerramos modal

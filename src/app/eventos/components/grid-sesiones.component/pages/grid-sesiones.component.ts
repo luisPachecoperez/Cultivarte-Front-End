@@ -1,11 +1,11 @@
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { v4 as uuidv4 } from 'uuid';
 import { SnackbarService } from '../../../../shared/services/snackbar.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { SesionFormValue, SesionDTO, EstadoSesion } from '../interfaces/grid-sesiones.interface';
 
-type EstadoSesion = 'original' | 'nuevo' | 'modificado';
 
 @Component({
   selector: 'app-grid-sesiones',
@@ -24,7 +24,8 @@ export class GridSesionesComponent {
   soloLectura = input<boolean>(false);
 
   /** 📤 Emite snapshot de cambios acumulados al padre */
-  cambios = output<{ nuevos: any[]; modificados: any[]; eliminados: any[] }>();
+  cambios = output<{ nuevos: SesionDTO[]; modificados: SesionDTO[]; eliminados: Pick<SesionDTO, 'id_sesion'>[] }>();
+
 
   /** (compat) */
   sesionModificada = output<void>();
@@ -32,9 +33,12 @@ export class GridSesionesComponent {
   nuevaSesionForm: FormGroup;
 
   /** buffer de eliminados */
-  private eliminadosBuffer: any[] = [];
+  private eliminadosBuffer: Pick<SesionDTO, 'id_sesion'>[] = [];
 
-  constructor(private fb: FormBuilder, private snack: SnackbarService) {
+  private fb = inject(FormBuilder);
+  private snack = inject(SnackbarService);
+
+  constructor() {
     this.nuevaSesionForm = this.fb.group({
       fecha: ['', Validators.required],
       horaInicio: ['', Validators.required],
@@ -163,8 +167,8 @@ export class GridSesionesComponent {
   }
 
   /** normaliza nombres al formato del back */
-  private mapSesionDTO(s: any, esNueva: boolean) {
-    const dto: any = {
+  private mapSesionDTO(s: SesionFormValue, esNueva: boolean) {
+    const dto: SesionDTO = {
       // para NUEVOS y MODIFICADOS debe ir id_actividad
       id_actividad: s.id_actividad ?? this.idEvento(),
       fecha_sesion: s.fecha,
