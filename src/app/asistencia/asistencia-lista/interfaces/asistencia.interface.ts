@@ -69,6 +69,6 @@ export interface PayloadAsistenciaNormal {
  * 📤 Respuesta del backend
  */
 export interface AsistenciaResponse {
-  exitoso: 'S' | 'N';
+  exitoso: string;
   mensaje?: string;
 }

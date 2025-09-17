@@ -42,10 +42,10 @@ export interface SesionBackendDTO {
 
 export interface EventoCalendario {
   id: string;
-  title: string | null;
-  start: string | null;
-  end: string | null;
-  extendedProps: SesionCalendario;  // 👈 lo que devuelve el servicio
+  title?: string;                  // opcional, en lugar de `string | null`
+  start: string | Date;            // nunca null
+  end?: string | Date;             // opcional
+  extendedProps: SesionCalendario;
 }
 
 

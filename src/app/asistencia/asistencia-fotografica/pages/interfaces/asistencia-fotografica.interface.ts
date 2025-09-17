@@ -16,7 +16,7 @@ export interface EventoAsistencia {
  * 📥 Detalle de asistencia devuelto por el backend
  */
 export interface DetalleAsistencia {
-  sedes: { id: string; nombre: string }[];
+  sedes: { id_sede: string; nombre: string }[];
   imagen?: string;
   descripcion?: string;
   numero_asistentes?: number;

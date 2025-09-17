@@ -39,9 +39,10 @@ export class AsistenciaComponent implements OnInit {
   constructor() {
     this.asistenciaForm = this.fb.group({
       id_sede: ['', Validators.required],
-      descripcion: [''] // se deja por consistencia con fotográfica
+      descripcion: ['']
     });
   }
+
 
   ngOnInit(): void {
     const ev = this.evento();
@@ -62,7 +63,7 @@ export class AsistenciaComponent implements OnInit {
           nombre_completo: beneficiario?.nombre_completo || 'Desconocido',
           id_sede: beneficiario?.id_sede || null,
           eliminar: asis.eliminar || 'S'
-        };
+        }as AsistenteConDetalle;
       });
       console.log('asistentes precargados:', this.asistentes);
       // ✅ Sedes

@@ -50,12 +50,13 @@ export class EventComponent implements OnInit, OnChanges {
     modificados: [],
     eliminados: []
   };
-  // ✅ dependencias con inject()
-  private fb = inject(FormBuilder);
-  private eventService = inject(EventService);
-  private gridSesionesService = inject(GridSesionesService);
-  private authService = inject(AuthService);
-  private snack = inject(SnackbarService);
+
+  // Inyectamos con funciones
+private fb = inject(FormBuilder);
+private eventService = inject(EventService);
+private gridSesionesService = inject(GridSesionesService);
+private authService = inject(AuthService);
+private snack = inject(SnackbarService);
 
   constructor() {
     // Effect: cambios en fecha preseleccionada
@@ -272,7 +273,8 @@ export class EventComponent implements OnInit, OnChanges {
       this.nombreDeEventos = data.nombresDeActividad;
       this.frecuencias = data.frecuencias;
 
-      // lógica de sede
+
+      // ✅ Si hay exactamente una sede y estamos creando (no editando)
       if (!this.estaEditando && this.sedes.length === 1) {
         this.eventoForm.get('sede')?.enable({ emitEvent: false });
         this.eventoForm.get('sede')?.setValue(this.sedes[0].id_sede, { emitEvent: false });
@@ -569,14 +571,14 @@ export class EventComponent implements OnInit, OnChanges {
       nuevos: this.cambiosSesionesSnapshot.nuevos.map(s => ({
         id_sesion: s.id_sesion,
         id_actividad: s.id_actividad,
-        fecha_actividad: s.fecha_sesion,
+        fecha_sesion: s.fecha_sesion,
         hora_inicio: s.hora_inicio,
         hora_fin: s.hora_fin
       })),
       modificados: this.cambiosSesionesSnapshot.modificados.map(s => ({
         id_sesion: s.id_sesion,
         id_actividad: s.id_actividad,
-        fecha_actividad: s.fecha_sesion,
+        fecha_sesion: s.fecha_sesion,
         hora_inicio: s.hora_inicio,
         hora_fin: s.hora_fin
       })),

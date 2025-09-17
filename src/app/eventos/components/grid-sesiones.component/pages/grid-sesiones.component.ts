@@ -4,7 +4,8 @@ import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Va
 import { v4 as uuidv4 } from 'uuid';
 import { SnackbarService } from '../../../../shared/services/snackbar.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { SesionFormValue, SesionDTO, EstadoSesion } from '../interfaces/grid-sesiones.interface';
+import { SesionFormValue, SesionDTOGrid, EstadoSesion } from '../interfaces/grid-sesiones.interface';
+
 
 
 @Component({
@@ -24,7 +25,7 @@ export class GridSesionesComponent {
   soloLectura = input<boolean>(false);
 
   /** 📤 Emite snapshot de cambios acumulados al padre */
-  cambios = output<{ nuevos: SesionDTO[]; modificados: SesionDTO[]; eliminados: Pick<SesionDTO, 'id_sesion'>[] }>();
+  cambios = output<{ nuevos: SesionDTOGrid[]; modificados: SesionDTOGrid[]; eliminados: Pick<SesionDTOGrid, 'id_sesion'>[] }>();
 
 
   /** (compat) */
@@ -33,7 +34,7 @@ export class GridSesionesComponent {
   nuevaSesionForm: FormGroup;
 
   /** buffer de eliminados */
-  private eliminadosBuffer: Pick<SesionDTO, 'id_sesion'>[] = [];
+  private eliminadosBuffer: Pick<SesionDTOGrid, 'id_sesion'>[] = [];
 
   private fb = inject(FormBuilder);
   private snack = inject(SnackbarService);
@@ -168,7 +169,7 @@ export class GridSesionesComponent {
 
   /** normaliza nombres al formato del back */
   private mapSesionDTO(s: SesionFormValue, esNueva: boolean) {
-    const dto: SesionDTO = {
+    const dto: SesionDTOGrid = {
       // para NUEVOS y MODIFICADOS debe ir id_actividad
       id_actividad: s.id_actividad ?? this.idEvento(),
       fecha_sesion: s.fecha,

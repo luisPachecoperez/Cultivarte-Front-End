@@ -43,7 +43,7 @@ export interface SesionDTO {
 export interface SesionCambioDTO {
   id_sesion?: string;
   id_actividad: string;
-  fecha_actividad: string;
+  fecha_sesion: string;
   hora_inicio: string;
   hora_fin: string;
 }

@@ -15,7 +15,7 @@ export interface SesionFormValue {
 }
 
 // Lo que se envía al backend
-export interface SesionDTO {
+export interface SesionDTOGrid {
   id_actividad?: string | null;
   id_sesion?: string;
   fecha_sesion: string;

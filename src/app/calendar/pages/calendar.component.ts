@@ -69,7 +69,7 @@ export class CalendarComponent {
       timeGridWeek: { buttonText: 'Semana' },
       timeGridDay: { buttonText: 'Día' }
     },
-    events: [],
+    events: this.eventosCalendario,
     locale: esLocale,
     dateClick: this.handleDateClick.bind(this),
     eventClick: this.handleEventClick.bind(this),
@@ -101,7 +101,7 @@ export class CalendarComponent {
 
     this.calendarService.obtenerSesiones(this.ultimaFechaInicio, this.ultimaFechaFin, idUsuario)
       .subscribe({
-        next: (sesionesFormateadas: EventoCalendario[]) => {
+        next: (sesionesFormateadas: any[]) => {
           this.eventosCalendario = sesionesFormateadas;
 
           // 👇 transformamos a EventInput[]
@@ -399,6 +399,12 @@ export class CalendarComponent {
     if (accion === 'asistencia') {
       this.mostrarFormulario = false;
       this.mostrarModalAcciones = false;
+      const idSesion = this.eventoSeleccionado?.id_sesion;
+      if (!idSesion) {
+        console.warn('No hay sesión seleccionada para tomar asistencia');
+        this.snack.error('No hay sesión seleccionada');
+        return;
+      }
 
       this.asistenciaService.obtenerDetalleAsistencia(this.eventoSeleccionado.id_sesion!)
         .subscribe((respuesta) => {
