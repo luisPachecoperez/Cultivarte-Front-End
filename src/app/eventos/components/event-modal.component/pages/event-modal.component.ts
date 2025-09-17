@@ -4,6 +4,7 @@ import { EventModalService } from '../services/event-modal.services';
 import { Tooltip } from 'bootstrap';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../../../shared/services/snackbar.service'; // ajusta la ruta
+import { EventoModal } from '../interfaces/event-modal.interface';
 
 export interface EventoModalData {
   id_actividad: string;
@@ -22,13 +23,14 @@ export interface EventoModalData {
   imports: [CommonModule, MatSnackBarModule]
 })
 export class EventModalComponent implements AfterViewInit {
-  evento = input<EventoModalData|null>(null);
+  evento = input<EventoModal | null>(null);
   accionSeleccionada = output<'editar' | 'asistencia'>();
   cerrar = output<void>();
 
   mensajeResultado: string | null = null;
   exitoAccion = false;
 
+  // ✅ inject() en lugar de constructor
   private eventModalService = inject(EventModalService);
   private snack = inject(SnackbarService);
 
@@ -47,7 +49,7 @@ export class EventModalComponent implements AfterViewInit {
     if (!e) return;
 
     this.snack
-      .confirm(`¿Deseas eliminar el evento "${e?.nombreSesion?? 'sin nombre'}"?`)
+      .confirm(`¿Deseas eliminar el evento "${e?.nombreSesion ?? 'sin nombre'}"?`)
       .subscribe((ok) => {
         if (!ok) return;
 
@@ -68,4 +70,5 @@ export class EventModalComponent implements AfterViewInit {
         });
       });
   }
+
 }

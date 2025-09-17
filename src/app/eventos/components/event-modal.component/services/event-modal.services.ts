@@ -1,9 +1,8 @@
-import { Injectable, inject  } from '@angular/core';
-import { throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { of, throwError } from 'rxjs';
+import { catchError, delay, map, tap } from 'rxjs/operators';
 import { GraphQLService } from '../../../../shared/services/graphql.service';
-
-
+import { AuthService } from '../../../../shared/services/auth.service';
 @Injectable({
   providedIn: 'root'
 })
@@ -20,7 +19,7 @@ export class EventModalService {
 `;
 
 
-private graphQLService = inject(GraphQLService);
+  constructor(private graphQLService: GraphQLService, private authService: AuthService) {}
 
   /**
    * 🗑️ Elimina un evento (solo si asistentes_evento == 0)

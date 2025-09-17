@@ -1,45 +1,17 @@
-import { Component, input, output, OnInit } from '@angular/core';
+import { Component, input, output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { AsistenciaService } from '../services/asistencia.service';
 import { v4 as uuidv4 } from 'uuid';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
-import { inject } from '@angular/core';
-
-interface EventoSeleccionado {
-  id_actividad: string;
-  id_sesion: string;
-  nombreSesion: string;
-  fecha: string;
-  horaInicio: string;
-  horaFin: string;
-}
-
-interface Beneficiario {
-  id_persona: string;
-  nombre_completo: string;
-  id_sede: string;
-}
-
-interface Asistente {
-  id_persona: string;
-  nombre_completo: string;
-  id_sede: string | null;
-  eliminar: 'S' | 'N';
-}
-
-interface Sede {
-  id_sede: string;
-  nombre: string;
-}
-
-interface DetalleAsistenciaResponse {
-  beneficiarios: Beneficiario[];
-  asistentes_sesiones: { id_persona: string; eliminar?: 'S' | 'N' }[];
-  sedes: Sede[];
-  id_sede?: string;
-}
-
+import {
+  EventoAsistenciaNormal,
+  Beneficiario,
+  AsistenteConDetalle,
+  DetalleAsistenciaNormal,
+  PayloadAsistenciaNormal,
+  AsistenciaResponse
+} from '../interfaces/asistencia.interface';
 
 @Component({
   selector: 'app-asistencia',
@@ -49,19 +21,20 @@ interface DetalleAsistenciaResponse {
   styleUrls: ['./asistencia.component.css']
 })
 export class AsistenciaComponent implements OnInit {
-  evento = input<EventoSeleccionado | null>(null);
+  evento = input<EventoAsistenciaNormal | null>(null);
   cerrar = output<void>();
 
   beneficiariosBD: Beneficiario[] = [];
-  asistentes: Asistente[] = [];
+  asistentes: AsistenteConDetalle[] = [];
   filtro = new FormControl('');
 
-  sedes: Sede[] = []; // ✅ ahora las sedes vienen del servicio
+  sedes: { id_sede: string; nombre: string }[] = [];// ✅ ahora las sedes vienen del servicio
   asistenciaForm: FormGroup;
 
-  private asistenciaService = inject(AsistenciaService);
-  private fb = inject(FormBuilder);
-  private snack = inject(SnackbarService);
+   // ✅ usar inject en vez de constructor
+   private asistenciaService = inject(AsistenciaService);
+   private fb = inject(FormBuilder);
+   private snack = inject(SnackbarService);
 
   constructor() {
     this.asistenciaForm = this.fb.group({
@@ -76,21 +49,21 @@ export class AsistenciaComponent implements OnInit {
     if (!ev) return;
 
     // 🚀 Cargar detalle desde el servicio
-    this.asistenciaService.obtenerDetalleAsistencia(ev.id_sesion).subscribe((data: DetalleAsistenciaResponse) => {
+    this.asistenciaService.obtenerDetalleAsistencia(ev.id_sesion).subscribe((data: DetalleAsistenciaNormal) => {
       console.log('📥 Detalle asistencia normallll:', data);
 
       // ✅ Guardamos todos los beneficiarios que vienen del back
       this.beneficiariosBD = data.beneficiarios || [];
       // ✅ Beneficiarios
       // ✅ Reconstruimos los asistentes con datos completos
-      this.asistentes = (data.asistentes_sesiones || []).map((asis: { id_persona: string; eliminar?: 'S' | 'N' }) => {
+      this.asistentes = (data.asistentes_sesiones || []).map((asis) => {
         const beneficiario = this.beneficiariosBD.find(b => b.id_persona === asis.id_persona);
         return {
           id_persona: asis.id_persona,
           nombre_completo: beneficiario?.nombre_completo || 'Desconocido',
           id_sede: beneficiario?.id_sede || null,
           eliminar: asis.eliminar || 'S'
-        }as Asistente;
+        }as AsistenteConDetalle;
       });
       console.log('asistentes precargados:', this.asistentes);
       // ✅ Sedes
@@ -131,16 +104,10 @@ export class AsistenciaComponent implements OnInit {
   agregarAsistente(beneficiario: Beneficiario) {
     if (!this.asistentes.find(a => a.id_persona === beneficiario.id_persona)) {
       console.log('Agregar asistente:', beneficiario);
-
-      // al guardarlo en asistentes debemos "convertirlo" a Asistente
-      const nuevoAsistente: Asistente = {
-        id_persona: beneficiario.id_persona,
-        nombre_completo: beneficiario.nombre_completo,
-        id_sede: beneficiario.id_sede,
-        eliminar: 'S' // por defecto se puede eliminar
-      };
-
-      this.asistentes.push(nuevoAsistente);
+      this.asistentes.push({
+        ...beneficiario,
+        eliminar: 'S'
+      });
     }
   }
 
@@ -162,7 +129,7 @@ export class AsistenciaComponent implements OnInit {
 
     const ev = this.evento();
 
-    const payload = {
+    const payload: PayloadAsistenciaNormal = {
       id_actividad: '',
       id_sesion: '',
       imagen: '', // vacío en asistencia normal
@@ -170,7 +137,7 @@ export class AsistenciaComponent implements OnInit {
       descripcion: '', // vacío si no aplica
       nuevos: this.asistentes.map(a => ({
         id_persona: a.id_persona,
-        id_sesion: ev?.id_sesion ?? '',
+        id_sesion: ev!.id_sesion,
         id_asistencia: uuidv4(),
       }))
     };
@@ -179,7 +146,7 @@ export class AsistenciaComponent implements OnInit {
 
     // 🔹 Aquí conectamos con el servicio
     this.asistenciaService.guardarAsistencia(payload).subscribe({
-      next: (resp) => {
+      next: (resp:AsistenciaResponse) => {
         console.log('✅ Respuesta del back:', resp);
         if (resp.exitoso === 'S') {
           // éxito → cerramos modal

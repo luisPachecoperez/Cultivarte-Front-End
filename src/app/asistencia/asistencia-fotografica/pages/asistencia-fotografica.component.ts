@@ -1,8 +1,15 @@
 import { Component, input, output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AsistenciaService, PreAsistencia } from '../../asistencia-lista/services/asistencia.service';
+import { AsistenciaService } from '../../asistencia-lista/services/asistencia.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
+import {
+  EventoAsistencia,
+  DetalleAsistencia,
+  PayloadAsistencia,
+  AsistenciaResponse
+} from './interfaces/asistencia-fotografica.interface';
+
 
 // 🔹 Definimos tipos explícitos
 interface EventoSeleccionado {
@@ -28,25 +35,17 @@ interface Sede {
 })
 export class AsistenciaFotograficaComponent implements OnInit {
   // 🔹 Datos que vienen del calendario al abrir el modal
-  evento = input<EventoSeleccionado | null>(null);
+  evento = input<EventoAsistencia | null>(null);
   cerrar = output<void>();
-  asistenciaGuardada = output<{
-    id_actividad: string;
-    id_sesion: string;
-    imagen: string;
-    numero_asistentes: number;
-    descripcion: string;
-    nuevos: never[];
-  }>();
-
+  asistenciaGuardada = output<PayloadAsistencia>();
   bloqueado = false;
 
   asistenciaForm: FormGroup;
   imagenPrevia: string | null = null;
   imagenBase64: string | null = null; // ✅ para almacenar la foto en Base64
-  sedes: Sede[] = []; // ✅ lista de sedes que viene del back/mock
+  sedes: { id_sede: string; nombre: string }[] = []; // ✅ lista de sedes que viene del back/mock
 
-  // ✅ usamos inject() en lugar de constructor
+  // ✅ usar inject()
   private fb = inject(FormBuilder);
   private asistenciaService = inject(AsistenciaService);
   private snack = inject(SnackbarService);
@@ -63,7 +62,8 @@ export class AsistenciaFotograficaComponent implements OnInit {
     const ev = this.evento();
     if (!ev) return;
 
-    this.asistenciaService.obtenerDetalleAsistencia(ev.id_sesion).subscribe((data: PreAsistencia) => {
+    // 🚀 Llamamos al servicio para obtener detalle de asistencia
+    this.asistenciaService.obtenerDetalleAsistencia(ev.id_sesion).subscribe((data:DetalleAsistencia) => {
       console.log('📥 Detalle asistencia fotográfica:', data);
 
       this.sedes = data.sedes || [];
@@ -85,6 +85,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
         });
       }
 
+      // 🔒 Si hay cualquier dato, bloqueamos el formulario completo
       if ((data.numero_asistentes ?? 0) > 0 || data.descripcion || data.imagen) {
         this.bloqueado = true;
         this.asistenciaForm.disable();
@@ -92,7 +93,6 @@ export class AsistenciaFotograficaComponent implements OnInit {
     });
   }
 
-  // ✅ tipamos el evento correctamente
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -129,7 +129,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
     console.log('📤 Enviando asistencia fotográfica (payload JSON):', payload);
 
     this.asistenciaService.guardarAsistenciaFotografica(payload).subscribe({
-      next: (resp) => {
+      next: (resp:AsistenciaResponse) => {
         console.log('✅ Respuesta del back (fotográfica):', resp);
         if (resp.exitoso === 'S') {
           this.asistenciaGuardada.emit(payload);

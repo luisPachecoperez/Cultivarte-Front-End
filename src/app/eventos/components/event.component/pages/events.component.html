@@ -149,8 +149,10 @@
 
         <!-- Grid de sesiones -->
         @if (estaEditando) {
-        <app-grid-sesiones [formArray]="sesiones" [soloLectura]="modoSoloLectura"
-          [idEvento]="eventoParaEditar?.id || eventoSeleccionado()?.idEvento || null"
+          <app-grid-sesiones
+          [formArray]="sesiones"
+          [soloLectura]="modoSoloLectura"
+          [idEvento]="eventoParaEditar?.id || eventoSeleccionado()?.id_actividad || null"
           (cambios)="onCambiosSesiones($event)">
         </app-grid-sesiones>
         }

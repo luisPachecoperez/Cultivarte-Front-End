@@ -17,11 +17,6 @@ import { PreCreateActividad } from '../../../../indexdb/interfaces/pre-create-ac
 import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';
 import { Sesiones } from '../../../../indexdb/interfaces/sesiones';
 
-interface OperacionResponse {
-  exitoso: string;
-  mensaje?: string;
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -286,7 +281,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
 
   }
 
-  crearEvento(evento: any, sesiones: Sesiones[]): Observable<OperacionResponse> {
+  crearEvento(evento: any, sesiones: Sesiones[]): Observable<GraphQLResponse> {
     console.log('📤 Enviando evento al back:', evento);
     console.log('📤 Enviando sesiones al back:', sesiones);
     const hoy = new Date().toISOString().split('T')[0];
@@ -328,13 +323,13 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
     // 🔹 Intentar sincronizar con backend
     console.log('📤 Enviando actividad al back:', actividadPayload);
     return this.graphql
-      .mutation<{ createActividad: OperacionResponse }>(
+      .mutation<{ createActividad: GraphQLResponse }>(
         this.CREATE_ACTIVIDAD,
         { data: actividadPayload }   // 👈 Ojo: ahora mandamos dentro de data
       )
       .pipe(
         switchMap((res) => {
-          const actividadResponse:OperacionResponse = res.createActividad;
+          const actividadResponse = res.createActividad;
 
           if (actividadResponse?.exitoso === 'S') {
             const sesionesPayload = {
@@ -342,9 +337,6 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
                 ...s,
                 id_sesion: uuidv4(),
                 id_actividad: actividadPayload.id_actividad,
-                fecha_sesion: (s.fecha_sesion instanceof Date)
-                  ? s.fecha_sesion.toISOString().split('T')[0]
-                  : s.fecha_sesion,  // ya era string
               })),
               modificados: [],
               eliminados: [],

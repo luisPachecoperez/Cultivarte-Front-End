@@ -4,26 +4,8 @@ import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Va
 import { v4 as uuidv4 } from 'uuid';
 import { SnackbarService } from '../../../../shared/services/snackbar.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { SesionFormValue, SesionDTOGrid, EstadoSesion } from '../interfaces/grid-sesiones.interface';
 
-type EstadoSesion = 'original' | 'nuevo' | 'modificado';
-
-interface SesionFormValue {
-  id_actividad?: string | null;
-  id_sesion: string;
-  fecha: string;
-  horaInicio: string;
-  horaFin: string;
-  asistentes_sesion: number;
-  metaEstado: EstadoSesion;
-}
-
-interface SesionDTO {
-  id_actividad: string | null | undefined;
-  fecha_sesion: string;
-  hora_inicio: string;
-  hora_fin: string;
-  id_sesion?: string;
-}
 
 
 @Component({
@@ -43,7 +25,8 @@ export class GridSesionesComponent {
   soloLectura = input<boolean>(false);
 
   /** 📤 Emite snapshot de cambios acumulados al padre */
-  cambios = output<{ nuevos: SesionDTO[]; modificados: SesionDTO[]; eliminados: { id_sesion: string }[] }>();
+  cambios = output<{ nuevos: SesionDTOGrid[]; modificados: SesionDTOGrid[]; eliminados: Pick<SesionDTOGrid, 'id_sesion'>[] }>();
+
 
   /** (compat) */
   sesionModificada = output<void>();
@@ -51,12 +34,10 @@ export class GridSesionesComponent {
   nuevaSesionForm: FormGroup;
 
   /** buffer de eliminados */
-  private eliminadosBuffer: { id_sesion: string }[] = [];
-
+  private eliminadosBuffer: Pick<SesionDTOGrid, 'id_sesion'>[] = [];
 
   private fb = inject(FormBuilder);
   private snack = inject(SnackbarService);
-
 
   constructor() {
     this.nuevaSesionForm = this.fb.group({
@@ -187,8 +168,8 @@ export class GridSesionesComponent {
   }
 
   /** normaliza nombres al formato del back */
-  private mapSesionDTO(s: SesionFormValue, esNueva: boolean): SesionDTO {
-    const dto: SesionDTO = {
+  private mapSesionDTO(s: SesionFormValue, esNueva: boolean) {
+    const dto: SesionDTOGrid = {
       // para NUEVOS y MODIFICADOS debe ir id_actividad
       id_actividad: s.id_actividad ?? this.idEvento(),
       fecha_sesion: s.fecha,
