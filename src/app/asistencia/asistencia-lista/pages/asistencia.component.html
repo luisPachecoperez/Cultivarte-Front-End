@@ -48,9 +48,9 @@
   <!-- Lista sugerida -->
   @if (resultadosBusqueda.length) {
     <ul class="lista-sugerencias">
-      @for (b of resultadosBusqueda; track b.id_persona) {
+      @for (b of resultadosBusqueda; track b.identificacion) {
         <li (click)="agregarAsistente(b)">
-          {{ b.nombre_completo }} - {{ b.id_persona }}
+          {{ b.nombre_completo }} - {{ b.identificacion }}
         </li>
       }
     </ul>

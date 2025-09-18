@@ -70,6 +70,7 @@ export class EventComponent implements OnInit, OnChanges {
   private gridSesionesService = inject(GridSesionesService);
   private authService = inject(AuthService);
   private snack = inject(SnackbarService);
+  private loadingService = inject(LoadingService);
 
   constructor() {
     // Effect: cambios en fecha preseleccionada
@@ -496,7 +497,7 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   guardarEvento(): void {
-    //console.log('📦 eventoFormguardar:', this.eventoForm);
+    console.log('📦 eventoFormguardar:', this.eventoForm);
     if (this.eventoForm.invalid) {
       this.eventoForm.markAllAsTouched();
       this.snack.error(
@@ -515,6 +516,7 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   private crearEvento(): void {
+    this.loadingService.show();
     const evento = this.eventoForm.getRawValue();
     let sesiones: any[] = [];
 
@@ -676,13 +678,16 @@ export class EventComponent implements OnInit, OnChanges {
             editarUna: false,
             idSesionOriginal: null,
           });
+          this.loadingService.hide();
           this.resetearFormulario();
         } else {
+          this.loadingService.hide();
           console.error('❌ Error al crear evento:', resp.mensaje);
           this.snack.error('Error al crear evento');
         }
       })
       .catch((err) => {
+
         console.error('❌ Excepción al crear evento:', err);
         this.snack.error('Error inesperado al crear evento');
       });
@@ -690,6 +695,8 @@ export class EventComponent implements OnInit, OnChanges {
 
   async actualizarSesion() {
     // 🚨 Ahora usamos el snapshot del grid
+    this.loadingService.show();
+
     const payloadFinal = {
       nuevos: this.cambiosSesionesSnapshot.nuevos.map((s) => ({
         id_sesion: s.id_sesion,
@@ -720,16 +727,23 @@ export class EventComponent implements OnInit, OnChanges {
       if (resp.exitoso === 'S') {
         this.snack.success(resp.mensaje ?? 'Sesiones actualizadas');
         this.eventoEditado.emit(payloadFinal);
+        this.loadingService.hide();
+
         this.cerrarFormulario.emit();
       } else {
+        this.loadingService.hide();
+
         this.snack.error(
           resp.mensaje ?? 'No se pudieron actualizar las sesiones'
         );
       }
     } catch (err) {
+      this.loadingService.hide();
+
       console.error('❌ Error al guardar sesiones:', err);
       this.snack.error('Error al guardar sesiones');
     }
+
   }
 
   private resetearFormulario(): void {

@@ -803,7 +803,8 @@ export class ActividadesDataSource {
         return {
           id_persona: p.id_persona,
           nombre_completo: `${p.nombres} ${p.apellidos}`,
-          id_sede: sedePersona?.id_sede ?? '', // 👈 fallback vacío
+          id_sede: sedePersona?.id_sede ?? '',
+          identificacion:p.identificacion // 👈 fallback vacío
         };
       });
     //console.log('beneficiarios:', beneficiarios);
@@ -880,6 +881,7 @@ export class ActividadesDataSource {
         id_persona: b.id_persona,
         nombre_completo: b.nombre_completo,
         id_sede: b.id_sede,
+        identificacion:b.identificacion
       })),
       asistentes_sesiones: asistentes.map((a) => ({
         id_persona: a.id_persona,

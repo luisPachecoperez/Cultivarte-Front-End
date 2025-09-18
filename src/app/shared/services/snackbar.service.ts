@@ -29,7 +29,7 @@ export class SnackbarService {
     });
   }
 
-  error(message: string, duration = 3000) {
+  error(message: string, duration = 300000) {
     this.snack.open(message, 'Cerrar', {
       duration,
       panelClass: ['error-snackbar'],

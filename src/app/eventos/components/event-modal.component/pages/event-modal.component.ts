@@ -5,7 +5,7 @@ import { Tooltip } from 'bootstrap';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../../../shared/services/snackbar.service'; // ajusta la ruta}
 import { firstValueFrom } from 'rxjs';
-
+import { LoadingService } from '../../../../shared/services/loading.service';
 export interface EventoModalData {
   id_actividad: string;
   nombreSesion: string;
@@ -32,6 +32,7 @@ export class EventModalComponent implements AfterViewInit {
 
   private eventModalService = inject(EventModalService);
   private snack = inject(SnackbarService);
+  private loadingService = inject(LoadingService);
 
   ngAfterViewInit(): void {
     const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -52,19 +53,23 @@ export class EventModalComponent implements AfterViewInit {
     );
     //console.log("Resultado ok:", ok);
     if (!ok) return;
-
+    this.loadingService.show();
     try {
       const res = await this.eventModalService.eliminarEvento(e.id_actividad);
       //console.log("REspuesta de elminar evento:", res);
       const success = res.exitoso === 'S';
       if (success) {
         this.snack.success(res.mensaje ?? 'Eliminado correctamente');
+        this.loadingService.hide();
+
         this.cerrar.emit();
       } else {
         this.snack.error(res.mensaje ?? 'No se pudo eliminar');
+        this.loadingService.hide();
       }
     } catch (err: any) {
       this.snack.error(err?.mensaje ?? 'Error eliminando el evento');
+      this.loadingService.hide();
     }
   }
 }

@@ -27,6 +27,7 @@ interface Beneficiario {
   id_persona: string;
   nombre_completo: string;
   id_sede: string;
+  identificacion: string;
 }
 
 interface Asistente {
@@ -80,11 +81,10 @@ export class AsistenciaComponent implements OnInit {
   ngOnInit(): void {
     const ev = this.evento();
     if (!ev) return;
-
     this.asistenciaService
       .obtenerDetalleAsistencia(ev.id_sesion)
       .then((data: PreAsistencia) => {
-        //console.log('📥 Llega desde Promise:', data);
+        console.log('📥 Llega desde Promise:', data);
 
         this.beneficiariosBD = data.beneficiarios || [];
         this.asistentes = (data.asistentes_sesiones || []).map((asis: any) => {
@@ -126,8 +126,8 @@ export class AsistenciaComponent implements OnInit {
       // 🔹 Filtrar SOLO si empieza con el texto (nombre o ID)
       const coincideTexto =
         b.nombre_completo?.toLowerCase().startsWith(texto) ||
-        b.id_persona?.toLowerCase().startsWith(texto);
-
+        b.identificacion?.toLowerCase().startsWith(texto);
+      //console.log('coincideTexto:', coincideTexto, b.nombre_completo, texto, b.identificacion);
       return coincideSede && coincideTexto;
     });
   }

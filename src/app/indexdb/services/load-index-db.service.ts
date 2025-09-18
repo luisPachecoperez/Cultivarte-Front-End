@@ -152,7 +152,7 @@ export class LoadIndexDBService {
   // ==========================
   async loadPersonas(): Promise<void> {
     //console.log('Cargando Personas...');
-    const query = `
+    /*const query = `
       query {
         getPersonas {
           id_persona
@@ -190,7 +190,23 @@ export class LoadIndexDBService {
           fecha_modificacion
         }
       }
-    `;
+    `;*/
+
+    const query = `
+    query {
+      getPersonas {
+        id_persona
+        id_tipo_persona
+        id_tipo_identificacion
+        identificacion
+        nombres
+        apellidos
+        razon_social
+        email
+
+      }
+    }
+  `;
 
     const response = await firstValueFrom(
       this.graphql.query<{ getPersonas: Personas[] }>(query)

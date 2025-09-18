@@ -60,7 +60,7 @@ private graphQLService= inject(GraphQLService);
                 () =>
                   ({
                     exitoso: 'S',
-                    mensaje: 'Actividad marcada para eliminación (offline)',
+                    mensaje: 'Evento eliminado satisfactoriamente'
                   } as GraphQLResponse)
               )
             );

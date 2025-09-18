@@ -26,18 +26,18 @@
   text-align: center;
   width: 100%;
 }
-
+/*
 .btn-close {
   position: absolute;
   right: 1rem;
   top: 1rem;
   z-index: 10;
-}
+}*/
 @media (max-width: 576px) {
-  .btn-close {
+  /*.btn-close {
     right: 0.5rem;
     top: 0.5rem;
-  }
+  }*/
 }
 
 input.form-control,

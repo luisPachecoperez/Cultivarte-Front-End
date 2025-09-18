@@ -15,7 +15,7 @@
 }
 
 .error-snackbar {
-  background-color: yellow !important;
+  background-color: rgb(255, 8, 0) !important;
   color: white !important;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
   font-size: 18px !important;
@@ -61,3 +61,56 @@
 .mdc-snackbar__surface mat-mdc-snackbar-surface{
   background-color: #4caf50!important;
 }
+.dropdown-caret{
+  background-color: #4caf50;
+  position: absolute;
+  right: .75rem;      /* separa del borde derecho */
+  top: 0;
+  bottom: 0;          /* estira la altura del span */
+  display: flex;      /* permite centrar vertical */
+  align-items: center;/* centra verticalmente */
+  pointer-events: none;
+  color: #6c757d;     /* gris (Bootstrap secondary) */
+  line-height: 1;     /* evita desalineación por altura de línea */
+  z-index: 1;         /* por si hay bordes/overlays encima */
+}
+
+.form-control-select{
+  background: url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'><path fill=\'%236c757d\' d=\'M1 5l7 7 7-7\'/></svg>') no-repeat right 0.75rem center;
+  background-size: 15px;
+}
+input[type="date"].is-invalid,
+input[type="time"].is-invalid {
+  background-image: none !important;
+  padding-right: 3rem; /* ajusta espacio si hace falta */
+}
+.input-invalid {
+  border: 2px solid red !important;
+  background-image: none !important;
+}
+
+.is-invalid {
+  border: 2px solid red !important;
+}
+
+
+.btn-cerrar {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+}
+
+.btn-cerrar::before,
+.btn-cerrar::after {
+  content: "X";
+  position: absolute;
+  top: 0px;
+  left: 50%;
+  width: 16px;
+  height: 2px;
+  background-color: #000; /* color de la X */
+  transform-origin: center;
+}
+

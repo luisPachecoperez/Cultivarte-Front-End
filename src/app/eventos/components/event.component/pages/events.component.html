@@ -24,14 +24,19 @@
           <!-- ¿Es institucional? -->
           <div class="mb-3 d-flex align-items-center gap-2">
             <label class="form-label mb-0">¿Es institucional?</label>
-            <div class="form-check ms-2">
+            <div class="form-check ms-2"
+            >
               <input class="form-check-input" type="radio" formControlName="institucional" [value]="true"
-                id="institucionalSi" />
+                id="institucionalSi"
+                [ngClass]="{'is-invalid': eventoForm.get('institucional')?.invalid && eventoForm.get('institucional')?.touched}"
+                />
               <label class="form-check-label" for="institucionalSi">Sí</label>
             </div>
             <div class="form-check ms-2">
               <input class="form-check-input" type="radio" formControlName="institucional" [value]="false"
-                id="institucionalNo" />
+                id="institucionalNo"
+                [ngClass]="{'is-invalid': eventoForm.get('institucional')?.invalid && eventoForm.get('institucional')?.touched}"
+                />
               <label class="form-check-label" for="institucionalNo">No</label>
             </div>
           </div>
@@ -40,7 +45,10 @@
           <div class="row g-2 mb-3">
             <div class="col">
               <label class="form-label">Tipo de evento</label>
-              <select class="form-control" formControlName="tipoEvento">
+              <select class="form-control form-control-select" formControlName="tipoEvento"
+              [ngClass]="{'is-invalid': eventoForm.get('tipoEvento')?.invalid && eventoForm.get('tipoEvento')?.touched}"
+
+              >
                 <option value="" disabled>Selecciona tipo</option>
                 @for (tipo of tiposDeActividad; track tipo.id_tipo_actividad) {
                 <option [value]="tipo.id_tipo_actividad">{{ tipo.nombre }}</option>
@@ -49,7 +57,9 @@
             </div>
             <div class="col">
               <label class="form-label">Responsable</label>
-              <select class="form-control" formControlName="responsable">
+              <select class="form-control form-control-select" formControlName="responsable"
+              [ngClass]="{'is-invalid': eventoForm.get('responsable')?.invalid && eventoForm.get('responsable')?.touched}"
+              >
                 <option value="" disabled>Selecciona responsable</option>
                 @for (r of responsables; track r.id_responsable) {
                 <option [value]="r.id_responsable">{{ r.nombre }}</option>
@@ -59,9 +69,10 @@
             <!-- Campo de Aliado con Autocomplete -->
             <div class="col position-relative">
               <label class="form-label">Nombre de aliado</label>
-              <input type="text" class="form-control" [value]="aliadoTexto" (input)="onAliadoInput($event)"
+              <input type="text" class="form-control form-control-select" [value]="aliadoTexto" (input)="onAliadoInput($event)"
               (focus)="!estaEditando && (mostrarSugerencias = true)"
-              [readonly]="estaEditando" placeholder="Escribe para buscar" autocomplete="off" />
+              [readonly]="estaEditando" placeholder="Escribe para buscar" autocomplete="off"
+              [ngClass]="{'is-invalid': eventoForm.get('aliado')?.invalid && eventoForm.get('aliado')?.touched}"/>
 
               <!-- Lista de aliados filtrados -->
               @if (!estaEditando && mostrarSugerencias && aliadosFiltrados.length > 0) {
@@ -84,7 +95,9 @@
               <label for="nombreEvento">Nombre del Evento</label>
 
               @if (esListaNombreEvento()) {
-                <select class="form-control" formControlName="nombreEvento">
+                <select class="form-control form-control-select" formControlName="nombreEvento"
+                [ngClass]="{'is-invalid': eventoForm.get('nombreEvento')?.invalid && eventoForm.get('nombreEvento')?.touched}"
+                >
                   <option value="" disabled selected>Seleccione un nombre</option>
                   @for (n of eventosFiltrados; track n.nombre) {
                     <!-- Guardamos directamente el nombre -->
@@ -96,6 +109,7 @@
                   type="text"
                   class="form-control"
                   formControlName="nombreEvento"
+                  [ngClass]="{'is-invalid': eventoForm.get('nombreEvento')?.invalid && eventoForm.get('nombreEvento')?.touched}"
                   placeholder="Escriba el nombre del evento"
                 />
               }
@@ -105,7 +119,8 @@
             <!-- Sede -->
             <div class="col-4">
               <label class="form-label">Sede</label>
-              <select class="form-control" formControlName="sede">
+              <select class="form-control form-control-select" formControlName="sede"
+              [ngClass]="{'is-invalid': eventoForm.get('sede')?.invalid && eventoForm.get('sede')?.touched}">
                 <option value="" disabled>Selecciona sede</option>
                 @for (s of sedes; track s.id_sede) {
                 <option [value]="s.id_sede">{{ s.nombre }}</option>
@@ -118,13 +133,13 @@
           <div class="mb-3">
             <label class="form-label">Descripción del evento</label>
             <textarea class="form-control" placeholder="Descripción del evento"
-              formControlName="descripcionGrupo"></textarea>
+              formControlName="descripcionGrupo" [ngClass]="{'is-invalid': eventoForm.get('descripcionGrupo')?.invalid && eventoForm.get('descripcionGrupo')?.touched}"></textarea>
           </div>
 
           <!-- Frecuencia -->
           <div class="mb-3">
-            <label class="form-label">Frecuencia</label>
-            <select class="form-control" formControlName="frecuencia">
+            <label class="form-label ">Frecuencia</label>
+            <select class="form-control form-control-select" formControlName="frecuencia" [ngClass]="{'is-invalid': eventoForm.get('frecuencia')?.invalid && eventoForm.get('frecuencia')?.touched}">
               <option value="" disabled>Selecciona frecuencia</option>
               @for (f of frecuencias; track f.id_frecuencia) {
               <option [value]="f.id_frecuencia">{{ f.nombre }}</option>
@@ -136,13 +151,19 @@
           <label class="form-label mt-3">¿Cuándo?</label>
           <div class="row g-2 align-items-center mb-3">
             <div class="col-4">
-              <input type="date" class="form-control" formControlName="fecha" />
+              <input type="date" class="form-control" formControlName="fecha"
+              [ngClass]="{'input-invalid': eventoForm.get('fecha')?.invalid && eventoForm.get('fecha')?.touched}"
+              />
             </div>
             <div class="col-3">
-              <input type="time" class="form-control" formControlName="horaInicio" />
+              <input type="time" class="form-control" formControlName="horaInicio"
+              [ngClass]="{'input-invalid': eventoForm.get('horaInicio')?.invalid && eventoForm.get('horaInicio')?.touched}"
+              />
             </div>
             <div class="col-3">
-              <input type="time" class="form-control" formControlName="horaFin" />
+              <input type="time" class="form-control" formControlName="horaFin"
+              [ngClass]="{'input-invalid': eventoForm.get('horaFin')?.invalid && eventoForm.get('horaFin')?.touched}"
+              />
             </div>
           </div>
         </form>
