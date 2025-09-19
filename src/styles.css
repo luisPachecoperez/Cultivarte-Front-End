@@ -7,7 +7,7 @@
 }
 
 .warning-snackbar {
-  background-color: #f6bf28 !important;
+  background-color: #fdbc3d !important;
   border-radius: 5px;
   color: black !important;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
@@ -114,3 +114,77 @@ input[type="time"].is-invalid {
   transform-origin: center;
 }
 
+input:disabled,
+select:disabled,
+textarea:disabled,
+input[readonly],
+textarea[readonly] {
+  background-color: #d3d3d3 !important; /* gris clarito */
+  color: #50585e;                      /* opcional: texto gris */
+  cursor: not-allowed;                 /* opcional */
+}
+.fc-col-header-cell-cushion {
+  color: #4CC1BB !important;   /* azul bootstrap */
+  font-weight: bold;           /* opcional */
+  text-decoration: none;       /* Quitar subrayado */
+
+}
+
+.fc-col-header-cell-cushion::first-letter {
+  text-transform: uppercase;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: #4CC1BB!important; /* azul Bootstrap */
+}
+/*
+.fc-daygrid-day-top {
+  border-top: 3px solid #0d6efd !important;
+  background-color: #f8f9fa;
+}
+*/
+.fc-toolbar-title {
+  font-size: 1.75em;
+  margin: 0px;
+  color:#ed164e!important;
+
+}
+
+.fc-toolbar-title::first-letter {
+  text-transform: uppercase;
+}
+
+.fc-dayGridMonth-button,
+.fc-timeGridWeek-button,
+.fc-timeGridDay-button,
+.fc-today-button,
+.fc-next-button,
+.fc-prev-button{
+  background-color: #4CC1BB!important;
+  border: none!important;
+}
+
+.modal-dialog{
+  max-width: 800px; /* Ajusta el valor según tus necesidades */
+  width: 60%
+}
+.modal-title {
+  background-color: #ed164e!important;
+  border-radius: 10px!important;  ;
+}
+.text-muted{
+  color: white!important;
+}
+.modal-header{
+  border-bottom: none!important;
+  border-radius: 10px!important;
+}
+.btn{
+  border-radius: 10px!important;
+
+}
+.btn-danger {
+  background-color: #ed164e; /* rojo por defecto, cámbialo al tuyo */
+  border-color:none!important;
+}

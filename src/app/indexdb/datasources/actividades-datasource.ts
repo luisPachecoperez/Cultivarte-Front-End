@@ -54,12 +54,19 @@ export class ActividadesDataSource {
       data.fecha_modificacion.includes('-')
     ) {
       // ✅ Caso fecha tipo string con guiones → convertir a timestamp
-      data.fecha_modificacion = String(new Date(data.fecha_modificacion).getTime());
+      data.fecha_modificacion = String(
+        new Date(data.fecha_modificacion).getTime()
+      );
     }
 
-    console.log("Creando actividad: ",data)
+    console.log('Creando actividad: ', data);
+    console.log("consultando actividad por id: ", this.getById( data.id_actividad));
     try {
-      await indexDB.actividades.add(data);
+      await indexDB.actividades.add(data).catch((error) => {
+        console.error('Error explícito dentro de add():', error);
+        // puedes transformar el error aquí
+        throw new Error(error?.message || 'Error al agregar actividad');
+      });
       return {
         exitoso: 'S',
         mensaje: 'Registro creado exitosamente',
@@ -68,7 +75,7 @@ export class ActividadesDataSource {
       console.error('Error al guardar:', error);
       return {
         exitoso: 'N',
-        mensaje: `Error al guardar: ${error?.mensaje || error}`,
+        mensaje: `Error al guardar: ${error?.message || error}`,
       };
     }
   }
@@ -107,10 +114,9 @@ export class ActividadesDataSource {
       .where('id_actividad')
       .equals(id)
       .toArray();
-    const actividad: Actividades | undefined=await this.getById(id)
+    const actividad: Actividades | undefined = await this.getById(id);
 
-    if (actividad && actividad.syncStatus === 'pending-create')
-      soft = false; // Si la actividad no se ha sincronizado, hacer hard delete
+    if (actividad && actividad.syncStatus === 'pending-create') soft = false; // Si la actividad no se ha sincronizado, hacer hard delete
 
     if (soft) {
       // 🔹 2a. Soft delete → marcar actividad y sesiones como eliminadas
@@ -804,7 +810,7 @@ export class ActividadesDataSource {
           id_persona: p.id_persona,
           nombre_completo: `${p.nombres} ${p.apellidos}`,
           id_sede: sedePersona?.id_sede ?? '',
-          identificacion:p.identificacion // 👈 fallback vacío
+          identificacion: p.identificacion, // 👈 fallback vacío
         };
       });
     //console.log('beneficiarios:', beneficiarios);
@@ -881,7 +887,7 @@ export class ActividadesDataSource {
         id_persona: b.id_persona,
         nombre_completo: b.nombre_completo,
         id_sede: b.id_sede,
-        identificacion:b.identificacion
+        identificacion: b.identificacion,
       })),
       asistentes_sesiones: asistentes.map((a) => ({
         id_persona: a.id_persona,

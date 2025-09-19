@@ -33,7 +33,7 @@
 }
 
 :host ::ng-deep .fc-event {
-  background-color: #36ba75 !important;
+  background-color: #F1635A !important;
   color: white !important;
   border: none;
   font-weight: bold;

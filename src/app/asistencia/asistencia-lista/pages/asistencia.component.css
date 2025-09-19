@@ -48,7 +48,7 @@
 
 /* Subtítulo */
 .modal-subtitle {
-  background-color: #d84875;
+  background-color: #ed164e;
   color: #fff;
   font-weight: bold;
   padding: 0.5rem;
@@ -113,7 +113,7 @@
   background: none;
   border: none;
   font-size: 1.2rem;
-  color: #d84875;
+  color: #ed164e;
   cursor: pointer;
 }
 
@@ -124,7 +124,7 @@
 }
 
 .btn-guardar {
-  background-color: #d84875;
+  background-color: #ed164e;
   color: white;
   border: none;
   padding: 0.6rem 1.5rem;

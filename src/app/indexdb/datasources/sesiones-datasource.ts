@@ -38,7 +38,7 @@ export class SesionesDataSource {
       data.fecha_modificacion = String(new Date(data.fecha_modificacion).getTime());
     }
 
-    //console.log('adicionando sesion al index:', data);
+    console.log('adicionando sesion al index:', data.id_sesion);
     await indexDB.sesiones.add(data);
     return {
       exitoso: 'S',

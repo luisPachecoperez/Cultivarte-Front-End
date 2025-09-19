@@ -329,11 +329,21 @@ export class EventComponent implements OnInit, OnChanges {
         //console.log('📦 id_programa:', this.id_programa);
         this.eventoForm.get('id_programa')?.setValue(this.id_programa);
         this.sedes = data.sedes;
+        this.sedes.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
         this.tiposDeActividad = data.tiposDeActividad;
+        this.tiposDeActividad.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
         this.aliados = data.aliados;
+        this.aliados.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
         this.responsables = data.responsables;
+        this.responsables.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
         this.nombreDeEventos = data.nombresDeActividad;
+        this.nombreDeEventos.sort((a, b) => a.nombre.localeCompare(b.nombre));
         this.frecuencias = data.frecuencias;
+        this.frecuencias.sort((a, b) => a.nombre.localeCompare(b.nombre))
         //console.log('📦 frecuencias:', this.frecuencias);
         // actualizar eventos filtrados si ya hay un tipo seleccionado
 
@@ -514,30 +524,36 @@ export class EventComponent implements OnInit, OnChanges {
       this.crearEvento();
     }
   }
+  private getFinDeMes(fechaStr: string): Date {
+    // Partir el string en partes
+    const [y, m, d] = fechaStr.split("-").map(Number);
 
+    // Crear la fecha base de manera local (evita el bug de UTC)
+    const fechaBase = new Date(y, m - 1, d);
+
+    // Último día del mes = día 0 del siguiente mes
+    return new Date(fechaBase.getFullYear(), fechaBase.getMonth() + 1, 0);
+  }
   private crearEvento(): void {
     this.loadingService.show();
     const evento = this.eventoForm.getRawValue();
     let sesiones: any[] = [];
 
     //console.log('📋 Evento base:', evento);
-
+    console.log("Fecha base:", evento.fecha);
     const fechaBase = new Date(evento.fecha);
-    const finMes = new Date(
-      fechaBase.getFullYear(),
-      fechaBase.getMonth() + 1,
-      0
-    );
+    const finMes =  this.getFinDeMes(evento.fecha);
     const [year, month, day] = evento.fecha.split('-').map(Number);
     const actual = new Date(year, month - 1, day);
-    //console.log('📋 actual:', actual);
+    console.log('📋 actual:', actual);
 
     const nombreFrecuencia =
       this.frecuencias.find((f) => f.id_frecuencia === evento.frecuencia)
         ?.nombre || '';
 
     // Frecuencias
-    //console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
+    console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
+    console.log('📋 Actual:', actual, "Fin de mes:",finMes);
     if (nombreFrecuencia.toLowerCase() === 'a diario') {
       while (actual <= finMes) {
         if (actual.getDay() >= 1 && actual.getDay() <= 6) {
@@ -701,14 +717,14 @@ export class EventComponent implements OnInit, OnChanges {
       nuevos: this.cambiosSesionesSnapshot.nuevos.map((s) => ({
         id_sesion: s.id_sesion,
         id_actividad: s.id_actividad,
-        fecha_sesion: s.fecha_sesion,
+        fecha_actividad: s.fecha_sesion,
         hora_inicio: s.hora_inicio,
         hora_fin: s.hora_fin,
       })),
       modificados: this.cambiosSesionesSnapshot.modificados.map((s) => ({
         id_sesion: s.id_sesion,
         id_actividad: s.id_actividad,
-        fecha_sesion: s.fecha_sesion,
+        fecha_actividad: s.fecha_sesion,
         hora_inicio: s.hora_inicio,
         hora_fin: s.hora_fin,
       })),
