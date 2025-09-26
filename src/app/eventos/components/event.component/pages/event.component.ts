@@ -132,15 +132,19 @@ export class EventComponent implements OnInit, OnChanges {
   mostrarSugerencias: boolean = false;
 
   // Filtra aliados cada vez que el usuario escribe
-  onAliadoInput(event: any) {
-    const texto = event.target.value.toLowerCase();
+  onAliadoInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+
+    //console.log("onaliadoinput:",event.target);
+    const texto = input.value.toLowerCase();
     this.aliadoTexto = texto;
 
     // Filtra por coincidencia en nombre
+    //console.log("aliados sin filtrar:",this.aliados);
     this.aliadosFiltrados = this.aliados.filter((a) =>
       a.nombre.toLowerCase().includes(texto)
     );
-
+    //console.log(this.aliadosFiltrados)
     // Mostrar lista si hay coincidencias
     this.mostrarSugerencias = this.aliadosFiltrados.length > 0;
   }
@@ -267,16 +271,6 @@ export class EventComponent implements OnInit, OnChanges {
 
   }
 
-  get nombresFiltrados(): any[] {
-    const tipoId = this.eventoForm.get('tipoEvento')?.value;
-    if (!tipoId) return [];
-
-    // Retorna sólo los nombres cuyo id_parametro_detalle coincide con el tipo seleccionado
-    return this.nombreDeEventos.filter(
-      (n) => n.id_parametro_detalle === tipoId
-    );
-  }
-
   private filtrarEventosPorTipo(tipoId: string | null | undefined): void {
     //console.log('📦 tipoId filtrarEventosPorTipo:', tipoId);
     if (!tipoId) {
@@ -324,7 +318,7 @@ export class EventComponent implements OnInit, OnChanges {
     this.eventService
       .obtenerConfiguracionEvento(idUsuario)
       .subscribe((data) => {
-        console.log('📦 datos de configuración:', data);
+        //console.log('📦 datos de configuración:', data);
         this.id_programa = data.id_programa;
         //console.log('📦 id_programa:', this.id_programa);
         this.eventoForm.get('id_programa')?.setValue(this.id_programa);
@@ -507,7 +501,7 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   guardarEvento(): void {
-    console.log('📦 eventoFormguardar:', this.eventoForm);
+    //console.log('📦 eventoFormguardar:', this.eventoForm);
     if (this.eventoForm.invalid) {
       this.eventoForm.markAllAsTouched();
       this.snack.error(
@@ -537,23 +531,24 @@ export class EventComponent implements OnInit, OnChanges {
   private crearEvento(): void {
     this.loadingService.show();
     const evento = this.eventoForm.getRawValue();
+    //console.log('📦 evento a crear:', evento);
     let sesiones: any[] = [];
 
     //console.log('📋 Evento base:', evento);
-    console.log("Fecha base:", evento.fecha);
+    //console.log("Fecha base:", evento.fecha);
     const fechaBase = new Date(evento.fecha);
     const finMes =  this.getFinDeMes(evento.fecha);
     const [year, month, day] = evento.fecha.split('-').map(Number);
     const actual = new Date(year, month - 1, day);
-    console.log('📋 actual:', actual);
+    //console.log('📋 actual:', actual);
 
     const nombreFrecuencia =
       this.frecuencias.find((f) => f.id_frecuencia === evento.frecuencia)
         ?.nombre || '';
 
     // Frecuencias
-    console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
-    console.log('📋 Actual:', actual, "Fin de mes:",finMes);
+    //console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
+    //console.log('📋 Actual:', actual, "Fin de mes:",finMes);
     if (nombreFrecuencia.toLowerCase() === 'a diario') {
       while (actual <= finMes) {
         if (actual.getDay() >= 1 && actual.getDay() <= 6) {
@@ -606,13 +601,16 @@ export class EventComponent implements OnInit, OnChanges {
     }
 
     if (nombreFrecuencia.toLowerCase() === 'mensualmente') {
-      for (let mes = fechaBase.getMonth(); mes <= 11; mes++) {
-        const [year, month, day] = evento.fecha.split('-').map(Number);
-        //console.log('📋 dia:', day);
-        //console.log('📋 mes:', month);
-        //console.log('📋 año:', year);
-        const nuevaFecha = new Date(year, month - 1, day); // clonamos la fecha base
-        nuevaFecha.setMonth(mes); // solo cambiamos el mes
+      for (let mes: number = fechaBase.getUTCMonth(); mes <= 11; mes++) {
+        let nuevaFecha :Date = new Date(Date.UTC(
+          fechaBase.getUTCFullYear(), // año fijo
+          mes,                        // mes iterado (0–11)
+          fechaBase.getUTCDate()      // día original
+        ));
+        if (nuevaFecha.getUTCMonth() !== mes) {
+          // Entonces ponemos el último día del mes correcto
+          nuevaFecha = new Date(Date.UTC(year, mes + 1, 0));
+        }
         sesiones.push(
           this.crearSesion(
             this.formatearFechaLocal(nuevaFecha),
@@ -649,19 +647,30 @@ export class EventComponent implements OnInit, OnChanges {
 
     // Si estamos en modo lista (esListaNombreEvento) y el valor es un id,
     // buscar el objeto en eventosFiltrados por id_parametro_detalle y usar su nombre.
+    console.log("esListaNombreEvento:",this.esListaNombreEvento());
+    console.log("eventosFiltrados:",this.eventosFiltrados);
     if (this.esListaNombreEvento()) {
       const seleccionado = this.eventosFiltrados.find(
-        (n) => n.id_parametro_detalle === evento.nombreEvento
+        (n) => n.nombre === evento.nombreEvento
       );
+      console.log("evento.nombreEvento:",evento.nombreEvento);
+      console.log("seleccionado:",seleccionado);
+      console.log("nombreEventos:",this.nombreDeEventos);
       if (seleccionado) {
         nombreActividad = seleccionado.nombre;
+        console.log("nombreActividad:",nombreActividad);
       } else {
         // fallback: si no está en eventosFiltrados intentar buscar en nombreDeEventos
+
         const buscado = (this.nombreDeEventos || []).find(
-          (n) => n.id_parametro_detalle === evento.nombreEvento
+          (n) => n.nombre === evento.nombreEvento
         );
         nombreActividad = buscado?.nombre ?? evento.nombreEvento;
+        console.log("buscado:",buscado);
+        console.log("nombreActividad fallback:",nombreActividad);
       }
+      console.log("nombreActividad final:",nombreActividad);
+
     }
 
     const payload = {
@@ -699,7 +708,7 @@ export class EventComponent implements OnInit, OnChanges {
         } else {
           this.loadingService.hide();
           console.error('❌ Error al crear evento:', resp.mensaje);
-          this.snack.error('Error al crear evento');
+          this.snack.error(resp.mensaje?? 'No se pudo crear el evento');
         }
       })
       .catch((err) => {

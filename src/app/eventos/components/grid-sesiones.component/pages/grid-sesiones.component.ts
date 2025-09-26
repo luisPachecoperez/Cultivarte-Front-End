@@ -100,6 +100,7 @@ export class GridSesionesComponent {
       asistentes_sesion: [0],
       metaEstado: ['nuevo' as EstadoSesion]
     });
+    //console.log("Nueva sesión a agregar:", nueva.value);
 
     this.formArray().push(nueva);
     this.nuevaSesionForm.reset();
@@ -137,7 +138,7 @@ export class GridSesionesComponent {
     this.formArray().removeAt(index);
     this.emitirCambios();
     this.sesionModificada.emit();
-    this.snack.success('Sesión eliminada correctamente');
+   // this.snack.success('Sesión eliminada correctamente');
   }
 
   notificarCambio(): void {

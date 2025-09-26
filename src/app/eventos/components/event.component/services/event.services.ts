@@ -223,7 +223,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
             .pipe(
               map((res) => {
                 this.loadingService.hide(); // 🔄 ocultar
-                console.log('📡 Respuesta cruda de GraphQL:', res);
+                //console.log('📡 Respuesta cruda de GraphQL:', res);
                 res.getPreCreateActividad;
                 return res.getPreCreateActividad;
               }),
@@ -256,7 +256,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
     evento: any,
     sesiones: Sesiones[]
   ): Promise<GraphQLResponse<void>> {
-    console.log('📤 Enviando evento al back:', evento);
+    //console.log('📤 Enviando evento al back:', evento);
     const id_usuario = this.authService.getUserUuid();
 
     // 🔹 Construcción del payload de la actividad
@@ -358,21 +358,9 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
                     '❌ Error al crear en GraphQL, usando solo IndexDB:',
                     err
                   );
-
-                  // Guardar en IndexDB como pendiente
-                  actividadPayload.syncStatus = 'pending-create';
-                  this.actividadesDataSource.create(actividadPayload);
-
-                  sesiones.forEach((s: Sesiones) => {
-                    this.sesionesDataSource.create({
-                      ...s,
-                      syncStatus: 'pending-create',
-                    });
-                  });
-
                   return of({
-                    exitoso: 'S',
-                    mensaje: 'Registro guardado satisfactoriamente',
+                    exitoso: 'N',
+                    mensaje: 'Error guardando el evento',
                   });
                 })
               );

@@ -59,8 +59,8 @@ export class ActividadesDataSource {
       );
     }
 
-    console.log('Creando actividad: ', data);
-    console.log("consultando actividad por id: ", this.getById( data.id_actividad));
+    //console.log('Creando actividad: ', data);
+    //console.log("consultando actividad por id: ", this.getById( data.id_actividad));
     try {
       await indexDB.actividades.add(data).catch((error) => {
         console.error('Error explícito dentro de add():', error);

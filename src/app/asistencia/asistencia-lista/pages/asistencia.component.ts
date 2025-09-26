@@ -84,7 +84,7 @@ export class AsistenciaComponent implements OnInit {
     this.asistenciaService
       .obtenerDetalleAsistencia(ev.id_sesion)
       .then((data: PreAsistencia) => {
-        console.log('📥 Llega desde Promise:', data);
+        //console.log('📥 Llega desde Promise:', data);
 
         this.beneficiariosBD = data.beneficiarios || [];
         this.asistentes = (data.asistentes_sesiones || []).map((asis: any) => {
