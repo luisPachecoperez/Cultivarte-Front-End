@@ -446,16 +446,21 @@ export class ActividadesDataSource {
     )
       // 🔹 Ordenamos por fecha antes de formatear
       .sort((a, b) => {
-        const fechaA = new Date(+a.fecha_actividad).getTime();
-        const fechaB = new Date(+b.fecha_actividad).getTime();
+        if (a.fecha_actividad===undefined)return -1;
+        if (b.fecha_actividad===undefined)return -1;
+        const fechaA = new Date(+(a.fecha_actividad ??0)).getTime();
+        const fechaB = new Date(+(b.fecha_actividad??0)).getTime();
         return fechaA - fechaB; // ascendente (más antigua primero)
       })
       // 🔹 Luego mapeamos y formateamos
       .map((s) => ({
         ...s,
-        fecha_actividad: new Date(+s.fecha_actividad)
+        fecha_actividad: new Date(+(s.fecha_actividad??0))
           .toISOString()
-          .split('T')[0], // yyyy-MM-dd
+          .split('T')[0], // yyyy-MM-dd,
+          nro_asistentes:s.nro_asistentes??0,
+          descripcion:s.descripcion??'',
+          nombre_actividad:s.nombre_actividad??''
       }));
     const respuesta: PreEditActividad = {
       id_programa: actividad.id_programa || '',

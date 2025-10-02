@@ -168,4 +168,3 @@ export class AsistenciaFotograficaComponent implements OnInit {
     }
   }
 }
-

@@ -15,7 +15,7 @@ import { SesionFormValue } from '../../../interfaces/sesion-form-value.interface
 type EstadoSesion = 'original' | 'nuevo' | 'modificado';
 
 interface Eliminados {
-  id_sesion: string;
+  id_sesion: string| null|undefined;
 }
 
 @Component({
@@ -38,7 +38,7 @@ export class Grid_sesionesComponent {
   cambios = output<{
     nuevos: SesionFormValue[];
     modificados: SesionFormValue[];
-    eliminados: { id_sesion: string }[];
+    eliminados: { id_sesion: string |null |undefined}[];
   }>();
 
   /** (compat) */
@@ -133,7 +133,7 @@ export class Grid_sesionesComponent {
 
     if (sesion.metaEstado !== 'nuevo') {
       // solo id_sesion en eliminados
-      this.eliminadosBuffer.push({ id_sesion: sesion.id_sesion });
+      this.eliminadosBuffer.push({ id_sesion: sesion.id_sesion ??''});
     }
 
     this.formArray().removeAt(index);

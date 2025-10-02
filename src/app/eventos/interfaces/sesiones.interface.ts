@@ -16,4 +16,3 @@ export interface Sesiones {
   fecha_modificacion?: string | null;
   [key: string]: any; // Firma de índice para permitir propiedades adicionales
 }
-

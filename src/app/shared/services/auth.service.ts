@@ -137,44 +137,5 @@ export class AuthService {
       );
   }
 
-  async logout(email?: string) {
-    let google: GoogleAccounts;
-
-    this.clear();
-    // Borrar cookie
-    this.cookieService.deleteCookie(environment.USER_COOKIE_NAME);
-    //en fbd no
-
-    // (Opcional) mutación al backend para cerrar sesión server-side
-    const LOGOUT_MUTATION = `mutation { logout { success message } }`;
-
-    try {
-      const result = await firstValueFrom(
-        this.graphQLService.mutation<{
-          logout: { success: boolean; message: string };
-        }>(LOGOUT_MUTATION),
-      );
-
-      if (result.logout.success) {
-        //console.log("✅ Logout backend:", result.logout.message);
-      } else {
-        console.warn('⚠️ Logout backend fallido:', result.logout.message);
-      }
-    } catch (err) {
-      console.error('❌ Error logout backend:', err);
-    }
-
-    // (Opcional) Revocar consentimiento en Google
-    try {
-      if (email && typeof google !== 'undefined') {
-        google.accounts.id.revoke(email, () => {});
-      } else {
-        google?.accounts?.id?.cancel?.();
-      }
-    } catch {
-      // Ignorar errores silenciosamente
-    }
-
-    await this.router.navigate(['/login']);
-  }
+  
 }

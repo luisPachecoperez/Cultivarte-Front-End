@@ -90,7 +90,7 @@ export class CalendarComponent {
   fechaSeleccionada: string | null = null;
   eventoEditando: EventoCalendario | null = null;
 
-  eventoSeleccionado: Sesiones | null = null;
+  eventoSeleccionado: Sesiones |undefined;
   mostrarModalAcciones: boolean = false;
   mostrarFormulario: boolean = false;
   mostrarAsistencia: boolean = false;
@@ -167,7 +167,7 @@ export class CalendarComponent {
   handleDateClick(arg: DateClickMinimal) {
     //console.log('📌 Click en fecha:', arg.dateStr);
     this.fechaSeleccionada = arg.dateStr;
-    this.eventoSeleccionado = null;
+    this.eventoSeleccionado = undefined;
     this.mostrarFormulario = true;
   }
 
@@ -353,7 +353,7 @@ export class CalendarComponent {
   // ✅ Recargar sesiones al cerrar formularios o modales
   cerrarFormulario() {
     this.mostrarFormulario = false;
-    this.eventoSeleccionado = null;
+    this.eventoSeleccionado = undefined;
     this.cargarSesiones();
   }
 
@@ -383,7 +383,12 @@ export class CalendarComponent {
           this.eventoSeleccionado.id_actividad,
         );
       } else {
-        this.eventoComponent.precargarFormulario(this.eventoSeleccionado);
+
+        this.eventoComponent.precargarFormulario({
+          ...this.eventoSeleccionado,
+          nombre_actividad:this.eventoSeleccionado.nombre_actividad??undefined
+
+        })
       }
       this.mostrarFormulario = true;
       // this.abrirEdicion({
