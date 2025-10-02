@@ -1,5 +1,5 @@
-import { Injectable, input } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+
 import {
   firstValueFrom,
   map,
@@ -12,20 +12,22 @@ import {
 } from 'rxjs';
 import { LoadIndexDBService } from '../../../indexdb/services/load-index-db.service';
 import { ActividadesDataSource } from '../../../indexdb/datasources/actividades-datasource';
-import { PreAsistencia } from '../../../shared/interfaces/pre-asistencia.interface';
-import { Asistencias } from '../../../indexdb/interfaces/asistencias.interface';
+import { PreAsistencia } from '../../interfaces/pre-asistencia.interface';
+import { Asistencias } from '../../interfaces/asistencia.interface';
+import { Sesiones } from '../../../eventos/interfaces/sesiones.interface';
 import { AsistenciasDataSource } from '../../../indexdb/datasources/asistencias-datasource';
 import { SesionesDataSource } from '../../../indexdb/datasources/sesiones-datasource';
 import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.interface';
 import { inject } from '@angular/core';
 import { GraphQLService } from '../../../shared/services/graphql.service';
 import { LoadingService } from '../../../shared/services/loading.service';
-
+import { AsistenciaPayLoad } from '../../interfaces/asistencia-payload.interface';
+import { AsistenciasDB } from '../../../indexdb/interfaces/asistencias.interface';
 export interface AsistenciaInput {
   id_actividad: string;
   id_sesion: string;
   imagen: string;
-  numero_asistentes: number;
+  nro_asistentes: number;
   descripcion: string;
   nuevos: { id_persona: string; id_sesion: string; id_asistencia: string }[];
 }
@@ -88,7 +90,7 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
   // 🔹 Consultar info de asistencia según id_actividad
   async obtenerDetalleAsistencia(id_sesion: string): Promise<PreAsistencia> {
     this.LoadingService.show();
-    return await firstValueFrom(
+    return <PreAsistencia>await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
           //console.log('ping en update sesiones:', ping);
@@ -102,29 +104,28 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
               })
               .pipe(
                 map((res) => {
-                  const preAsistencia = res.getPreAsistencia;
-                  //console.log('👉 preAsistencia desde backend:', preAsistencia);
+                  //console.log('👉 preAsistencia desde backend:', res);
                   this.LoadingService.hide();
-
-                  return preAsistencia;
-                })
+                  return <PreAsistencia>res.getPreAsistencia;
+                }),
               );
           } else {
+            //console.log("Se fue por el else");
             return from(
-              this.actividadesDataSource.getPreAsistencia(id_sesion)
+              this.actividadesDataSource.getPreAsistencia(id_sesion),
             ).pipe(
-              tap((preAsistencia) => {
+              tap(() => {
                 //console.log('👉 preAsistencia calculada (offline):', preAsistencia);
                 this.LoadingService.hide();
-              })
+              }),
             );
           }
-        })
-      )
+        }),
+      ),
     );
   }
 
-  async guardarAsistencia(input: any): Promise<GraphQLResponse> {
+  async guardarAsistencia(input: AsistenciaPayLoad): Promise<GraphQLResponse> {
     this.LoadingService.show();
 
     return await firstValueFrom(
@@ -146,10 +147,12 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
 
                   // Nuevas -> synced
                   input.nuevos.forEach((a: Asistencias) => {
-                    this.asistenciasDataSource.create({
+                    const asistencia: AsistenciasDB = {
                       ...a,
                       syncStatus: 'synced',
-                    });
+                      deleted: false,
+                    };
+                    this.asistenciasDataSource.create(asistencia);
                   });
                   this.LoadingService.hide();
 
@@ -158,31 +161,26 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
                 catchError((error) => {
                   console.error('❌ Error en updateAsistencias:', error);
 
-                  // Nuevas -> pending
-                  input.nuevos.forEach((a: Asistencias) => {
-                    this.asistenciasDataSource.create({
-                      ...a,
-                      syncStatus: 'pending-create',
-                    });
-                  });
                   this.LoadingService.hide();
 
                   return of({
-                    exitoso: 'S',
-                    mensaje:
-                      'Asistencias guardadas satisfactoriamente (offline fallback)',
+                    exitoso: 'N',
+                    mensaje: 'Error guardando asistencias:' + error,
                   });
-                })
+                }),
               );
           } else {
             //console.log('⚠️ Backend inactivo: guardando offline');
 
             // Nuevas -> pending
             input.nuevos.forEach((a: Asistencias) => {
-              this.asistenciasDataSource.create({
+              const asistencia: AsistenciasDB = {
                 ...a,
                 syncStatus: 'pending-create',
-              });
+                deleted: false,
+              };
+
+              this.asistenciasDataSource.create(asistencia);
             });
             this.LoadingService.hide();
 
@@ -191,13 +189,15 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
               mensaje: 'Asistencias guardadas satisfactoriamente (offline)',
             });
           }
-        })
-      )
+        }),
+      ),
     );
   }
 
-  async guardarAsistenciaFotografica(input: any): Promise<GraphQLResponse> {
-    //console.log("Evidencia fotográfica:", input);
+  async guardarAsistenciaFotografica(
+    input: Sesiones,
+  ): Promise<GraphQLResponse> {
+    //console.log('Evidencia fotográfica:', input);
 
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
@@ -205,10 +205,9 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
           if (ping === 'pong') {
             // 🔹 Llamada al backend
             return this.graphQLService
-              .mutation<{ updateAsistencias: GraphQLResponse }>(
-                this.UPDATE_ASISTENCIAS,
-                { input }
-              )
+              .mutation<{
+                updateAsistencias: GraphQLResponse;
+              }>(this.UPDATE_ASISTENCIAS, { input })
               .pipe(
                 mergeMap((res) =>
                   from(this.sesionesDataSource.getById(input.id_sesion)).pipe(
@@ -218,33 +217,35 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
                           ...sesion,
                           syncStatus: 'synced',
                           deleted: false,
-                          imagen: input.imagen,
+                          imagen: input.imagen ?? '',
                           descripcion: input.descripcion,
-                          nro_asistentes: input.nro_asistentes, // 👈 corregido
-                        })
+                          nro_asistentes: input.nro_asistentes ?? 0, // 👈 corregido
+                        }),
                       ).pipe(
                         map(() => {
                           //console.log('📥 Sesión actualizada en IndexedDB (synced)');
                           return res.updateAsistencias;
-                        })
-                      )
-                    )
-                  )
-                )
+                        }),
+                      ),
+                    ),
+                  ),
+                ),
               );
           } else {
             // 🔹 Guardar solo en IndexedDB (offline)
-            return from(this.sesionesDataSource.getById(input.id_sesion)).pipe(
+            return from(
+              this.sesionesDataSource.getById(input.id_sesion ?? ''),
+            ).pipe(
               mergeMap((sesion) =>
                 from(
-                  this.sesionesDataSource.update(input.id_sesion, {
+                  this.sesionesDataSource.update(input.id_sesion ?? '', {
                     ...sesion,
                     syncStatus: 'pending-update',
                     deleted: false,
-                    imagen: input.imagen,
+                    imagen: input.imagen ?? '',
                     descripcion: input.descripcion,
-                    nro_asistentes: input.numero_asistentes, // 👈 corregido
-                  })
+                    nro_asistentes: input.nro_asistentes, // 👈 corregido
+                  }),
                 ).pipe(
                   map(() => {
                     //console.log('⚠️ Asistencia marcada como pendiente');
@@ -252,13 +253,13 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
                       exitoso: 'S',
                       mensaje: 'Asistencia actualizada correctamente (offline)',
                     } as GraphQLResponse;
-                  })
-                )
-              )
+                  }),
+                ),
+              ),
             );
           }
-        })
-      )
+        }),
+      ),
     );
   }
 }

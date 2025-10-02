@@ -6,24 +6,17 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../../../shared/services/snackbar.service'; // ajusta la ruta}
 import { firstValueFrom } from 'rxjs';
 import { LoadingService } from '../../../../shared/services/loading.service';
-export interface EventoModalData {
-  id_actividad: string;
-  nombreSesion: string;
-  fecha?: string;
-  horaInicio?: string;
-  horaFin?: string;
-  asistentes_evento?: number;
-}
+import { Actividades } from '../../../interfaces/actividades.interface';
 
 @Component({
   selector: 'app-event-modal',
   templateUrl: './event-modal.component.html',
   styleUrls: ['./event-modal.component.css'],
   standalone: true,
-  imports: [CommonModule, MatSnackBarModule]
+  imports: [CommonModule, MatSnackBarModule],
 })
 export class EventModalComponent implements AfterViewInit {
-  evento = input<EventoModalData|null>(null);
+  evento = input<Actividades | null>(null);
   accionSeleccionada = output<'editar' | 'asistencia'>();
   cerrar = output<void>();
 
@@ -35,8 +28,10 @@ export class EventModalComponent implements AfterViewInit {
   private loadingService = inject(LoadingService);
 
   ngAfterViewInit(): void {
-    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(el => new Tooltip(el));
+    const tooltipTriggerList = Array.from(
+      document.querySelectorAll('[data-bs-toggle="tooltip"]'),
+    );
+    tooltipTriggerList.forEach((el) => new Tooltip(el));
   }
 
   seleccionarAccion(tipo: 'editar' | 'asistencia') {
@@ -49,7 +44,9 @@ export class EventModalComponent implements AfterViewInit {
     if (!e) return;
     //console.log("Evento a eliminar:",this.evento());
     const ok = await firstValueFrom(
-      this.snack.confirm(`¿Deseas eliminar el Evento "${e?.nombreSesion ?? 'sin nombre'}"?`)
+      this.snack.confirm(
+        `¿Deseas eliminar el Evento "${e?.nombre_actividad ?? 'sin nombre'}"?`,
+      ),
     );
     //console.log("Resultado ok:", ok);
     if (!ok) return;
@@ -67,8 +64,8 @@ export class EventModalComponent implements AfterViewInit {
         this.snack.error(res.mensaje ?? 'No se pudo eliminar');
         this.loadingService.hide();
       }
-    } catch (err: any) {
-      this.snack.error(err?.mensaje ?? 'Error eliminando el evento');
+    } catch (err: unknown) {
+      this.snack.error(<string>err ?? 'Error eliminando el evento');
       this.loadingService.hide();
     }
   }

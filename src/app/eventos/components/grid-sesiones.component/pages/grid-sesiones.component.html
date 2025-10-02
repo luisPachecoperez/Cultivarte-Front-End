@@ -22,8 +22,8 @@
                     <input
                       type="date"
                       class="form-control"
-                      formControlName="fecha"
-                      [readonly]="soloLectura() || control.value.asistentes_sesion > 0"
+                      formControlName="fecha_actividad"
+                      [readonly]="soloLectura() || control.value.nro_asistentes > 0"
                       (keydown.enter)="$event.stopPropagation()"
                       (blur)="notificarCambio()"
                     />
@@ -32,8 +32,8 @@
                     <input
                       type="time"
                       class="form-control"
-                      formControlName="horaInicio"
-                      [readonly]="soloLectura() || control.value.asistentes_sesion > 0"
+                      formControlName="hora_inicio"
+                      [readonly]="soloLectura() || control.value.nro_asistentes > 0"
                       (keydown.enter)="$event.stopPropagation()"
                       (blur)="notificarCambio()"
                     />
@@ -42,14 +42,14 @@
                     <input
                       type="time"
                       class="form-control"
-                      formControlName="horaFin"
-                      [readonly]="soloLectura() || control.value.asistentes_sesion > 0"
+                      formControlName="hora_fin"
+                      [readonly]="soloLectura() || control.value.nro_asistentes > 0"
                       (keydown.enter)="$event.stopPropagation()"
                       (blur)="notificarCambio()"
                     />
                   </td>
                   <td class="d-flex gap-1 align-items-center">
-                    @if (control.value.asistentes_sesion > 0) {
+                    @if (control.value.nro_asistentes > 0) {
                       <span class="badge bg-secondary">Bloqueada</span>
                     } @else {
                       <button
@@ -75,27 +75,27 @@
         <td>
           <input
             type="date"
-            formControlName="fecha"
+            formControlName="fecha_actividad"
             class="form-control"
-            [ngClass]="{ 'is-invalid': nuevaSesionForm.get('fecha')?.invalid && nuevaSesionForm.get('fecha')?.touched }"
+            [ngClass]="{ 'is-invalid': nuevaSesionForm.get('fecha_actividad')?.invalid && nuevaSesionForm.get('fecha_actividad')?.touched }"
             (keydown.enter)="$event.stopPropagation()"
           />
         </td>
         <td>
           <input
             type="time"
-            formControlName="horaInicio"
+            formControlName="hora_inicio"
             class="form-control"
-            [ngClass]="{ 'is-invalid': nuevaSesionForm.get('horaInicio')?.invalid && nuevaSesionForm.get('horaInicio')?.touched }"
+            [ngClass]="{ 'is-invalid': nuevaSesionForm.get('hora_inicio')?.invalid && nuevaSesionForm.get('hora_inicio')?.touched }"
             (keydown.enter)="$event.stopPropagation()"
           />
         </td>
         <td>
           <input
             type="time"
-            formControlName="horaFin"
+            formControlName="hora_fin"
             class="form-control"
-            [ngClass]="{ 'is-invalid': nuevaSesionForm.get('horaFin')?.invalid && nuevaSesionForm.get('horaFin')?.touched }"
+            [ngClass]="{ 'is-invalid': nuevaSesionForm.get('hora_fin')?.invalid && nuevaSesionForm.get('hora_fin')?.touched }"
             (keydown.enter)="$event.stopPropagation()"
           />
         </td>

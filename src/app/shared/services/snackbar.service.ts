@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Observable, race } from 'rxjs';
-import {  map, take } from 'rxjs/operators';
-import { defaultIfEmpty } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { ConfirmSnackbarComponent } from '../components/confirm-snackbar/confirm-snackbar.component';
 import { Subject } from 'rxjs';
 @Injectable({ providedIn: 'root' })
@@ -20,7 +19,7 @@ export class SnackbarService {
     });
   }
 
-  warning(message: string, duration = 15000) {
+  warning(message: string, duration = 3000) {
     this.snack.open(message, 'Cerrar', {
       duration,
       panelClass: ['warning-snackbar'],
@@ -52,7 +51,5 @@ export class SnackbarService {
 
   resolveConfirm(result: boolean) {
     this.confirmResult$.next(result);
-
   }
-
 }

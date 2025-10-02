@@ -1,4 +1,4 @@
-export interface GraphQLResponse<T = void> {
+export interface GraphQLResponse {
   exitoso: string | null;
   mensaje: string | null;
 }

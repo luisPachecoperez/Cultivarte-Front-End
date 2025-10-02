@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { delay, map, tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
-
-import { v4 as uuidv4 } from 'uuid';
-
 import { from } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -12,15 +9,20 @@ import { switchMap } from 'rxjs/operators';
 import { GraphQLService } from '../../../../shared/services/graphql.service';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { ActividadesDataSource } from '../../../../indexdb/datasources/actividades-datasource';
+import { ActividadesDB } from '../../../../indexdb/interfaces/actividades.interface';
 import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.interface';
 import { SesionesDataSource } from '../../../../indexdb/datasources/sesiones-datasource';
-import { PreCreateActividad } from '../../../../shared/interfaces/pre-create-actividad.interface';
-import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';
-import { Sesiones } from '../../../../indexdb/interfaces/sesiones.interface';
-import { Actividades } from '../../../../indexdb/interfaces/actividades.interface';
+import { PreCreateActividad } from '../../../interfaces/pre-create-actividad.interface';
+import { Grid_sesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';
+
+import { Sesiones } from '../../../interfaces/sesiones.interface';
+
+import { Actividades } from '../../../interfaces/actividades.interface';
 import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
 import { inject } from '@angular/core';
 import { LoadingService } from '../../../../shared/services/loading.service';
+import { PreEditActividad } from '../../../interfaces/pre-edit-actividad.interface';
+import { SesionesDB } from '../../../../indexdb/interfaces/sesiones.interface';
 @Injectable({
   providedIn: 'root',
 })
@@ -145,7 +147,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
   private authService = inject(AuthService);
   private actividadesDataSource = inject(ActividadesDataSource);
   private sesionesDataSource = inject(SesionesDataSource);
-  private gridSesionesService = inject(GridSesionesService);
+  private grid_sesionesService = inject(Grid_sesionesService);
   private loadIndexDBService = inject(LoadIndexDBService);
   private loadingService = inject(LoadingService);
   constructor() {}
@@ -162,7 +164,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
    * @param id_actividad string
    */
 
-  async obtenerEventoPorId(id_actividad: string): Promise<any> {
+  async obtenerEventoPorId(id_actividad: string): Promise<PreEditActividad> {
     this.loadingService.show(); // 🔄 mostrar
     const id_usuario = this.authService.getUserUuid();
     //console.log(`📡 Mock GraphQL → Buscando evento con ID: ${id_actividad}`);
@@ -177,85 +179,87 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
               })
               .pipe(
                 tap((res) => {
-                  //console.log('📡 Respuesta cruda de GraphQL:', res);
+                  console.log('📡 Respuesta cruda de GraphQL:', res);
                   this.loadingService.hide();
                 }),
-                map((res) => res.getPreEditActividad),
+                map((res) => res.getPreEditActividad as PreEditActividad),
                 catchError((err) => {
                   console.error(
                     '❌ Error GraphQL, usando fallback local:',
-                    err
+                    err,
                   );
                   this.loadingService.hide(); // 🔄 ocultar
                   return from(
                     this.actividadesDataSource.getPreEditActividad(
                       id_actividad,
-                      id_usuario
-                    )
+                      id_usuario,
+                    ),
                   );
-                })
+                }),
               );
           } else {
             this.loadingService.hide(); // 🔄 ocultar
             return from(
               this.actividadesDataSource.getPreEditActividad(
                 id_actividad,
-                id_usuario
-              )
+                id_usuario,
+              ),
             );
           }
-        }) // 👈 cierre del switchMap
-      )
+        }), // 👈 cierre del switchMap
+      ),
     );
   }
 
-  obtenerConfiguracionEvento(id_usuario: string): Observable<any> {
+  obtenerConfiguracionEvento(
+    id_usuario: string,
+  ): Observable<PreCreateActividad> {
     this.loadingService.show(); // 🔄 mostrar
     //console.log('📡 Solicitando configuración de evento para usuario:',id_usuario);
     return this.loadIndexDBService.ping().pipe(
       switchMap((ping) => {
         if (ping === 'pong') {
           return this.graphql
-            .query<{ getPreCreateActividad: PreCreateActividad }>(
-              this.GET_PRE_CREATE_ACTIVIDAD,
-              { id_usuario }
-            )
+            .query<{
+              getPreCreateActividad: PreCreateActividad;
+            }>(this.GET_PRE_CREATE_ACTIVIDAD, { id_usuario })
             .pipe(
               map((res) => {
                 this.loadingService.hide(); // 🔄 ocultar
                 //console.log('📡 Respuesta cruda de GraphQL:', res);
-                res.getPreCreateActividad;
                 return res.getPreCreateActividad;
               }),
               catchError((err) => {
                 console.error(
                   '❌ Error al consultar configuración de evento por GraphQL, usando fallback local:',
-                  err
+                  err,
                 );
 
                 const preActividad$ = from(
-                  this.actividadesDataSource.getPreCreateActividad(id_usuario)
+                  this.actividadesDataSource.getPreCreateActividad(id_usuario),
                 );
-                this.loadingService.hide(); // 🔄 ocultar
+                //console.log("ocultando 1");
+                //this.loadingService.hide(); // 🔄 ocultar
                 return preActividad$;
-              })
+              }),
             );
         } else {
           const preActividad$ = from(
-            this.actividadesDataSource.getPreCreateActividad(id_usuario)
+            this.actividadesDataSource.getPreCreateActividad(id_usuario),
           );
-          this.loadingService.hide(); // 🔄 ocultar
+          //console.log("ocultando 2");
+          //this.loadingService.hide(); // 🔄 ocultar
 
           return preActividad$;
         }
-      }) // 👈 cierre del switchMap
+      }), // 👈 cierre del switchMap
     );
   }
 
   async crearEvento(
-    evento: any,
-    sesiones: Sesiones[]
-  ): Promise<GraphQLResponse<void>> {
+    evento: Actividades,
+    sesiones: Sesiones[],
+  ): Promise<GraphQLResponse> {
     //console.log('📤 Enviando evento al back:', evento);
     const id_usuario = this.authService.getUserUuid();
 
@@ -264,47 +268,18 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
       Actividades,
       'syncStatus' | 'deleted' | 'plazo_asistencia'
     >;
-    type SesionesPayloadBackend = Omit<Sesiones, 'syncStatus' | 'deleted'>;
 
-    let actividadPayload: Actividades = {
-      id_actividad: uuidv4(),
-      id_programa: evento.id_programa,
-      institucional: evento.institucional ? 'S' : 'N',
-      id_tipo_actividad: evento.id_tipo_actividad,
-      id_responsable: evento.id_responsable,
-      id_aliado: evento.id_aliado,
-      id_sede: evento.id_sede,
-      id_frecuencia: evento.id_frecuencia,
-      nombre_actividad: evento.nombre_actividad,
-      descripcion: evento.descripcion,
-      fecha_actividad: evento.fecha_actividad,
-      hora_inicio: evento.hora_inicio,
-      hora_fin: evento.hora_fin,
-      estado: 'A',
-      id_creado_por: id_usuario,
-      fecha_creacion: new Date().toISOString().split('T')[0],
-      id_modificado_por: null,
-      fecha_modificacion: null,
-      plazo_asistencia: null, // 👈 solo para IndexedDB
-      syncStatus: 'synced', // 👈 solo para IndexedDB
-      deleted: false, // 👈 solo para IndexedDB
-    };
     const payloadBackend: ActividadPayloadBackend = {
-      ...actividadPayload,
+      ...evento,
     };
-    delete (payloadBackend as any).syncStatus;
-    delete (payloadBackend as any).deleted;
-    delete (payloadBackend as any).plazo_asistencia;
 
     //console.log('📤 Enviando actividad al back:', payloadBackend);
 
     // Ajustar las sesiones
     sesiones.forEach((s: Sesiones) => {
-      s.id_actividad = actividadPayload.id_actividad;
-      s.syncStatus = 'synced';
+      s.id_actividad = evento.id_actividad || '';
       s.id_creado_por = id_usuario;
       s.fecha_creacion = new Date().toISOString().split('T')[0];
-      s.deleted = false;
     });
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
@@ -312,10 +287,9 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
           if (ping === 'pong') {
             //console.log('✅ Crear evento Backend activo');
             return this.graphql
-              .mutation<{ createActividad: GraphQLResponse<void> }>(
-                this.CREATE_ACTIVIDAD,
-                { data: payloadBackend }
-              )
+              .mutation<{
+                createActividad: GraphQLResponse;
+              }>(this.CREATE_ACTIVIDAD, { data: payloadBackend })
               .pipe(
                 switchMap((res) => {
                   const actividadResponse = res.createActividad;
@@ -325,29 +299,38 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
                   if (actividadResponse?.exitoso === 'S') {
                     // 👇 envolvemos la llamada async en from()
 
-                    const sesionesPayloadBackend: SesionesPayloadBackend[] =
-                      sesiones.map(({ syncStatus, deleted, ...rest }) => rest);
-                    const sesionesPayload = {
-                      nuevos: sesionesPayloadBackend,
+                    const Sesiones = {
+                      nuevos: sesiones,
                       modificados: [],
                       eliminados: [],
                     };
 
                     return from(
-                      this.gridSesionesService.guardarCambiosSesiones(
-                        sesionesPayload
-                      )
+                      this.grid_sesionesService.guardarCambiosSesiones(
+                        Sesiones,
+                      ),
                     ).pipe(
                       tap((sesionesResponse) => {
                         if (sesionesResponse?.exitoso === 'S') {
-                          this.actividadesDataSource.create(actividadPayload);
+                          const actividad: ActividadesDB = {
+                            ...evento,
+                            syncStatus: 'synced',
+                            deleted: false,
+                          };
+                          this.actividadesDataSource.create(actividad);
 
                           sesiones.forEach((s: Sesiones) => {
-                            this.sesionesDataSource.create(s);
+                            const sesion: SesionesDB = {
+                              ...s,
+                              id_sesion: s.id_sesion ?? '',
+                              syncStatus: 'synced',
+                              deleted: false,
+                            };
+                            this.sesionesDataSource.create(sesion);
                           });
                         }
                       }),
-                      map(() => actividadResponse)
+                      map(() => actividadResponse),
                     );
                   }
 
@@ -356,25 +339,33 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
                 catchError((err) => {
                   console.error(
                     '❌ Error al crear en GraphQL, usando solo IndexDB:',
-                    err
+                    err,
                   );
                   return of({
                     exitoso: 'N',
-                    mensaje: 'Error guardando el evento',
+                    mensaje:
+                      'Se presenta error técnico al guardar las sesiones',
                   });
-                })
+                }),
               );
           } else {
             //console.log('Crear evento backend inactivo');
             // Guardar en IndexDB como pendiente
-            actividadPayload.syncStatus = 'pending-create';
-            this.actividadesDataSource.create(actividadPayload);
+            const actividad: ActividadesDB = {
+              ...evento,
+              syncStatus: 'pending-create',
+              deleted: false,
+            };
+            this.actividadesDataSource.create(actividad);
 
             sesiones.forEach((s: Sesiones) => {
-              this.sesionesDataSource.create({
+              const sesion: SesionesDB = {
                 ...s,
+                id_sesion: s.id_sesion ?? '',
                 syncStatus: 'pending-create',
-              });
+                deleted: false,
+              };
+              this.sesionesDataSource.create(sesion);
             });
 
             return of({
@@ -382,8 +373,8 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
               mensaje: 'Registro guardado satisfactoriamente',
             });
           }
-        }) // 👈 cierre del switchMap
-      )
+        }), // 👈 cierre del switchMap
+      ),
     );
   }
 }

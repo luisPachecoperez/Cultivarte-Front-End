@@ -2,14 +2,13 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap, firstValueFrom } from 'rxjs';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Usuario } from '../interfaces/usuario.interface';
 import * as CryptoJS from 'crypto-js';
 import { GraphQLService } from './graphql.service';
 import { environment } from '../../../environments/environment';
 import { CookieService } from './cookie.service';
-
-declare const google: any; // para revoke/cancel opcional
+import { GoogleAccounts } from '../interfaces/google-accounts';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -22,19 +21,17 @@ export class AuthService {
   private secret = environment.COOKIE_SECRET;
   private userCookieName = environment.USER_COOKIE_NAME;
 
-  private http=inject( HttpClient);
-  private router=inject( Router);
-  private cookieService=inject( CookieService);
-  private graphQLService=inject( GraphQLService);
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private cookieService = inject(CookieService);
+  private graphQLService = inject(GraphQLService);
 
-
-  constructor(
-  ) {}
+  constructor() {}
   /** Estado simple de UI (no consulta cookie httpOnly) */
   public isAuthenticated(): boolean {
     let auth: boolean = false;
     const encrypted: string | null = this.cookieService.getCookie(
-      this.userCookieName
+      this.userCookieName,
     );
     if (!encrypted) {
       console.warn('❌ No existe cookie de sesión');
@@ -44,7 +41,9 @@ export class AuthService {
     try {
       // 🔓 Descifrar cookie
       const bytes = CryptoJS.AES.decrypt(encrypted, this.secret);
-      const decoded = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+      const decoded: Usuario = JSON.parse(
+        bytes.toString(CryptoJS.enc.Utf8),
+      ) as Usuario;
       //console.log('✅ Usuario autenticado:', decoded);
 
       if (!decoded) {
@@ -68,29 +67,31 @@ export class AuthService {
   }
 
   public getUserUuid(): string {
-    let user_uuid: string = '1329a5e8-d140-483a-b5c4-e6247837a8ca';
+    const user_uuid: string = '07fc57f3-6955-4657-82f2-cf91ec9c83dd' as string;
     return user_uuid;
-    // const encrypted :string | null = this.cookieService.getCookie(this.userCookieName);
-    // if (!encrypted) {
-    //   console.warn(this.userCookieName+'❌ No existe cookie de sesión');
-    //   return user_uuid;
-    // }
+    /*const encrypted: string | null = this.cookieService.getCookie(
+      this.userCookieName,
+    );
+    if (!encrypted) {
+      console.warn(this.userCookieName + '❌ No existe cookie de sesión');
+      return user_uuid;
+    }
 
-    // try {
-    //   // 🔓 Descifrar cookie
-    //   const bytes = CryptoJS.AES.decrypt(encrypted, this.secret);
-    //   const decoded = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-    //   user_uuid=decoded.user_uuid;
-    //   //console.log('✅ Usuario autenticado:',user_uuid);
-    //   if (!decoded) {
-    //     console.warn('❌ Cookie vacía o corrupta');
-    //     return user_uuid ;
-    //   }
-    // return user_uuid;
-    // } catch (err) {
-    //   console.error('❌ Error al validar cookie:', err);
-    //   return user_uuid;
-    // }
+    try {
+      // 🔓 Descifrar cookie
+      const bytes = CryptoJS.AES.decrypt(encrypted, this.secret ?? '');
+      const decoded = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+      user_uuid = decoded.user_uuid;
+      //console.log('✅ Usuario autenticado:',user_uuid);
+      if (!decoded) {
+        console.warn('❌ Cookie vacía o corrupta');
+        return user_uuid;
+      }
+      return user_uuid;
+    } catch (err) {
+      console.error('❌ Error al validar cookie:', err);
+      return user_uuid;
+    }*/
   }
   /**
    *
@@ -118,10 +119,9 @@ export class AuthService {
     `;
 
     return this.graphQLService
-      .mutation<{ googleLogin: { success: boolean; message: string; user?: Usuario } }>(
-        mutation,
-        { token: idToken }
-      )
+      .mutation<{
+        googleLogin: { success: boolean; message: string; user?: Usuario };
+      }>(mutation, { token: idToken })
       .pipe(
         tap((res) => {
           const payload = res.googleLogin;
@@ -133,49 +133,48 @@ export class AuthService {
             // Si falla, limpia el estado local
             this.clear();
           }
-        })
+        }),
       );
   }
 
-
   async logout(email?: string) {
+    let google: GoogleAccounts;
+
     this.clear();
     // Borrar cookie
     this.cookieService.deleteCookie(environment.USER_COOKIE_NAME);
+    //en fbd no
 
     // (Opcional) mutación al backend para cerrar sesión server-side
     const LOGOUT_MUTATION = `mutation { logout { success message } }`;
 
     try {
       const result = await firstValueFrom(
-        this.graphQLService.mutation<{ logout: { success: boolean; message: string } }>(
-          LOGOUT_MUTATION
-        )
+        this.graphQLService.mutation<{
+          logout: { success: boolean; message: string };
+        }>(LOGOUT_MUTATION),
       );
 
       if (result.logout.success) {
         //console.log("✅ Logout backend:", result.logout.message);
       } else {
-        console.warn("⚠️ Logout backend fallido:", result.logout.message);
+        console.warn('⚠️ Logout backend fallido:', result.logout.message);
       }
     } catch (err) {
-      console.error("❌ Error logout backend:", err);
+      console.error('❌ Error logout backend:', err);
     }
 
     // (Opcional) Revocar consentimiento en Google
     try {
-      if (email && typeof google !== "undefined") {
+      if (email && typeof google !== 'undefined') {
         google.accounts.id.revoke(email, () => {});
       } else {
-        // cancelar prompts/one-tap si hubiese
         google?.accounts?.id?.cancel?.();
       }
     } catch {
       // Ignorar errores silenciosamente
     }
 
-    await this.router.navigate(["/login"]);
+    await this.router.navigate(['/login']);
   }
-
-
 }

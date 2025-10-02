@@ -1,5 +1,5 @@
 import { indexDB } from '../services/database.service';
-import { Sesiones } from '../interfaces/sesiones.interface';
+import { SesionesDB } from '../interfaces/sesiones.interface';
 import { Injectable } from '@angular/core';
 import { GraphQLResponse } from '../../shared/interfaces/graphql-response.interface';
 @Injectable({
@@ -7,15 +7,15 @@ import { GraphQLResponse } from '../../shared/interfaces/graphql-response.interf
 })
 export class SesionesDataSource {
   constructor() {}
-  async getAll(): Promise<Sesiones[]> {
+  async getAll(): Promise<SesionesDB[]> {
     return await indexDB.sesiones.toArray();
   }
 
-  async getById(id: string): Promise<Sesiones | undefined> {
+  async getById(id: string): Promise<SesionesDB | undefined> {
     return await indexDB.sesiones.get(id);
   }
 
-  async create(data: Sesiones): Promise<GraphQLResponse> {
+  async create(data: SesionesDB): Promise<GraphQLResponse> {
     if (
       typeof data.fecha_actividad === 'string' &&
       data.fecha_actividad.includes('-')
@@ -35,7 +35,9 @@ export class SesionesDataSource {
       data.fecha_modificacion.includes('-')
     ) {
       // ✅ Caso fecha tipo string con guiones → convertir a timestamp
-      data.fecha_modificacion = String(new Date(data.fecha_modificacion).getTime());
+      data.fecha_modificacion = String(
+        new Date(data.fecha_modificacion).getTime(),
+      );
     }
 
     //console.log('adicionando sesion al index:', data.id_sesion);
@@ -48,7 +50,7 @@ export class SesionesDataSource {
 
   async update(
     id: string,
-    changes: Partial<Sesiones>
+    changes: Partial<SesionesDB>,
   ): Promise<GraphQLResponse> {
     if (
       changes.fecha_actividad &&
@@ -56,7 +58,7 @@ export class SesionesDataSource {
       changes.fecha_actividad.includes('-')
     ) {
       changes.fecha_actividad = String(
-        new Date(changes.fecha_actividad).getTime()
+        new Date(changes.fecha_actividad).getTime(),
       );
     }
 
@@ -72,7 +74,7 @@ export class SesionesDataSource {
 
     // 🔹 Si estaba pendiente de creación → mantener create
     if (changes.syncStatus === 'synced') {
-      await indexDB.sesiones.update(id,changes);
+      await indexDB.sesiones.update(id, changes);
     } else {
       if (current.syncStatus === 'pending-create') {
         await indexDB.sesiones.update(id, {
@@ -105,9 +107,7 @@ export class SesionesDataSource {
     };
   }
 
-  async bulkAdd(data: Sesiones[]): Promise<void> {
-    this.deleteFull();
-
+  async bulkAdd(data: SesionesDB[]): Promise<void> {
     const withSyncStatus = data.map((item) => ({
       ...item,
       syncStatus: item.syncStatus ?? 'synced',
@@ -121,7 +121,7 @@ export class SesionesDataSource {
 
   // 🔹 Nuevo método getByRange
 
-  async sesionesPorActividad(id_actividad: string): Promise<Sesiones[]> {
+  async sesionesPorActividad(id_actividad: string): Promise<SesionesDB[]> {
     return await indexDB.sesiones
       .where('id_actividad')
       .equals(id_actividad)

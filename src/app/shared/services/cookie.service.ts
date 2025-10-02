@@ -7,19 +7,18 @@ import { environment } from '../../../environments/environment';
 export class CookieService {
   private secret = environment.COOKIE_SECRET;
 
-  setCookie(name: string,  value: string, hours: number): void {
+  setCookie(name: string, value: string, hours: number): void {
     // 🔒 Cifrar valor con AES
     const encrypted = CryptoJS.AES.encrypt(value, this.secret).toString();
 
     const date = new Date();
     date.setTime(date.getTime() + hours * 60 * 60 * 1000);
-    const expires = "; expires=" + date.toUTCString();
+    const expires = '; expires=' + date.toUTCString();
 
     document.cookie = `${name}=${encrypted}${expires}; path=/; Secure; SameSite=Strict`;
   }
 
   getCookie(name: string): string | null {
-
     const cookies = document.cookie.split(';');
     for (let c of cookies) {
       c = c.trim();

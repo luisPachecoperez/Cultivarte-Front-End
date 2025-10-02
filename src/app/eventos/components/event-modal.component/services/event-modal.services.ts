@@ -4,7 +4,6 @@ import { map } from 'rxjs/operators';
 import { ActividadesDataSource } from '../../../../indexdb/datasources/actividades-datasource';
 import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
 import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.interface';
-import { HttpClient } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { GraphQLService } from '../../../../shared/services/graphql.service';
 @Injectable({
@@ -20,15 +19,14 @@ export class EventModalService {
   }
 `;
 
-private actividadesDataSource=inject( ActividadesDataSource);
-private loadIndexDBService =inject(LoadIndexDBService);
-private graphQLService= inject(GraphQLService);
+  private actividadesDataSource = inject(ActividadesDataSource);
+  private loadIndexDBService = inject(LoadIndexDBService);
+  private graphQLService = inject(GraphQLService);
 
-  constructor(
-  ) {}
+  constructor() {}
 
   /**
-   * 🗑️ Elimina un evento (solo si asistentes_evento == 0)
+   * 🗑️ Elimina un evento (solo si nro_asistentes == 0)
    */
   async eliminarEvento(id_actividad: string): Promise<GraphQLResponse> {
     //console.log('📤 Enviando mutación de eliminar evento al backend:',id_actividad );
@@ -39,35 +37,38 @@ private graphQLService= inject(GraphQLService);
           if (ping === 'pong') {
             // 🔹 Llamada al backend
             return this.graphQLService
-              .mutation<{ deleteActividad: GraphQLResponse }>(
-                this.DELETE_ACTIVIDAD,
-                { id_actividad }
-              )
+              .mutation<{
+                deleteActividad: GraphQLResponse;
+              }>(this.DELETE_ACTIVIDAD, { id_actividad })
               .pipe(
                 switchMap(async (res) => {
                   const result = res.deleteActividad;
                   if (result.exitoso === 'S') {
                     // 🔹 Borrado definitivo en indexDB
-                    await this.actividadesDataSource.delete(id_actividad, false);
+                    await this.actividadesDataSource.delete(
+                      id_actividad,
+                      false,
+                    );
                   }
                   return result;
-                })
+                }),
               );
           } else {
             // 🔹 Modo offline → solo marcado como eliminado
-            return from(this.actividadesDataSource.delete(id_actividad, true)).pipe(
+            return from(
+              this.actividadesDataSource.delete(id_actividad, true),
+            ).pipe(
               map(
                 () =>
                   ({
                     exitoso: 'S',
-                    mensaje: 'Evento eliminado satisfactoriamente'
-                  } as GraphQLResponse)
-              )
+                    mensaje: 'Evento eliminado satisfactoriamente',
+                  }) as GraphQLResponse,
+              ),
             );
           }
-        })
-      )
+        }),
+      ),
     );
-
   }
 }

@@ -1,5 +1,5 @@
 import { indexDB } from '../services/database.service';
-import { Asistencias } from '../interfaces/asistencias.interface';
+import { AsistenciasDB } from '../interfaces/asistencias.interface';
 import { Injectable } from '@angular/core';
 import { GraphQLResponse } from '../../shared/interfaces/graphql-response.interface';
 
@@ -7,49 +7,49 @@ import { GraphQLResponse } from '../../shared/interfaces/graphql-response.interf
   providedIn: 'root',
 })
 export class AsistenciasDataSource {
-  async getAll(): Promise<Asistencias[]> {
+  async getAll(): Promise<AsistenciasDB[]> {
     return await indexDB.asistencias.toArray();
   }
 
-  async getById(id: string): Promise<Asistencias | undefined> {
+  async getById(id: string): Promise<AsistenciasDB | undefined> {
     return await indexDB.asistencias.get(id);
   }
 
-  async create(data: Asistencias): Promise<GraphQLResponse> {
+  async create(data: AsistenciasDB): Promise<GraphQLResponse> {
     await indexDB.asistencias.add(data);
-    return  {
+    return {
       exitoso: 'S',
       mensaje: `Registro adicionado`,
     };
   }
 
-  async update(id: string, changes: Partial<Asistencias>): Promise<GraphQLResponse> {
-
-     await indexDB.asistencias.update(id, changes);
-     return     {
+  async update(
+    id: string,
+    changes: Partial<AsistenciasDB>,
+  ): Promise<GraphQLResponse> {
+    await indexDB.asistencias.update(id, changes);
+    return {
       exitoso: 'S',
       mensaje: `Registro actualizado`,
     };
   }
 
   async delete(id: string, soft: boolean): Promise<GraphQLResponse> {
-
     if (soft) {
       await indexDB.asistencias.update(id, { deleted: true });
     } else {
       await indexDB.asistencias.delete(id);
     }
-    return     {
+    return {
       exitoso: 'S',
       mensaje: `Registro actualizado`,
     };
   }
 
-  async bulkAdd(data: Asistencias[]): Promise<void> {
-    this.deleteFull();
-    const withSyncStatus = data.map(item => ({
+  async bulkAdd(data: AsistenciasDB[]): Promise<void> {
+    const withSyncStatus = data.map((item) => ({
       ...item,
-      syncStatus: item.syncStatus ?? 'synced'
+      syncStatus: item.syncStatus ?? 'synced',
     }));
     await indexDB.asistencias.bulkAdd(withSyncStatus);
   }

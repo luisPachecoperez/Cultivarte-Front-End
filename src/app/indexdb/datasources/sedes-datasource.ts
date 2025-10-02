@@ -1,24 +1,24 @@
 import { indexDB } from '../services/database.service';
-import { Sedes } from '../interfaces/sedes.interface';
+import { SedesDB } from '../interfaces/sedes.interface';
 import { Injectable } from '@angular/core';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SedesDataSource {
-  async getAll(): Promise<Sedes[]> {
+  async getAll(): Promise<SedesDB[]> {
     return await indexDB.sedes.toArray();
   }
 
-  async getById(id: string): Promise<Sedes | undefined> {
+  async getById(id: string): Promise<SedesDB | undefined> {
     return await indexDB.sedes.get(id);
   }
 
-  async create(data: Sedes): Promise<string> {
+  async create(data: SedesDB): Promise<string> {
     return await indexDB.sedes.add(data);
   }
 
-  async update(id: string, changes: Partial<Sedes>): Promise<number> {
+  async update(id: string, changes: Partial<SedesDB>): Promise<number> {
     return await indexDB.sedes.update(id, changes);
   }
 
@@ -26,11 +26,11 @@ export class SedesDataSource {
     await indexDB.sedes.delete(id);
   }
 
-  async bulkAdd(data: Sedes[]): Promise<void> {
-    this.deleteFull();
-    const withSyncStatus = data.map(item => ({
+  async bulkAdd(data: SedesDB[]): Promise<void> {
+    await this.deleteFull();
+    const withSyncStatus = data.map((item) => ({
       ...item,
-      syncStatus: item.syncStatus ?? 'synced'
+      syncStatus: item.syncStatus ?? 'synced',
     }));
     await indexDB.sedes.bulkAdd(withSyncStatus);
   }

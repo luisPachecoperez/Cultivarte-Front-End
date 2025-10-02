@@ -6,22 +6,20 @@ import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.
 import { AuthService } from '../../../../shared/services/auth.service';
 import { switchMap } from 'rxjs/operators';
 import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
-import { Sesiones } from '../../../../indexdb/interfaces/sesiones.interface';
+import { Sesiones } from '../../../interfaces/sesiones.interface';
+import { SesionesDB } from '../../../../indexdb/interfaces/sesiones.interface';
 import { SesionesDataSource } from '../../../../indexdb/datasources/sesiones-datasource';
 import { inject } from '@angular/core';
-
 @Injectable({
   providedIn: 'root',
 })
-export class GridSesionesService {
+export class Grid_sesionesService {
   private graphQLService = inject(GraphQLService);
   private authService = inject(AuthService);
   private loadIndexDBService = inject(LoadIndexDBService);
   private sesionesDataSource = inject(SesionesDataSource);
 
-  constructor(
-
-  ) {}
+  constructor() {}
 
   /**
    * 📤 Envía cambios de sesiones al backend
@@ -35,16 +33,18 @@ export class GridSesionesService {
    * }
    */
   async guardarCambiosSesiones(payload: {
-    eliminados: any[];
-    modificados: any[];
-    nuevos: any[];
-  }): Promise<GraphQLResponse | any> {
+    eliminados: { id_sesion: string }[];
+    modificados: Sesiones[];
+    nuevos: Sesiones[];
+  }): Promise<GraphQLResponse> {
     const { nuevos, modificados, eliminados } = payload;
-    const updateWithUUID = modificados.map((s) => ({
-      ...s,
-      id_modificado_por: this.authService.getUserUuid(),
-      id_creado_por: s.id_creado_por,
-    }));
+    const modificadosPorUsuario: Sesiones[] = modificados.map(
+      (s: Sesiones) => ({
+        ...s,
+        id_modificado_por: this.authService.getUserUuid(),
+        id_creado_por: s.id_creado_por,
+      }),
+    );
 
     const updateSesiones = `
     mutation ($input: EditarSesiones!) {
@@ -58,7 +58,7 @@ export class GridSesionesService {
     const variables = {
       input: {
         nuevos: nuevos,
-        modificados: updateWithUUID,
+        modificados: modificadosPorUsuario,
         eliminados: eliminados,
       },
     };
@@ -72,32 +72,45 @@ export class GridSesionesService {
             //console.log('Update sesiones backend activo');
 
             return this.graphQLService
-              .mutation<{ updateSesiones: GraphQLResponse<any> }>(
-                updateSesiones,
-                variables
-              )
+              .mutation<{
+                updateSesiones: GraphQLResponse;
+              }>(updateSesiones, variables)
               .pipe(
                 map((res) => {
                   //console.log('✅ updateSesiones OK:', res);
 
-                  // Nuevos -> synced
-                  nuevos.forEach((s: Sesiones) => {
-                    this.sesionesDataSource.create({
+                  const nuevosIndexDB: Sesiones[] = nuevos.map(
+                    (s: Sesiones) => ({
                       ...s,
                       syncStatus: 'synced',
-                    });
+                      deleted: false,
+                    }),
+                  );
+
+                  nuevosIndexDB.forEach((s: Sesiones) => {
+                    const sesion: SesionesDB = {
+                      ...s,
+                      id_sesion: s.id_sesion ?? '',
+                      syncStatus: 'synced',
+                      deleted: false,
+                    };
+                    this.sesionesDataSource.create(sesion);
                   });
 
-                  // Modificados -> synced
-                  updateWithUUID.forEach((s: Sesiones) => {
-                    this.sesionesDataSource.update(s.id_sesion, {
+                  const modificadosIndexDB: SesionesDB[] =
+                    modificadosPorUsuario.map((s: Sesiones) => ({
                       ...s,
+                      id_sesion: s.id_sesion ?? '',
                       syncStatus: 'synced',
-                    });
+                      deleted: false,
+                    }));
+                  // Modificados -> synced
+                  modificadosIndexDB.forEach((s: SesionesDB) => {
+                    this.sesionesDataSource.update(s.id_sesion, s);
                   });
 
                   // Eliminados -> delete
-                  eliminados.forEach((s: Sesiones) => {
+                  eliminados.forEach((s: { id_sesion: string }) => {
                     this.sesionesDataSource.delete(s.id_sesion, false);
                   });
 
@@ -105,55 +118,39 @@ export class GridSesionesService {
                 }),
                 catchError((error) => {
                   console.error('❌ Error en updateSesiones:', error);
-                  //Si hay error escribir en indexdb, pero con synced=pending
-                  // Nuevos -> pending
-                  nuevos.forEach((s: Sesiones) => {
-                    this.sesionesDataSource.create({
-                      ...s,
-                      syncStatus: 'pending-create',
-                    });
-                  });
-
-                  // Modificados -> pending
-                  updateWithUUID.forEach((s: Sesiones) => {
-                    this.sesionesDataSource.update(s.id_sesion, {
-                      ...s,
-                      syncStatus: 'pending-update',
-                    });
-                  });
-
-                  // Eliminados -> marcado como deleted
-                  eliminados.forEach((s: Sesiones) => {
-                    this.sesionesDataSource.delete(s.id_sesion, true);
-                  });
-
                   return of({
-                    exitoso: 'S',
-                    mensaje: 'Sesiones actualizadas correctamente',
+                    exitoso: 'N',
+                    mensaje: 'Error actualizando sesiones:' + error,
                   });
-                })
+                }),
               );
           } else {
             //console.log('Update sesiones backend inactivo');
 
             // Nuevos -> pending
             nuevos.forEach((s: Sesiones) => {
-              this.sesionesDataSource.create({
+              const sesion: SesionesDB = {
                 ...s,
+                id_sesion: s.id_sesion ?? '',
                 syncStatus: 'pending-create',
-              });
+                deleted: false,
+              };
+              this.sesionesDataSource.create(sesion);
             });
 
             // Modificados -> pending
-            updateWithUUID.forEach((s: Sesiones) => {
-              this.sesionesDataSource.update(s.id_sesion, {
+            modificadosPorUsuario.forEach((s: Sesiones) => {
+              const sesion: SesionesDB = {
                 ...s,
+                id_sesion: s.id_sesion ?? '',
                 syncStatus: 'pending-update',
-              });
+                deleted: false,
+              };
+              this.sesionesDataSource.update(sesion.id_sesion, sesion);
             });
 
             // Eliminados -> marcado como deleted
-            eliminados.forEach((s: Sesiones) => {
+            eliminados.forEach((s) => {
               this.sesionesDataSource.delete(s.id_sesion, true);
             });
 
@@ -162,8 +159,8 @@ export class GridSesionesService {
               mensaje: 'Sesiones actualizadas correctamente',
             });
           }
-        })
-      )
+        }),
+      ),
     );
   }
 }

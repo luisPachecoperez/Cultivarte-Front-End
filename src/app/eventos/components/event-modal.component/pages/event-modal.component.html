@@ -3,21 +3,27 @@
 
 <!-- Modal -->
 <div class="modal fade show d-block" role="dialog" aria-modal="true" aria-labelledby="modalAccionesLabel">
+  
   <div class="modal-dialog modal-sm modal-dialog-centered">
+    
     <div class="modal-content">
-
+      <div style="background-color: transparent;width: 100%;display: flex;justify-content: end;">
+      <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrar.emit()"></button>
+    </div>
       <!-- Header -->
       <div class="modal-header">
+        
         <h5 class="modal-title w-100 text-center" id="modalAccionesLabel">
-          <strong class="d-block mb-1 text-uppercase fs-5">{{ evento()?.nombreSesion }}</strong>
+          <strong class="d-block mb-1 text-uppercase fs-5">{{ evento()?.nombre_actividad }}</strong>
+          
           <small class="text-muted">
-            {{ evento()?.fecha }} |
-            {{ evento()?.fecha + 'T' + evento()?.horaInicio | date: 'hh:mm a' }}
+            {{ evento()?.fecha_actividad }} |
+            {{ evento()?.fecha_actividad + 'T' + evento()?.hora_inicio | date: 'hh:mm a' }}
             a
-            {{ evento()?.fecha + 'T' + evento()?.horaFin | date: 'hh:mm a' }}
+            {{ evento()?.fecha_actividad + 'T' + evento()?.hora_fin | date: 'hh:mm a' }}
           </small>
         </h5>
-        <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrar.emit()"></button>
+        
       </div>
 
       <!-- Body -->

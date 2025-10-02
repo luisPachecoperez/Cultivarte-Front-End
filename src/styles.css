@@ -104,7 +104,7 @@ input[type="time"].is-invalid {
 
 .btn-cerrar::before,
 .btn-cerrar::after {
-  content: "X";
+  content: "o";
   position: absolute;
   top: 0px;
   left: 50%;
@@ -187,4 +187,14 @@ textarea[readonly] {
 .btn-danger {
   background-color: #ed164e; /* rojo por defecto, cámbialo al tuyo */
   border-color:none!important;
+}
+.fc-daygrid-day::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 5%!important;
+  width: 90%!important;
+  height: 1px!important;
+  background-color: #00A669!important; /* Cambiado de black a green */
+  border-radius: 2px;
 }

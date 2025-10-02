@@ -1,5 +1,8 @@
 import { Component, Inject } from '@angular/core';
-import { MatSnackBarRef, MAT_SNACK_BAR_DATA } from '@angular/material/snack-bar';
+import {
+  MatSnackBarRef,
+  MAT_SNACK_BAR_DATA,
+} from '@angular/material/snack-bar';
 import { SnackbarService } from '../../services/snackbar.service';
 
 @Component({
@@ -9,19 +12,17 @@ import { SnackbarService } from '../../services/snackbar.service';
       <span>{{ data.message }}</span>
       <div class="actions">
         <button class="button-mat" (click)="onClick(true)">Sí</button>
-        <button class="button-mat"  (click)="onClick(false)">No</button>
+        <button class="button-mat" (click)="onClick(false)">No</button>
       </div>
     </div>
   `,
-  styles: [`
-
-  `]
+  styles: [``],
 })
 export class ConfirmSnackbarComponent {
   constructor(
     private snackBarRef: MatSnackBarRef<ConfirmSnackbarComponent>,
     @Inject(MAT_SNACK_BAR_DATA) public data: any,
-    private snackbarService: SnackbarService
+    private snackbarService: SnackbarService,
   ) {}
 
   onClick(result: boolean) {

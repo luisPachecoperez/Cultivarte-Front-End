@@ -8,10 +8,9 @@ import { SesionesDataSource } from '../datasources/sesiones-datasource';
 import { AsistenciasDataSource } from '../datasources/asistencias-datasource';
 import { GraphQLService } from '../../shared/services/graphql.service';
 import { LoadIndexDBService } from './load-index-db.service';
-
+import { SesionesDB } from '../interfaces/sesiones.interface';
 @Injectable({ providedIn: 'root' })
 export class DataSyncService {
-
   private readonly CREATE_ACTIVIDAD = `
       mutation CreateActividad($data: ActividadInput!) {
         createActividad(data: $data) {
@@ -39,8 +38,8 @@ export class DataSyncService {
       }
     `;
   private readonly DELETE_SESION = `
-        mutation DeleteSesion($idSesion: ID!) {
-          deleteSesion(id_sesion: $idSesion) {
+        mutation DeleteSesion($id_sesion: ID!) {
+          deleteSesion(id_sesion: $id_sesion) {
             exitoso
             mensaje
           }
@@ -55,8 +54,8 @@ export class DataSyncService {
     }
     `;
 
-    private loadIndexDBService = inject(LoadIndexDBService);
-    constructor(
+  private loadIndexDBService = inject(LoadIndexDBService);
+  constructor(
     private http: HttpClient,
     private actividadesDataSource: ActividadesDataSource,
     private sesionesDataSource: SesionesDataSource,
@@ -90,18 +89,9 @@ export class DataSyncService {
     }
     //console.log('Backend activo inicia sincronizacion');
     //Buscar las actividades, sesiones y asistencias pendientes
-    this.syncActividadesPendientes();
-    this.syncSesionesPendientes();
-    this.syncAsistenciasPendientes();
-
-    const asistenciasPendientes = await indexDB.asistencias
-      .filter(
-        (s) =>
-          s.syncStatus === 'pending-create' ||
-          s.syncStatus === 'pending-update' ||
-          s.deleted === true
-      )
-      .toArray();
+    await this.syncActividadesPendientes();
+    await this.syncSesionesPendientes();
+    await this.syncAsistenciasPendientes();
   }
 
   async syncActividadesPendientes() {
@@ -110,13 +100,13 @@ export class DataSyncService {
         (s) =>
           s.syncStatus === 'pending-create' ||
           s.syncStatus === 'pending-update' ||
-          s.deleted === true
+          s.deleted === true,
       )
       .toArray();
 
     //console.log('Actividades pendientes: ', actividadesPendientes);
     for (const act of actividadesPendientes) {
-      await this.crearActividades(act.id_actividad);
+      await this.crearActividades(act.id_actividad ?? '');
     }
   }
   async crearActividades(id_actividad: string): Promise<void> {
@@ -159,7 +149,7 @@ export class DataSyncService {
       const resp = await firstValueFrom(
         this.graphQLService.mutation<{
           createActividad: { mensaje: string; exitoso: string };
-        }>(this.CREATE_ACTIVIDAD, { data: input })
+        }>(this.CREATE_ACTIVIDAD, { data: input }),
       );
 
       const result = resp.createActividad;
@@ -176,7 +166,7 @@ export class DataSyncService {
       } else {
         console.warn(
           `❌ Actividad ${id_actividad} no sincronizada:`,
-          result.mensaje
+          result.mensaje,
         );
       }
     } catch (err) {
@@ -190,12 +180,12 @@ export class DataSyncService {
         (s) =>
           s.syncStatus === 'pending-create' ||
           s.syncStatus === 'pending-update' ||
-          s.deleted === true
+          s.deleted === true,
       )
       .toArray();
     for (const ses of sesionesPendientes) {
       if (ses.deleted === true) {
-        await this.sesionesDataSource.update(ses.id_sesion, {
+        await this.sesionesDataSource.update(ses.id_sesion ?? '', {
           ...ses,
           syncStatus: 'pending-delete',
         });
@@ -207,19 +197,19 @@ export class DataSyncService {
     for (const ses of sesionesPendientes) {
       switch (ses.syncStatus) {
         case 'pending-create':
-          await this.crearSesiones(ses.id_sesion);
+          await this.crearSesiones(ses.id_sesion ?? '');
           break;
 
         case 'pending-update':
-          await this.updateSesiones(ses.id_sesion);
+          await this.updateSesiones(ses.id_sesion ?? '');
           break;
 
         case 'pending-delete':
-          await this.deleteSesion(ses.id_sesion);
+          await this.deleteSesion(ses.id_sesion ?? '');
           break;
 
         default:
-          //console.log(`⚠️ Sesión ${ses.id_sesion} con syncStatus desconocido: ${ses.syncStatus}`);
+        //console.log(`⚠️ Sesión ${ses.id_sesion} con syncStatus desconocido: ${ses.syncStatus}`);
       }
     }
   }
@@ -257,7 +247,7 @@ export class DataSyncService {
       const resp = await firstValueFrom(
         this.graphQLService.mutation<{
           createSesion: { mensaje: string; exitoso: string };
-        }>(this.CREATE_SESION, { input })
+        }>(this.CREATE_SESION, { input }),
       );
 
       const result = resp.createSesion;
@@ -281,7 +271,9 @@ export class DataSyncService {
 
   async updateSesiones(id_sesion: string): Promise<void> {
     // 1. Traer la sesión desde indexDB
-    const sesion = await indexDB.sesiones.get(id_sesion);
+    const sesion: SesionesDB = (await indexDB.sesiones.get(
+      id_sesion,
+    )) as SesionesDB;
     if (!sesion) {
       console.warn(`⚠️ Sesión ${id_sesion} no encontrada en indexDB`);
       return;
@@ -313,7 +305,7 @@ export class DataSyncService {
       const resp = await firstValueFrom(
         this.graphQLService.mutation<{
           updateSesion: { mensaje: string; exitoso: string };
-        }>(this.UPDATE_SESION, { input })
+        }>(this.UPDATE_SESION, { input }),
       );
 
       const result = resp.updateSesion;
@@ -341,7 +333,7 @@ export class DataSyncService {
         (s) =>
           s.syncStatus === 'pending-create' ||
           s.syncStatus === 'pending-update' ||
-          s.deleted === true
+          s.deleted === true,
       )
       .toArray();
 
@@ -363,37 +355,37 @@ export class DataSyncService {
     }, new Map<string, typeof asistenciasPendientes>());
 
     // 🔹 Procesar cada grupo
-    for (const [idSesion, asistenciasDeSesion] of grupos.entries()) {
-      const sesion = await indexDB.sesiones.get(idSesion);
+    for (const [id_sesion, asistenciasDeSesion] of grupos.entries()) {
+      const sesion = await indexDB.sesiones.get(id_sesion);
       if (!sesion) {
-        console.warn(`⚠️ Sesión ${idSesion} no encontrada en indexDB`);
+        console.warn(`⚠️ Sesión ${id_sesion} no encontrada en indexDB`);
         continue;
       }
 
       const input = {
-        numero_asistentes: 0,
+        nro_asistentes: 0,
         nuevos: asistenciasDeSesion.map((a) => ({
           id_asistencia: a.id_asistencia ?? null,
           id_sesion: a.id_sesion ?? null,
           id_persona: a.id_persona ?? null,
         })),
         imagen: null,
-        id_sesion: idSesion,
+        id_sesion: id_sesion,
         id_actividad: sesion.id_actividad ?? null,
         descripcion: null,
       };
 
-      //console.log(`📤 Payload UpdateAsistencias (sesión ${idSesion}):`, input);
+      //console.log(`📤 Payload UpdateAsistencias (sesión ${id_sesion}):`, input);
 
       try {
         const resp = await firstValueFrom(
           this.graphQLService.mutation<{
             updateAsistencias: { mensaje: string; exitoso: string };
-          }>(this.UPDATE_ASISTENCIAS, { input })
+          }>(this.UPDATE_ASISTENCIAS, { input }),
         );
 
         const result = resp.updateAsistencias;
-        //console.log(`📥 Respuesta updateAsistencias (sesión ${idSesion}):`,result );
+        //console.log(`📥 Respuesta updateAsistencias (sesión ${id_sesion}):`,result );
 
         if (result.exitoso === 'S') {
           for (const asis of asistenciasDeSesion) {
@@ -403,17 +395,17 @@ export class DataSyncService {
               deleted: false,
             });
           }
-          //console.log(`✅ ${asistenciasDeSesion.length} asistencias sincronizadas (sesión ${idSesion})`);
+          //console.log(`✅ ${asistenciasDeSesion.length} asistencias sincronizadas (sesión ${id_sesion})`);
         } else {
           console.warn(
-            `❌ Asistencias no sincronizadas (sesión ${idSesion}):`,
-            result.mensaje
+            `❌ Asistencias no sincronizadas (sesión ${id_sesion}):`,
+            result.mensaje,
           );
         }
       } catch (err) {
         console.error(
-          `❌ Error sincronizando asistencias (sesión ${idSesion}):`,
-          err
+          `❌ Error sincronizando asistencias (sesión ${id_sesion}):`,
+          err,
         );
       }
     }
@@ -425,7 +417,7 @@ export class DataSyncService {
       const resp = await firstValueFrom(
         this.graphQLService.mutation<{
           deleteSesion: { mensaje: string; exitoso: string };
-        }>(this.DELETE_SESION, { idSesion: id_sesion })
+        }>(this.DELETE_SESION, { id_sesion: id_sesion }),
       );
 
       const result = resp.deleteSesion;
@@ -452,8 +444,8 @@ export class DataSyncService {
         switchMap((ping) => {
           //console.log('ping en update sesiones:', ping);
           return of(ping === 'pong'); // 👈 devolvemos un observable de boolean
-        })
-      )
+        }),
+      ),
     );
   }
   private toDateOnly(value: string | null | undefined): string | null {
