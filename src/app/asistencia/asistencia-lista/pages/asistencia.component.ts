@@ -1,5 +1,6 @@
 import { Component, input, output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Sesiones } from '../../../eventos/interfaces/sesiones.interface';
 import {
   FormControl,
   FormBuilder,
@@ -8,45 +9,19 @@ import {
   FormsModule,
   Validators,
 } from '@angular/forms';
+import { Asistente } from '../../interfaces/asistente.interface';
 import { AsistenciaService } from '../services/asistencia.service';
 import { v4 as uuidv4 } from 'uuid';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { inject } from '@angular/core';
-import { PreAsistencia } from '../../../shared/interfaces/pre-asistencia.interface';
+import { PreAsistencia } from '../../interfaces/pre-asistencia.interface';
 import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.interface';
-interface EventoSeleccionado {
-  id_actividad: string;
-  id_sesion: string;
-  nombreSesion: string;
-  fecha: string;
-  horaInicio: string;
-  horaFin: string;
-}
-
-interface Beneficiario {
-  id_persona: string;
-  nombre_completo: string;
-  id_sede: string;
-  identificacion: string;
-}
-
-interface Asistente {
-  id_persona: string;
-  nombre_completo: string;
-  id_sede: string | null;
-  eliminar: 'S' | 'N';
-}
+import { Beneficiarios } from '../../../eventos/interfaces/lista-beneficiarios.interface';
+import { AsistenciaPayLoad } from '../../interfaces/asistencia-payload.interface';
 
 interface Sede {
   id_sede: string;
   nombre: string;
-}
-
-interface DetalleAsistenciaResponse {
-  beneficiarios: Beneficiario[];
-  asistentes_sesiones: { id_persona: string; eliminar?: 'S' | 'N' }[];
-  sedes: Sede[];
-  id_sede?: string;
 }
 
 @Component({
@@ -57,10 +32,10 @@ interface DetalleAsistenciaResponse {
   styleUrls: ['./asistencia.component.css'],
 })
 export class AsistenciaComponent implements OnInit {
-  evento = input<EventoSeleccionado | null>(null);
+  evento = input<Sesiones | null>(null);
   cerrar = output<void>();
 
-  beneficiariosBD: Beneficiario[] = [];
+  beneficiariosBD: Beneficiarios[] = [];
   asistentes: Asistente[] = [];
   filtro = new FormControl('');
 
@@ -68,10 +43,10 @@ export class AsistenciaComponent implements OnInit {
   asistenciaForm: FormGroup;
 
   private asistenciaService = inject(AsistenciaService);
-  private fb = inject(FormBuilder);
   private snack = inject(SnackbarService);
 
-  constructor() {
+  constructor(private fb: FormBuilder) {
+    /* eslint-disable @typescript-eslint/unbound-method */
     this.asistenciaForm = this.fb.group({
       id_sede: ['', Validators.required],
       descripcion: [''],
@@ -86,18 +61,21 @@ export class AsistenciaComponent implements OnInit {
       .then((data: PreAsistencia) => {
         //console.log('📥 Llega desde Promise:', data);
 
-        this.beneficiariosBD = data.beneficiarios || [];
-        this.asistentes = (data.asistentes_sesiones || []).map((asis: any) => {
-          const beneficiario = this.beneficiariosBD.find(
-            (b) => b.id_persona === asis.id_persona
-          );
-          return {
-            id_persona: asis.id_persona,
-            nombre_completo: beneficiario?.nombre_completo || 'Desconocido',
-            id_sede: beneficiario?.id_sede || null,
-            eliminar: asis.eliminar || 'S',
-          } as Asistente;
-        });
+        this.beneficiariosBD = (data.beneficiarios as Beneficiarios[]) || [];
+        this.asistentes = (data.asistentes_sesiones || []).map(
+          (asis: Asistente) => {
+            const beneficiario = this.beneficiariosBD.find(
+              (b) => b.id_persona === asis.id_persona,
+            );
+            return {
+              id_persona: asis.id_persona,
+              nombre_completo: beneficiario?.nombre_completo || 'Desconocido',
+              id_sede: beneficiario?.id_sede || null,
+              eliminar: asis.eliminar || 'S',
+              identificacion: beneficiario?.identificacion,
+            } as Asistente;
+          },
+        );
         this.sedes = data.sedes || [];
         if (data.id_sede) {
           this.asistenciaForm.patchValue({ id_sede: data.id_sede });
@@ -113,8 +91,12 @@ export class AsistenciaComponent implements OnInit {
   }
 
   get resultadosBusqueda() {
-    const texto = this.filtro.value?.toLowerCase().trim() || '';
-    const sedeSeleccionada = this.asistenciaForm.value.id_sede;
+    const texto: string =
+      (this.filtro.value as string)?.toLowerCase().trim() || ('' as string);
+
+    /* eslint-disable  @typescript-eslint/no-unsafe-member-access */
+    const sedeSeleccionada: string = this.asistenciaForm.value
+      .id_sede as string;
 
     // ⛔ No mostrar nada si el usuario no ha escrito nada
     if (!texto) return [];
@@ -132,7 +114,7 @@ export class AsistenciaComponent implements OnInit {
     });
   }
 
-  agregarAsistente(beneficiario: Beneficiario) {
+  agregarAsistente(beneficiario: Beneficiarios) {
     if (
       !this.asistentes.find((a) => a.id_persona === beneficiario.id_persona)
     ) {
@@ -157,11 +139,11 @@ export class AsistenciaComponent implements OnInit {
       return;
     }
     this.asistentes = this.asistentes.filter(
-      (a) => a.id_persona !== id_persona
+      (a) => a.id_persona !== id_persona,
     );
   }
 
-  async guardarAsistencia() : Promise<GraphQLResponse | void> {
+  async guardarAsistencia(): Promise<GraphQLResponse | void> {
     if (this.asistenciaForm.invalid) {
       this.asistenciaForm.markAllAsTouched();
       this.snack.warning('⚠️ Debes completar todos los campos obligatorios');
@@ -169,18 +151,20 @@ export class AsistenciaComponent implements OnInit {
     }
 
     const ev = this.evento();
-
-    const payload = {
-      id_actividad: '',
-      id_sesion: '',
+    //console.log("Asistentes:",this.asistentes);
+    const payload: AsistenciaPayLoad = {
+      id_actividad: ev?.id_actividad ?? '',
+      id_sesion: ev?.id_sesion ?? '',
       imagen: '', // vacío en asistencia normal
       numero_asistentes: 0,
       descripcion: '', // vacío si no aplica
-      nuevos: this.asistentes.map((a) => ({
-        id_persona: a.id_persona,
-        id_sesion: ev?.id_sesion ?? '',
-        id_asistencia: uuidv4(),
-      })),
+      nuevos: this.asistentes
+        .filter((a) => a.eliminar === 'S')
+        .map((a) => ({
+          id_persona: a.id_persona,
+          id_sesion: ev?.id_sesion ?? '',
+          id_asistencia: uuidv4(),
+        })),
     };
 
     //console.log('📤 Enviando asistencia normal:', payload);
@@ -193,8 +177,10 @@ export class AsistenciaComponent implements OnInit {
 
       if (resp.exitoso === 'S') {
         // éxito → cerramos modal
+        this.snack.success(resp.mensaje ?? '');
         this.cerrar.emit();
       } else {
+        this.snack.warning(resp.mensaje ?? '');
         console.error('❌ Error al guardar asistencia:', resp.mensaje);
       }
     } catch (err) {

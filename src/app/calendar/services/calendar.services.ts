@@ -3,17 +3,18 @@ import { map } from 'rxjs/operators';
 
 import { firstValueFrom, from } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import { Sesiones } from '../../indexdb/interfaces/sesiones.interface';
+import { Sesiones } from '../../eventos/interfaces/sesiones.interface';
 import { GraphQLService } from '../../shared/services/graphql.service';
 import { ActividadesDataSource } from '../../indexdb/datasources/actividades-datasource';
 import { LoadIndexDBService } from '../../indexdb/services/load-index-db.service';
 import { switchMap } from 'rxjs/operators';
 import { inject } from '@angular/core';
+import { EventoCalendario } from '../interfaces/evento-calendario.interface';
 @Injectable({
   providedIn: 'root',
 })
 export class CalendarService {
-  private readonly GET_SESIONES = `
+  private readonly CONSULTAR_FECHA_CALENDARIO = `
   query ($input: CalendarioInput!) {
     consultarFechaCalendario(input: $input) {
       id_actividad
@@ -25,12 +26,10 @@ export class CalendarService {
     }
   }
 `;
-private graphqlService = inject( GraphQLService);
-private actividadesDataSource= inject( ActividadesDataSource);
-private loadIndexDBService= inject( LoadIndexDBService);
-  constructor(
-
-  ) {}
+  private graphqlService = inject(GraphQLService);
+  private actividadesDataSource = inject(ActividadesDataSource);
+  private loadIndexDBService = inject(LoadIndexDBService);
+  constructor() {}
 
   /**
    * 📡 Obtiene sesiones para mostrar en el calendario
@@ -39,56 +38,69 @@ private loadIndexDBService= inject( LoadIndexDBService);
    * @param id_usuario string
    */
 
-  async obtenerSesiones(fechaInicio: string, fechaFin: string, id_usuario: string) {
-    return await firstValueFrom(
-     this.loadIndexDBService.ping().pipe(
-      switchMap((ping) => {
-        if (ping === 'pong') {
-          //console.log('✅ Backend activo');
-          return this.graphqlService
-            .query<{ consultarFechaCalendario: Sesiones[] }>(this.GET_SESIONES, {
-              input: {
-                fecha_inicial: fechaInicio,
-                fecha_final: fechaFin,
-                id_usuario: id_usuario,
-              },
-            })
-            .pipe(
-              tap((response) => {
-                //console.log('Obtuvo sesiones del servicio del graphql', response);
-              }),
-              map((response) =>
-                (response?.consultarFechaCalendario || []).map((s) => ({
-                  id: s.id_sesion,
-                  title: s.nombre_actividad,
-                  start: s.desde,
-                  end: s.hasta,
-                  extendedProps: { ...s },
-                }))
+  async obtenerSesiones(
+    fechaInicio: string,
+    fechaFin: string,
+    id_usuario: string,
+  ): Promise<EventoCalendario[]> {
+    return <EventoCalendario[]>await firstValueFrom(
+      this.loadIndexDBService.ping().pipe(
+        switchMap((ping) => {
+          if (ping === 'pong') {
+            //console.log('✅ Backend activo:',);
+            return this.graphqlService
+              .query<{ consultarFechaCalendario: Sesiones[] }>(
+                this.CONSULTAR_FECHA_CALENDARIO,
+                {
+                  input: {
+                    fecha_inicial: fechaInicio,
+                    fecha_final: fechaFin,
+                    id_usuario: id_usuario,
+                  },
+                },
+              )
+              .pipe(
+                tap((response) => {
+                  console.log(
+                    'Obtuvo sesiones del servicio del graphql',
+                    response,
+                  );
+                }),
+                map((response) =>
+                  (response?.consultarFechaCalendario || []).map((s) => ({
+                    id: s.id_sesion,
+                    title: s.nombre_actividad,
+                    start: s.desde,
+                    end: s.hasta,
+                    extendedProps: { ...s },
+                  })),
+                ),
+                catchError((err) => {
+                  console.error(
+                    '❌ Error con GraphQL, usando fallback local:',
+                    err,
+                  );
+                  return from(
+                    this.actividadesDataSource.consultarFechaCalendario(
+                      new Date(fechaInicio),
+                      new Date(fechaFin),
+                      id_usuario,
+                    ),
+                  );
+                }),
+              );
+          } else {
+            //console.log('❌ Backend inactivo → usando IndexedDB');
+            return from(
+              this.actividadesDataSource.consultarFechaCalendario(
+                new Date(fechaInicio),
+                new Date(fechaFin),
+                id_usuario,
               ),
-              catchError((err) => {
-                console.error('❌ Error con GraphQL, usando fallback local:', err);
-                return from(
-                  this.actividadesDataSource.consultarFechaCalendario(
-                    new Date(fechaInicio),
-                    new Date(fechaFin),
-                    id_usuario
-                  )
-                );
-              })
             );
-        } else {
-          //console.log('❌ Backend inactivo → usando IndexedDB');
-          return from(
-            this.actividadesDataSource.consultarFechaCalendario(
-              new Date(fechaInicio),
-              new Date(fechaFin),
-              id_usuario
-            )
-          );
-        }
-      })
-    )
-  );
+          }
+        }),
+      ),
+    );
   }
 }

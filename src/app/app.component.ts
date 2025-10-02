@@ -24,8 +24,8 @@ export class AppComponent {
     this.loadingService.show(); // 🔄 mostrar
     try {
       await this.dataSyncService.startSync();
-      await this.loadIndexDBService.cargarDatosIniciales(
-        this.authService.getUserUuid()
+      this.loadIndexDBService.cargarDatosIniciales(
+        this.authService.getUserUuid(),
       );
     } finally {
       this.loadingService.hide(); // 🔄 ocultar

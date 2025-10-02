@@ -1,41 +1,32 @@
 import { Injectable } from '@angular/core';
 import Dexie, { Table } from 'dexie';
-import { Actividades } from '../interfaces/actividades.interface';
-import { Aliados } from '../interfaces/aliados.interface';
-import { Beneficiarios } from '../interfaces/beneficiarios.interface';
-
-import { Asistencias } from '../interfaces/asistencias.interface';
-import { Parametros_detalle } from '../interfaces/parametros_detalle.interface';
-import { Parametros_generales } from '../interfaces/parametros_generales.interface';
-import { Personas } from '../interfaces/personas.interface';
-import { Personas_grupo_interes } from '../interfaces/personas_grupo_interes.interface';
-import { Personas_programas } from '../interfaces/personas_programas.interface';
-import { Personas_sedes } from '../interfaces/personas_sedes.interface';
-import { Poblaciones } from '../interfaces/poblaciones.interface';
-import { Sedes } from '../interfaces/sedes.interface';
-import { Sesiones } from '../interfaces/sesiones.interface';
-import { Sessions } from '../interfaces/sessions.interface';
+import { ActividadesDB } from '../interfaces/actividades.interface';
+import { AsistenciasDB } from '../interfaces/asistencias.interface';
+import { Parametros_detalleDB } from '../interfaces/parametros_detalle.interface';
+import { Parametros_generalesDB } from '../interfaces/parametros_generales.interface';
+import { PersonasDB } from '../interfaces/personas.interface';
+import { Personas_grupo_interesDB } from '../interfaces/personas_grupo_interes.interface';
+import { Personas_programasDB } from '../interfaces/personas_programas.interface';
+import { Personas_sedesDB } from '../interfaces/personas_sedes.interface';
+import { PoblacionesDB } from '../interfaces/poblaciones.interface';
+import { SedesDB } from '../interfaces/sedes.interface';
+import { SesionesDB } from '../interfaces/sesiones.interface';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DatabaseService extends Dexie {
-  actividades!: Table<Actividades, string>;
-  aliados!: Table<Aliados, string>;
-
-  asistencias!: Table<Asistencias, string>;
-  parametros_detalle!: Table<Parametros_detalle, string>;
-  parametros_generales!: Table<Parametros_generales, string>;
-  personas!: Table<Personas, string>;
-  Aliados!: Table<Aliados, string>;
-  Beneficiarios!: Table<Beneficiarios, string>;
-  personas_grupo_interes!: Table<Personas_grupo_interes, string>;
-  personas_programas!: Table<Personas_programas, string>;
-  personas_sedes!: Table<Personas_sedes, string>;
-  poblaciones!: Table<Poblaciones, string>;
-  sedes!: Table<Sedes, string>;
-  sesiones!: Table<Sesiones, string>;
-  sessions!: Table<Sessions, string>;
+  actividades!: Table<ActividadesDB, string>;
+  asistencias!: Table<AsistenciasDB, string>;
+  parametros_detalle!: Table<Parametros_detalleDB, string>;
+  parametros_generales!: Table<Parametros_generalesDB, string>;
+  personas!: Table<PersonasDB, string>;
+  personas_grupo_interes!: Table<Personas_grupo_interesDB, string>;
+  personas_programas!: Table<Personas_programasDB, string>;
+  personas_sedes!: Table<Personas_sedesDB, string>;
+  poblaciones!: Table<PoblacionesDB, string>;
+  sedes!: Table<SedesDB, string>;
+  sesiones!: Table<SesionesDB, string>;
 
   constructor() {
     super('CultivarteAppIndexDB');
@@ -64,9 +55,8 @@ export class DatabaseService extends Dexie {
 
       sesiones:
         'id_sesion, id_actividad, fecha_actividad, hora_inicio, hora_fin,imagen,descripcion, nro_asistentes, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
-      sessions:
-        'session_id, user_id, user_email, user_name, created_at, expires_at, revoked',
     });
+
     //console.log('Base de datos lista para usarse');
   }
 }

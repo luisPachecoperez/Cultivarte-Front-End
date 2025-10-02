@@ -14,16 +14,18 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'Amis-Front-End' title`, () => {
+  it(`should have the 'davi-fbol-cultivarte-front-mngr' title`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('Amis-Front-End');
+    expect(app.title).toEqual('davi-fbol-cultivarte-front-mngr');
   });
 
   it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, Amis-Front-End');
+    expect(compiled.querySelector('h1')?.textContent).toContain(
+      'Hello, davi-fbol-cultivarte-front-mngr',
+    );
   });
 });

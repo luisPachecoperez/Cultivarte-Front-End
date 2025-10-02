@@ -1,7 +1,8 @@
 export interface Usuario {
-    id: string;
-    email: string;
-    nombre: string;
-    photoUrl?: string | null;
-    user_uuid?: string | null;
+  id: string | null;
+  email: string;
+  nombre: string;
+  exp: number | null;
+  photoUrl?: string | null;
+  user_uuid?: string | null;
 }
