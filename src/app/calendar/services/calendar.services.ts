@@ -14,7 +14,7 @@ import { EventoCalendario } from '../interfaces/evento-calendario.interface';
   providedIn: 'root',
 })
 export class CalendarService {
-  private readonly CONSULTAR_FECHA_CALENDARIO = `
+  private readonly GET_SESIONES = `
   query ($input: CalendarioInput!) {
     consultarFechaCalendario(input: $input) {
       id_actividad
@@ -47,10 +47,10 @@ export class CalendarService {
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
           if (ping === 'pong') {
-            //console.log('✅ Backend activo:',);
+            //console.log('✅ Backend activo');
             return this.graphqlService
               .query<{ consultarFechaCalendario: Sesiones[] }>(
-                this.CONSULTAR_FECHA_CALENDARIO,
+                this.GET_SESIONES,
                 {
                   input: {
                     fecha_inicial: fechaInicio,
@@ -60,11 +60,8 @@ export class CalendarService {
                 },
               )
               .pipe(
-                tap((response) => {
-                  console.log(
-                    'Obtuvo sesiones del servicio del graphql',
-                    response,
-                  );
+                tap(() => {
+                  //console.log('Obtuvo sesiones del servicio del graphql', response);
                 }),
                 map((response) =>
                   (response?.consultarFechaCalendario || []).map((s) => ({

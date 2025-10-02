@@ -21,7 +21,7 @@ import { Responsables } from '../../eventos/interfaces/lista-responsables-interf
 import { Frecuencias } from '../../eventos/interfaces/lista-frecuencias-interface';
 import { TiposDeActividad } from '../../eventos/interfaces/lista-tipos-actividades-interface';
 import { Programas } from '../../eventos/interfaces/lista-programas.interface';
-import { NombresDeActividad } from '../../eventos/interfaces/lista-nombres-actividades.interface';
+import { NombresDeActividades } from '../../eventos/interfaces/lista-nombres-actividades.interface';
 @Injectable({
   providedIn: 'root',
 })
@@ -150,6 +150,8 @@ export class ActividadesDataSource {
   }
 
   async bulkAdd(data: ActividadesDB[]): Promise<void> {
+    //console.log('Bulk add Actividades:', data);
+    await this.deleteFull();
     const withSyncStatus = data.map((item) => ({
       ...item,
       syncStatus: item.syncStatus ?? 'synced',
@@ -177,7 +179,7 @@ export class ActividadesDataSource {
   }
 
   async getPreCreateActividad(id_usuario: string): Promise<PreCreateActividad> {
-    console.log('Obteniendo datos para PreCreateActividad IndexDB');
+    //console.log('Obteniendo datos para PreCreateActividad IndexDB');
     // 1. Obtener parámetros generales y detalle
     const parametrosGenerales = await indexDB.parametros_generales.toArray();
     const parametrosDetalle = await indexDB.parametros_detalle.toArray();
@@ -247,8 +249,8 @@ export class ActividadesDataSource {
     if (programa === null) programa = ' ';
     //console.log('PreCreateActividad Frecuencias:', frecuencias);
 
-    // 3. nombresDeActividad (array plano con split de valores)
-    const nombresDeActividad: { id_tipo_actividad: string; nombre: string }[] =
+    // 3. nombreDeActividades (array plano con split de valores)
+    const nombreDeActividades: { id_tipo_actividad: string; nombre: string }[] =
       [];
     const generalTipoActividad = parametrosGenerales.find(
       (pg) => pg.nombre_parametro === 'TIPO_ACTIVIDAD_CULTIVARTE',
@@ -265,7 +267,7 @@ export class ActividadesDataSource {
           const valores = det.valores.split(',').map((v) => v.trim());
           //console.log('Nombres de actividades de ', det.nombre, ' ', valores);
           valores.forEach((val) => {
-            nombresDeActividad.push({
+            nombreDeActividades.push({
               id_tipo_actividad: det.id_parametro_detalle,
               nombre: val,
             });
@@ -273,11 +275,11 @@ export class ActividadesDataSource {
         }
       }
     }
-    //console.log('PreCreateActividad Nombre de Actividades:',nombresDeActividad);
+    //console.log('PreCreateActividad Nombre de Actividades:',nombreDeActividades);
     // 4. Sedes y Aliados filtrados por usuario
     const aliados: { id_aliado: string; nombre: string }[] =
       await this.personasDataSource.getAliados(id_usuario);
-    console.log('PreCreateActividad Aliados:', aliados);
+    //console.log('PreCreateActividad Aliados:', aliados);
     const sedesUsuario =
       await this.personasSedesDataSource.getSedesByUsuario(id_usuario);
     //console.log('PreCreateActividad Sedes del usuario:', sedesUsuario);
@@ -308,7 +310,7 @@ export class ActividadesDataSource {
       tiposDeActividad,
       aliados,
       responsables,
-      nombresDeActividad,
+      nombreDeActividades,
       frecuencias,
     };
     //console.log('PreCreateActividad IndexDB:', respuesta);
@@ -388,8 +390,8 @@ export class ActividadesDataSource {
 
     //console.log('PreEditActividad Frecuencias:', frecuencias);
 
-    // 3. nombresDeActividad (array plano con split de valores)
-    const nombresDeActividad: NombresDeActividad[] = [];
+    // 3. nombreDeActividades (array plano con split de valores)
+    const nombreDeActividades: NombresDeActividades[] = [];
     const generalTipoActividad = parametrosGenerales.find(
       (pg) => pg.nombre_parametro === 'TIPO_ACTIVIDAD_CULTIVARTE',
     );
@@ -405,7 +407,7 @@ export class ActividadesDataSource {
           const valores = det.valores.split(',').map((v) => v.trim());
           //console.log('Nombres de actividades de ', det.nombre, ' ', valores);
           valores.forEach((val) => {
-            nombresDeActividad.push({
+            nombreDeActividades.push({
               id_tipo_actividad: det.id_parametro_detalle,
               nombre: val,
             });
@@ -413,7 +415,7 @@ export class ActividadesDataSource {
         }
       }
     }
-    //console.log('PreEditActividad Nombre de Actividades:', nombresDeActividad);
+    //console.log('PreEditActividad Nombre de Actividades:', nombreDeActividades);
     // 4. Sedes y Aliados filtrados por usuario
     const aliados: { id_aliado: string; nombre: string }[] =
       await this.personasDataSource.getAliados(id_usuario);
@@ -446,21 +448,16 @@ export class ActividadesDataSource {
     )
       // 🔹 Ordenamos por fecha antes de formatear
       .sort((a, b) => {
-        if (a.fecha_actividad===undefined)return -1;
-        if (b.fecha_actividad===undefined)return -1;
-        const fechaA = new Date(+(a.fecha_actividad ??0)).getTime();
-        const fechaB = new Date(+(b.fecha_actividad??0)).getTime();
+        const fechaA = new Date(+a.fecha_actividad).getTime();
+        const fechaB = new Date(+b.fecha_actividad).getTime();
         return fechaA - fechaB; // ascendente (más antigua primero)
       })
       // 🔹 Luego mapeamos y formateamos
       .map((s) => ({
         ...s,
-        fecha_actividad: new Date(+(s.fecha_actividad??0))
+        fecha_actividad: new Date(+s.fecha_actividad)
           .toISOString()
-          .split('T')[0], // yyyy-MM-dd,
-          nro_asistentes:s.nro_asistentes??0,
-          descripcion:s.descripcion??'',
-          nombre_actividad:s.nombre_actividad??''
+          .split('T')[0], // yyyy-MM-dd
       }));
     const respuesta: PreEditActividad = {
       id_programa: actividad.id_programa || '',
@@ -468,7 +465,7 @@ export class ActividadesDataSource {
       tiposDeActividad,
       aliados,
       responsables,
-      nombresDeActividad,
+      nombreDeActividades,
       frecuencias,
       actividad,
       sesiones,
@@ -525,19 +522,6 @@ export class ActividadesDataSource {
 
     //console.log('IndexDB Sesiones encontradas:', sesiones);
 
-    const asistentesPorActividad = new Map<string, number>();
-
-    sesiones.forEach((sesion) => {
-      if (!asistentesPorActividad.has(sesion.id_actividad)) {
-        asistentesPorActividad.set(sesion.id_actividad, 0);
-      }
-      asistentesPorActividad.set(
-        sesion.id_actividad,
-        (asistentesPorActividad.get(sesion.id_actividad) ?? 0) +
-          (sesion.nro_asistentes ?? 0),
-      );
-    });
-
     const mappedSesiones = sesiones.map((s: SesionesDB) => {
       const fecha = new Date(Number(s.fecha_actividad));
       const yyyyMMdd = fecha.toISOString().split('T')[0]; // yyyy-mm-dd
@@ -553,7 +537,7 @@ export class ActividadesDataSource {
           nombre_actividad: s.nombre_actividad,
           desde: `${yyyyMMdd} ${s.hora_inicio}`,
           hasta: `${yyyyMMdd} ${s.hora_fin}`,
-          asistentes_evento: asistentesPorActividad.get(s.id_actividad) ?? 0,
+          asistentes_evento: s.nro_asistentes ?? 0,
         },
       };
     });
@@ -567,7 +551,7 @@ export class ActividadesDataSource {
     if (!sesion) {
       throw new Error(`Sesión ${id_sesion} no encontrada en IndexedDB`);
     }
-    //console.log('Sesion preasistencias:', sesion);
+    //console.log('Sesion preasistencias:', id_sesion);
 
     const sedes: Sedes[] = await indexDB.sedes.toArray();
 
@@ -613,7 +597,7 @@ export class ActividadesDataSource {
         )
         .first();
 
-    // //console.log('GrupoBeneficiarioCultivarte:', grupoBeneficiarioCultivarte);
+    //console.log('GrupoBeneficiarioCultivarte:', grupoBeneficiarioCultivarte);
 
     const beneficiariosGruposInteres: Personas_grupo_interesDB[] | undefined =
       await indexDB.personas_grupo_interes
@@ -628,7 +612,7 @@ export class ActividadesDataSource {
       (pgi) => pgi.id_persona,
     );
 
-    //console.log('idsPersonasGrupo:', idsPersonasGrupo.length);
+    //console.log('Personas sedes:', ps);
 
     //console.log('idsPersonasGrupo:', idsPersonasGrupo);
 
@@ -648,7 +632,7 @@ export class ActividadesDataSource {
       .where('id_persona')
       .anyOf(idsBeneficiarios)
       .toArray();
-    // //console.log('personasSedes:', personasSedes);
+    //console.log('personasSedes:', personasSedes);
 
     const beneficiarios = personasBeneficiariosGrupo
       .filter((p): p is PersonasDB => !!p)
@@ -663,7 +647,7 @@ export class ActividadesDataSource {
           identificacion: p.identificacion, // 👈 fallback vacío
         };
       });
-    // //console.log('beneficiarios:', beneficiarios);
+    //console.log('beneficiarios:', beneficiarios);
 
     // 5. Asistentes a sesiones anteriores
 
@@ -674,7 +658,7 @@ export class ActividadesDataSource {
       .where('id_sesion')
       .equals(id_sesion)
       .toArray();
-    //console.log("Sesion:", id_sesion, "act:", sesion.id_actividad);
+
     //console.log('Asistencias sesion:', asistenciasSesion);
 
     if (asistenciasSesion.length > 0) {
@@ -688,13 +672,11 @@ export class ActividadesDataSource {
         }),
       );
     } else {
-      //console.log("no hay asistencias a la sesion");
       const sesionesMismaActividad = await indexDB.sesiones
         .where('id_actividad')
         .equals(sesion.id_actividad ?? '')
-        //.and((s) => new Date(s.fecha_actividad ?? '') < new Date())
+        .and((s) => new Date(s.fecha_actividad ?? '') < new Date())
         .toArray();
-      //console.log("id_actividad:", sesion.id_actividad, "sesiones de la misma actividad:", sesionesMismaActividad)
       const asistentesPrevios: AsistenciasDB[] = [];
 
       for (const s of sesionesMismaActividad) {

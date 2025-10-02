@@ -90,7 +90,7 @@ export class CalendarComponent {
   fechaSeleccionada: string | null = null;
   eventoEditando: EventoCalendario | null = null;
 
-  eventoSeleccionado: Sesiones |undefined;
+  eventoSeleccionado: Sesiones | null = null;
   mostrarModalAcciones: boolean = false;
   mostrarFormulario: boolean = false;
   mostrarAsistencia: boolean = false;
@@ -130,7 +130,6 @@ export class CalendarComponent {
   };
 
   onDatesSet(dateInfo: DatesSetArg) {
-    //console.log("ondataset");
     this.loadingService.show(); // 🔄 mostrar
     try {
       this.ultimaFechaInicio = dateInfo.start.toISOString().split('T')[0];
@@ -148,11 +147,10 @@ export class CalendarComponent {
     if (!this.ultimaFechaInicio || !this.ultimaFechaFin) return;
 
     const idUsuario = this.authService.getUserUuid();
-    //console.log("cargando sesiones para el calendario");
+
     this.calendarService
       .obtenerSesiones(this.ultimaFechaInicio, this.ultimaFechaFin, idUsuario)
       .then((sesionesFormateadas) => {
-        //console.log("sesiones formateadas:",sesionesFormateadas);
         this.eventosCalendario = sesionesFormateadas;
         this.calendarOptions = {
           ...this.calendarOptions,
@@ -160,14 +158,14 @@ export class CalendarComponent {
         };
       })
       .catch(() => {
-        //console.log('No fue posible cargar las sesiones');
+        console.log('No fue posible cargar las sesiones');
       });
   }
 
   handleDateClick(arg: DateClickMinimal) {
     //console.log('📌 Click en fecha:', arg.dateStr);
     this.fechaSeleccionada = arg.dateStr;
-    this.eventoSeleccionado = undefined;
+    this.eventoSeleccionado = null;
     this.mostrarFormulario = true;
   }
 
@@ -216,7 +214,7 @@ export class CalendarComponent {
     this.eventoSeleccionado = {
       id_actividad: ext?.id_actividad ?? '',
       id_sesion: ext?.id_sesion ?? event.id ?? '',
-      asistentes_evento: Number(ext?.asistentes_evento ?? 0),
+      nro_asistentes: Number(ext?.asistentes_evento ?? 0),
       nombre_actividad: nombre_actividad ?? '',
       sesiones: sesiones,
       fecha_actividad: fechaDesde ?? sesiones[0]?.fecha_actividad ?? '',
@@ -353,7 +351,7 @@ export class CalendarComponent {
   // ✅ Recargar sesiones al cerrar formularios o modales
   cerrarFormulario() {
     this.mostrarFormulario = false;
-    this.eventoSeleccionado = undefined;
+    this.eventoSeleccionado = null;
     this.cargarSesiones();
   }
 
@@ -383,12 +381,7 @@ export class CalendarComponent {
           this.eventoSeleccionado.id_actividad,
         );
       } else {
-
-        this.eventoComponent.precargarFormulario({
-          ...this.eventoSeleccionado,
-          nombre_actividad:this.eventoSeleccionado.nombre_actividad??undefined
-
-        })
+        this.eventoComponent.precargarFormulario(this.eventoSeleccionado);
       }
       this.mostrarFormulario = true;
       // this.abrirEdicion({

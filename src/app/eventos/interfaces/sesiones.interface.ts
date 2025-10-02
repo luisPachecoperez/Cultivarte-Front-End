@@ -8,8 +8,8 @@ export interface Sesiones {
   desde?: string | null;
   hasta?: string | null;
   imagen?: string;
-  nro_asistentes?: number | 0;
-  descripcion?: string | undefined;
+  nro_asistentes?: number | null;
+  descripcion?: string | null;
   id_creado_por?: string;
   fecha_creacion?: string;
   id_modificado_por?: string | null;

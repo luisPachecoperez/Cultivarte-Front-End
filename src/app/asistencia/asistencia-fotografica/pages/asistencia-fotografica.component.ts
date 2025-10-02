@@ -141,8 +141,8 @@ export class AsistenciaFotograficaComponent implements OnInit {
       id_actividad: ev.id_actividad,
       id_sesion: ev.id_sesion,
       imagen: this.imagenBase64 ?? '',
-      nro_asistentes: formValue.numeroAsistentes??0,
-      descripcion: formValue.descripcion??'',
+      nro_asistentes: formValue.numeroAsistentes ?? 0,
+      descripcion: formValue.descripcion,
       nuevos: [] as never[],
     };
 

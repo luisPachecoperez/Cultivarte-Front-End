@@ -67,31 +67,29 @@ export class AuthService {
   }
 
   public getUserUuid(): string {
-    const user_uuid: string = '07fc57f3-6955-4657-82f2-cf91ec9c83dd' as string;
+    const user_uuid: string = '1329a5e8-d140-483a-b5c4-e6247837a8ca';
     return user_uuid;
-    /*const encrypted: string | null = this.cookieService.getCookie(
-      this.userCookieName,
-    );
-    if (!encrypted) {
-      console.warn(this.userCookieName + '❌ No existe cookie de sesión');
-      return user_uuid;
-    }
+    // const encrypted :string | null = this.cookieService.getCookie(this.userCookieName);
+    // if (!encrypted) {
+    //   console.warn(this.userCookieName+'❌ No existe cookie de sesión');
+    //   return user_uuid;
+    // }
 
-    try {
-      // 🔓 Descifrar cookie
-      const bytes = CryptoJS.AES.decrypt(encrypted, this.secret ?? '');
-      const decoded = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-      user_uuid = decoded.user_uuid;
-      //console.log('✅ Usuario autenticado:',user_uuid);
-      if (!decoded) {
-        console.warn('❌ Cookie vacía o corrupta');
-        return user_uuid;
-      }
-      return user_uuid;
-    } catch (err) {
-      console.error('❌ Error al validar cookie:', err);
-      return user_uuid;
-    }*/
+    // try {
+    //   // 🔓 Descifrar cookie
+    //   const bytes = CryptoJS.AES.decrypt(encrypted, this.secret);
+    //   const decoded = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    //   user_uuid=decoded.user_uuid;
+    //   //console.log('✅ Usuario autenticado:',user_uuid);
+    //   if (!decoded) {
+    //     console.warn('❌ Cookie vacía o corrupta');
+    //     return user_uuid ;
+    //   }
+    // return user_uuid;
+    // } catch (err) {
+    //   console.error('❌ Error al validar cookie:', err);
+    //   return user_uuid;
+    // }
   }
   /**
    *
@@ -137,5 +135,44 @@ export class AuthService {
       );
   }
 
-  
+  async logout(email?: string) {
+    let google: GoogleAccounts;
+
+    this.clear();
+    // Borrar cookie
+    this.cookieService.deleteCookie(environment.USER_COOKIE_NAME);
+    //en fbd no
+
+    // (Opcional) mutación al backend para cerrar sesión server-side
+    const LOGOUT_MUTATION = `mutation { logout { success message } }`;
+
+    try {
+      const result = await firstValueFrom(
+        this.graphQLService.mutation<{
+          logout: { success: boolean; message: string };
+        }>(LOGOUT_MUTATION),
+      );
+
+      if (result.logout.success) {
+        //console.log("✅ Logout backend:", result.logout.message);
+      } else {
+        console.warn('⚠️ Logout backend fallido:', result.logout.message);
+      }
+    } catch (err) {
+      console.error('❌ Error logout backend:', err);
+    }
+
+    // (Opcional) Revocar consentimiento en Google
+    try {
+      if (email && typeof google !== 'undefined') {
+        google.accounts.id.revoke(email, () => {});
+      } else {
+        google?.accounts?.id?.cancel?.();
+      }
+    } catch {
+      // Ignorar errores silenciosamente
+    }
+
+    await this.router.navigate(['/login']);
+  }
 }

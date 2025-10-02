@@ -23,6 +23,14 @@ interface Sede {
   id_sede: string;
   nombre: string;
 }
+/*
+interface DetalleAsistenciaResponse {
+  beneficiarios: Beneficiario[];
+  nro_asistenteses: { id_persona: string; eliminar?: 'S' | 'N' }[];
+  sedes: Sede[];
+  id_sede?: string;
+}
+  */
 
 @Component({
   selector: 'app-asistencia',
@@ -59,7 +67,7 @@ export class AsistenciaComponent implements OnInit {
     this.asistenciaService
       .obtenerDetalleAsistencia(ev.id_sesion)
       .then((data: PreAsistencia) => {
-        //console.log('📥 Llega desde Promise:', data);
+        console.log('📥 Llega desde Promise:', data);
 
         this.beneficiariosBD = (data.beneficiarios as Beneficiarios[]) || [];
         this.asistentes = (data.asistentes_sesiones || []).map(
@@ -151,20 +159,18 @@ export class AsistenciaComponent implements OnInit {
     }
 
     const ev = this.evento();
-    //console.log("Asistentes:",this.asistentes);
+
     const payload: AsistenciaPayLoad = {
-      id_actividad: ev?.id_actividad ?? '',
-      id_sesion: ev?.id_sesion ?? '',
+      id_actividad: '',
+      id_sesion: '',
       imagen: '', // vacío en asistencia normal
-      numero_asistentes: 0,
+      nro_asistentes: 0,
       descripcion: '', // vacío si no aplica
-      nuevos: this.asistentes
-        .filter((a) => a.eliminar === 'S')
-        .map((a) => ({
-          id_persona: a.id_persona,
-          id_sesion: ev?.id_sesion ?? '',
-          id_asistencia: uuidv4(),
-        })),
+      nuevos: this.asistentes.map((a) => ({
+        id_persona: a.id_persona,
+        id_sesion: ev?.id_sesion ?? '',
+        id_asistencia: uuidv4(),
+      })),
     };
 
     //console.log('📤 Enviando asistencia normal:', payload);
@@ -177,10 +183,8 @@ export class AsistenciaComponent implements OnInit {
 
       if (resp.exitoso === 'S') {
         // éxito → cerramos modal
-        this.snack.success(resp.mensaje ?? '');
         this.cerrar.emit();
       } else {
-        this.snack.warning(resp.mensaje ?? '');
         console.error('❌ Error al guardar asistencia:', resp.mensaje);
       }
     } catch (err) {
