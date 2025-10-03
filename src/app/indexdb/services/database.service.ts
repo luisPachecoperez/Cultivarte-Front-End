@@ -55,7 +55,7 @@ export class DatabaseService extends Dexie {
 
       sesiones:
         'id_sesion, id_actividad, fecha_actividad, hora_inicio, hora_fin,imagen,descripcion, nro_asistentes, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
-    });
+     });
 
     //console.log('Base de datos lista para usarse');
   }

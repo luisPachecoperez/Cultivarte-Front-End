@@ -1,4 +1,4 @@
-import { Sesiones } from './sesiones';
+import { Sesiones } from "../../eventos/interfaces/sesiones.interface";
 
 export interface ActividadSesiones {
   id_programa: string;

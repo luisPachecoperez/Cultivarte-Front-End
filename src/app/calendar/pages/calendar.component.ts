@@ -130,7 +130,6 @@ export class CalendarComponent {
   };
 
   onDatesSet(dateInfo: DatesSetArg) {
-    //console.log("ondataset");
     this.loadingService.show(); // 🔄 mostrar
     try {
       this.ultimaFechaInicio = dateInfo.start.toISOString().split('T')[0];
@@ -148,11 +147,10 @@ export class CalendarComponent {
     if (!this.ultimaFechaInicio || !this.ultimaFechaFin) return;
 
     const idUsuario = this.authService.getUserUuid();
-    //console.log("cargando sesiones para el calendario");
+
     this.calendarService
       .obtenerSesiones(this.ultimaFechaInicio, this.ultimaFechaFin, idUsuario)
       .then((sesionesFormateadas) => {
-        //console.log("sesiones formateadas:",sesionesFormateadas);
         this.eventosCalendario = sesionesFormateadas;
         this.calendarOptions = {
           ...this.calendarOptions,
@@ -160,7 +158,7 @@ export class CalendarComponent {
         };
       })
       .catch(() => {
-        //console.log('No fue posible cargar las sesiones');
+        console.log('No fue posible cargar las sesiones');
       });
   }
 
@@ -216,7 +214,7 @@ export class CalendarComponent {
     this.eventoSeleccionado = {
       id_actividad: ext?.id_actividad ?? '',
       id_sesion: ext?.id_sesion ?? event.id ?? '',
-      asistentes_evento: Number(ext?.asistentes_evento ?? 0),
+      nro_asistentes: Number(ext?.asistentes_evento ?? 0),
       nombre_actividad: nombre_actividad ?? '',
       sesiones: sesiones,
       fecha_actividad: fechaDesde ?? sesiones[0]?.fecha_actividad ?? '',

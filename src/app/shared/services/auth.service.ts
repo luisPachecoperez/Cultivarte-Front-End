@@ -67,31 +67,29 @@ export class AuthService {
   }
 
   public getUserUuid(): string {
-    const user_uuid: string = '07fc57f3-6955-4657-82f2-cf91ec9c83dd' as string;
+    const user_uuid: string = '1329a5e8-d140-483a-b5c4-e6247837a8ca';
     return user_uuid;
-    /*const encrypted: string | null = this.cookieService.getCookie(
-      this.userCookieName,
-    );
-    if (!encrypted) {
-      console.warn(this.userCookieName + '❌ No existe cookie de sesión');
-      return user_uuid;
-    }
+    // const encrypted :string | null = this.cookieService.getCookie(this.userCookieName);
+    // if (!encrypted) {
+    //   console.warn(this.userCookieName+'❌ No existe cookie de sesión');
+    //   return user_uuid;
+    // }
 
-    try {
-      // 🔓 Descifrar cookie
-      const bytes = CryptoJS.AES.decrypt(encrypted, this.secret ?? '');
-      const decoded = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-      user_uuid = decoded.user_uuid;
-      //console.log('✅ Usuario autenticado:',user_uuid);
-      if (!decoded) {
-        console.warn('❌ Cookie vacía o corrupta');
-        return user_uuid;
-      }
-      return user_uuid;
-    } catch (err) {
-      console.error('❌ Error al validar cookie:', err);
-      return user_uuid;
-    }*/
+    // try {
+    //   // 🔓 Descifrar cookie
+    //   const bytes = CryptoJS.AES.decrypt(encrypted, this.secret);
+    //   const decoded = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    //   user_uuid=decoded.user_uuid;
+    //   //console.log('✅ Usuario autenticado:',user_uuid);
+    //   if (!decoded) {
+    //     console.warn('❌ Cookie vacía o corrupta');
+    //     return user_uuid ;
+    //   }
+    // return user_uuid;
+    // } catch (err) {
+    //   console.error('❌ Error al validar cookie:', err);
+    //   return user_uuid;
+    // }
   }
   /**
    *

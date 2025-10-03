@@ -47,6 +47,7 @@ export class AsistenciasDataSource {
   }
 
   async bulkAdd(data: AsistenciasDB[]): Promise<void> {
+    await this.deleteFull();
     const withSyncStatus = data.map((item) => ({
       ...item,
       syncStatus: item.syncStatus ?? 'synced',

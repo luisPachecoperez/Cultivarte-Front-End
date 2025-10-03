@@ -19,7 +19,7 @@ export class AppComponent {
   private loadIndexDBService = inject(LoadIndexDBService);
   private authService = inject(AuthService);
   protected loadingService = inject(LoadingService); // 👈 usado en el template
-
+  public title:string = 'CultiApp';
   async ngOnInit() {
     this.loadingService.show(); // 🔄 mostrar
     try {

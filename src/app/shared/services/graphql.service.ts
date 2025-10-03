@@ -12,7 +12,7 @@ import { CookieInterface } from '../interfaces/cookie-interface';
   providedIn: 'root',
 })
 export class GraphQLService {
-  private apiUrl = 'http://localhost:5000/graphql';
+  private apiUrl = 'http://localhost:4000/graphql';
   //private apiUrl = 'http://localhost:8083/graphql';
 
   constructor(

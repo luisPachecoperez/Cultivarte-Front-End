@@ -226,7 +226,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
             .pipe(
               map((res) => {
                 this.loadingService.hide(); // 🔄 ocultar
-                //console.log('📡 Respuesta cruda de GraphQL:', res);
+                console.log('📡 Respuesta cruda de GraphQL:', res);
                 return res.getPreCreateActividad;
               }),
               catchError((err) => {
@@ -238,8 +238,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
                 const preActividad$ = from(
                   this.actividadesDataSource.getPreCreateActividad(id_usuario),
                 );
-                //console.log("ocultando 1");
-                //this.loadingService.hide(); // 🔄 ocultar
+                this.loadingService.hide(); // 🔄 ocultar
                 return preActividad$;
               }),
             );
@@ -247,8 +246,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
           const preActividad$ = from(
             this.actividadesDataSource.getPreCreateActividad(id_usuario),
           );
-          //console.log("ocultando 2");
-          //this.loadingService.hide(); // 🔄 ocultar
+          this.loadingService.hide(); // 🔄 ocultar
 
           return preActividad$;
         }
@@ -260,7 +258,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
     evento: Actividades,
     sesiones: Sesiones[],
   ): Promise<GraphQLResponse> {
-    //console.log('📤 Enviando evento al back:', evento);
+    console.log('📤 Enviando evento al back:', evento);
     const id_usuario = this.authService.getUserUuid();
 
     // 🔹 Construcción del payload de la actividad

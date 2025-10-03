@@ -19,7 +19,7 @@ export class SnackbarYesNoService {
     });
   }
 
-  warning(message: string, duration = 3000) {
+  warning(message: string, duration = 15000) {
     this.snack.open(message, 'Cerrar', {
       duration,
       panelClass: ['warning-snackbar'],
