@@ -1,14 +1,13 @@
 // src/app/services/auth.service.ts
 import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { tap, firstValueFrom } from 'rxjs';
+import { tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { Usuario } from '../interfaces/usuario.interface';
 import * as CryptoJS from 'crypto-js';
 import { GraphQLService } from './graphql.service';
 import { environment } from '../../../environments/environment';
 import { CookieService } from './cookie.service';
-import { GoogleAccounts } from '../interfaces/google-accounts';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -136,7 +135,7 @@ export class AuthService {
         }),
       );
   }
-/*
+  /*
   async logout(email?: string) {
     let google: GoogleAccounts;
 

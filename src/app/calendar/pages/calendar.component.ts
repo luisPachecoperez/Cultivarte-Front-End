@@ -383,7 +383,7 @@ export class CalendarComponent {
           this.eventoSeleccionado.id_actividad,
         );
       } else {
-        this.eventoComponent.precargarFormulario(this.eventoSeleccionado!);
+        this.eventoComponent.precargarFormulario(this.eventoSeleccionado);
       }
       this.mostrarFormulario = true;
       // this.abrirEdicion({

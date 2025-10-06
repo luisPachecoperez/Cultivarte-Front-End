@@ -446,7 +446,12 @@ export class ActividadesDataSource {
     )
       // 🔹 Ordenamos por fecha antes de formatear
       .sort((a, b) => {
-        if(a.fecha_actividad===undefined || b.fecha_actividad=== undefined || a.fecha_actividad===null || b.fecha_actividad=== null)
+        if (
+          a.fecha_actividad === undefined ||
+          b.fecha_actividad === undefined ||
+          a.fecha_actividad === null ||
+          b.fecha_actividad === null
+        )
           return 1;
         const fechaA = new Date(+a.fecha_actividad).getTime();
         const fechaB = new Date(+b.fecha_actividad).getTime();
@@ -455,7 +460,11 @@ export class ActividadesDataSource {
       // 🔹 Luego mapeamos y formateamos
       .map((s) => ({
         ...s,
-        fecha_actividad: new Date(s.fecha_actividad ? +s.fecha_actividad : Date.now()).toISOString().split('T')[0], // yyyy-MM-dd
+        fecha_actividad: new Date(
+          s.fecha_actividad ? +s.fecha_actividad : Date.now(),
+        )
+          .toISOString()
+          .split('T')[0], // yyyy-MM-dd
       }));
     const respuesta: PreEditActividad = {
       id_programa: actividad.id_programa || '',

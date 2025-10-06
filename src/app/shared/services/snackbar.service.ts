@@ -5,6 +5,9 @@ import { take } from 'rxjs/operators';
 import { ConfirmSnackbarComponent } from '../components/confirm-snackbar/confirm-snackbar.component';
 import { Subject } from 'rxjs';
 @Injectable({ providedIn: 'root' })
+
+
+
 export class SnackbarService {
   private confirmResult$ = new Subject<boolean>();
 
@@ -37,15 +40,19 @@ export class SnackbarService {
     });
   }
 
+  // ✅ corregido para romper el ciclo circular
   confirm(message: string): Observable<boolean> {
-    this.snack.openFromComponent(ConfirmSnackbarComponent, {
-      data: { message },
-
-      panelClass: ['warning-snackbar'],
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
+    // Importación dinámica — solo carga el componente cuando se usa
+    import('../components/confirm-snackbar/confirm-snackbar.component').then(({ ConfirmSnackbarComponent }) => {
+      this.snack.openFromComponent(ConfirmSnackbarComponent, {
+        data: { message },
+        panelClass: ['warning-snackbar'],
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+      });
     });
 
+    // devuelve el observable con el resultado de confirmación
     return this.confirmResult$.asObservable().pipe(take(1));
   }
 

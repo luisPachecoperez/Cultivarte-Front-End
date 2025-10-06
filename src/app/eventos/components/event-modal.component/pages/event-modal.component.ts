@@ -16,7 +16,7 @@ import { Sesiones } from '../../../interfaces/sesiones.interface';
   imports: [CommonModule, MatSnackBarModule],
 })
 export class EventModalComponent implements AfterViewInit {
-  evento = input<Actividades |Sesiones| null|undefined>(undefined);
+  evento = input<Actividades | Sesiones | null | undefined>(undefined);
   accionSeleccionada = output<'editar' | 'asistencia'>();
   cerrar = output<void>();
 

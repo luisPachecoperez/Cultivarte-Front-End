@@ -133,7 +133,7 @@ export class Grid_sesionesComponent {
 
     if (sesion.metaEstado !== 'nuevo') {
       // solo id_sesion en eliminados
-      this.eliminadosBuffer.push({ id_sesion: sesion.id_sesion??'' });
+      this.eliminadosBuffer.push({ id_sesion: sesion.id_sesion ?? '' });
     }
 
     this.formArray().removeAt(index);

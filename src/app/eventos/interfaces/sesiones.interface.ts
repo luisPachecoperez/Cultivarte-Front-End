@@ -17,8 +17,6 @@ export interface Sesiones {
   [key: string]: any; // Firma de índice
 }
 
-
-
 /*export interface Sesiones {
   id_sesion: string;
   id_actividad: string;
