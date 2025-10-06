@@ -7,7 +7,7 @@ import { SnackbarService } from '../../../../shared/services/snackbar.service'; 
 import { firstValueFrom } from 'rxjs';
 import { LoadingService } from '../../../../shared/services/loading.service';
 import { Actividades } from '../../../interfaces/actividades.interface';
-
+import { Sesiones } from '../../../interfaces/sesiones.interface';
 @Component({
   selector: 'app-event-modal',
   templateUrl: './event-modal.component.html',
@@ -16,7 +16,7 @@ import { Actividades } from '../../../interfaces/actividades.interface';
   imports: [CommonModule, MatSnackBarModule],
 })
 export class EventModalComponent implements AfterViewInit {
-  evento = input<Actividades | null>(null);
+  evento = input<Actividades |Sesiones| null|undefined>(undefined);
   accionSeleccionada = output<'editar' | 'asistencia'>();
   cerrar = output<void>();
 

@@ -3,7 +3,7 @@
 @if (mostrarFormulario) {
   <app-event
     [fechaPreseleccionada]="fechaSeleccionada"
-    [eventoSeleccionado]="eventoSeleccionado"
+    [eventoSeleccionado]="eventoSeleccionado!"
     (eventoGuardado)="agregarOActualizarEvento($event)"
     (eventoEditado)="agregarOActualizarEvento($event)"
     (cerrarFormulario)="cerrarFormulario()"

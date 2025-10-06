@@ -446,8 +446,8 @@ export class ActividadesDataSource {
     )
       // 🔹 Ordenamos por fecha antes de formatear
       .sort((a, b) => {
-        if(a.fecha_actividad===undefined || b.fecha_actividad=== undefined)
-          return;
+        if(a.fecha_actividad===undefined || b.fecha_actividad=== undefined || a.fecha_actividad===null || b.fecha_actividad=== null)
+          return 1;
         const fechaA = new Date(+a.fecha_actividad).getTime();
         const fechaB = new Date(+b.fecha_actividad).getTime();
         return fechaA - fechaB; // ascendente (más antigua primero)

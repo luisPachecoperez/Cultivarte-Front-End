@@ -32,7 +32,7 @@ interface Sede {
   styleUrls: ['./asistencia.component.css'],
 })
 export class AsistenciaComponent implements OnInit {
-  evento = input<Sesiones | null>(null);
+  evento = input<Sesiones | null|undefined>(undefined);
   cerrar = output<void>();
 
   beneficiariosBD: Beneficiarios[] = [];

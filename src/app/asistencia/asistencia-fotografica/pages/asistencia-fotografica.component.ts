@@ -33,15 +33,15 @@ interface AsistenciaFormValue {
 })
 export class AsistenciaFotograficaComponent implements OnInit {
   // 🔹 Datos que vienen del calendario al abrir el modal
-  evento = input<Sesiones | null>(null);
+  evento = input<Sesiones | null|undefined>(undefined);
   cerrar = output<void>();
 
   asistenciaGuardada = output<{
     id_actividad: string;
     id_sesion: string;
-    imagen?: string;
-    nro_asistentes?: number;
-    descripcion?: string;
+    imagen?: string|null;
+    nro_asistentes?: number|null;
+    descripcion?: string|null;
     nuevos?: never[];
   }>();
   bloqueado = false;
