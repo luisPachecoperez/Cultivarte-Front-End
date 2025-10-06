@@ -40,7 +40,7 @@ export class SesionesDataSource {
       );
     }
 
-    console.log('adicionando sesion al index:', data.id_sesion);
+    //console.log('adicionando sesion al index:', data.id_sesion);
     await indexDB.sesiones.add(data);
     return {
       exitoso: 'S',
@@ -108,8 +108,6 @@ export class SesionesDataSource {
   }
 
   async bulkAdd(data: SesionesDB[]): Promise<void> {
-    await this.deleteFull();
-
     const withSyncStatus = data.map((item) => ({
       ...item,
       syncStatus: item.syncStatus ?? 'synced',

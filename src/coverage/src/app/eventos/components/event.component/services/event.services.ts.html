@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.24% </span>
+                <span class="strong">7.69% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>5/69</span>
+                <span class='fraction'>5/65</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.24% </span>
+                <span class="strong">7.69% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/69</span>
+                <span class='fraction'>5/65</span>
             </div>
         
             
@@ -441,7 +441,9 @@
 <a name='L376'></a><a href='#L376'>376</a>
 <a name='L377'></a><a href='#L377'>377</a>
 <a name='L378'></a><a href='#L378'>378</a>
-<a name='L379'></a><a href='#L379'>379</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L379'></a><a href='#L379'>379</a>
+<a name='L380'></a><a href='#L380'>380</a>
+<a name='L381'></a><a href='#L381'>381</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -669,27 +671,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -697,11 +695,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1047,7 +1051,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
             .pipe(
               map(<span class="fstat-no" title="function not covered" >(r</span>es) =&gt; {
 <span class="cstat-no" title="statement not covered" >                this.loadingService.hide(); </span>// 🔄 ocultar
-<span class="cstat-no" title="statement not covered" >                console.log('📡 Respuesta cruda de GraphQL:', res);</span>
+                //console.log('📡 Respuesta cruda de GraphQL:', res);
 <span class="cstat-no" title="statement not covered" >                return res.getPreCreateActividad;</span>
               }),
               catchError(<span class="fstat-no" title="function not covered" >(e</span>rr) =&gt; {
@@ -1059,7 +1063,8 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
                 const preActividad$ = <span class="cstat-no" title="statement not covered" >from(</span>
                   this.actividadesDataSource.getPreCreateActividad(id_usuario),
                 );
-<span class="cstat-no" title="statement not covered" >                this.loadingService.hide(); </span>// 🔄 ocultar
+                //console.log("ocultando 1");
+                //this.loadingService.hide(); // 🔄 ocultar
 <span class="cstat-no" title="statement not covered" >                return preActividad$;</span>
               }),
             );
@@ -1067,7 +1072,8 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
           const preActividad$ = <span class="cstat-no" title="statement not covered" >from(</span>
             this.actividadesDataSource.getPreCreateActividad(id_usuario),
           );
-<span class="cstat-no" title="statement not covered" >          this.loadingService.hide(); </span>// 🔄 ocultar
+          //console.log("ocultando 2");
+          //this.loadingService.hide(); // 🔄 ocultar
 &nbsp;
 <span class="cstat-no" title="statement not covered" >          return preActividad$;</span>
         }
@@ -1079,7 +1085,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
     evento: Actividades,
     sesiones: Sesiones[],
   ): Promise&lt;GraphQLResponse&gt; {
-<span class="cstat-no" title="statement not covered" >    console.log('📤 Enviando evento al back:', evento);</span>
+    //console.log('📤 Enviando evento al back:', evento);
     const id_usuario = <span class="cstat-no" title="statement not covered" >this.authService.getUserUuid();</span>
 &nbsp;
     // 🔹 Construcción del payload de la actividad
@@ -1204,7 +1210,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-03T18:20:15.344Z
+                at 2025-10-03T18:46:43.626Z
             </div>
         <script src="../../../../../../prettify.js"></script>
         <script>

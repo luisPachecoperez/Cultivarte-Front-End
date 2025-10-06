@@ -30,7 +30,6 @@ export class Personas_grupo_interesDataSource {
   }
 
   async bulkAdd(data: Personas_grupo_interesDB[]): Promise<void> {
-    await this.deleteFull();
     const withSyncStatus = data.map((item) => ({
       ...item,
       syncStatus: item.syncStatus ?? 'synced',

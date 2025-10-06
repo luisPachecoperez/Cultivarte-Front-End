@@ -34,7 +34,7 @@ import { Actividades } from '../../../interfaces/actividades.interface';
 import { EventoSeleccionado } from '../../../interfaces/evento-seleccionado.interface';
 import { Sedes } from '../../../interfaces/lista-sedes.interface';
 import { Frecuencias } from '../../../interfaces/lista-frecuencias-interface';
-import { NombresDeActividades } from '../../../interfaces/lista-nombres-actividades.interface';
+import { NombresDeActividad } from '../../../interfaces/lista-nombres-actividades.interface';
 import { TiposDeActividad } from '../../../interfaces/lista-tipos-actividades-interface';
 import { Responsables } from '../../../interfaces/lista-responsables-interface';
 import { PreCreateActividad } from '../../../interfaces/pre-create-actividad.interface';
@@ -135,9 +135,9 @@ export class EventComponent implements OnInit, OnChanges {
   tiposDeActividad: TiposDeActividad[] = [];
   aliados: Aliados[] = [];
   responsables: Responsables[] = [];
-  nombreDeEventos: NombresDeActividades[] = [];
+  nombreDeEventos: NombresDeActividad[] = [];
   frecuencias: Frecuencias[] = [];
-  eventosFiltrados: EventoSeleccionado[] = [];
+  nombresDeEventosFiltrados: NombresDeActividad[] = [];
 
   // Variables para el autocomplete de aliados
   aliadoTexto: string = '';
@@ -150,7 +150,7 @@ export class EventComponent implements OnInit, OnChanges {
     const texto: string = input.value?.toLowerCase();
     this.aliadoTexto = texto;
     // Filtra por coincidencia en nombre
-    console.log('aliados sin filtrar:', this.aliados);
+    //console.log('aliados sin filtrar:', this.aliados);
     this.aliadosFiltrados = this.aliados.filter((a) =>
       a.nombre.toLowerCase().includes(texto),
     );
@@ -162,7 +162,7 @@ export class EventComponent implements OnInit, OnChanges {
   // Selecciona un aliado de la lista
   seleccionarAliado(aliado: Aliados) {
     this.aliadoTexto = aliado.nombre;
-    this.eventoForm.patchValue({ aliado: aliado.id_aliado });
+    this.eventoForm.patchValue({ id_aliado: aliado.id_aliado });
     this.mostrarSugerencias = false;
   }
 
@@ -186,31 +186,31 @@ export class EventComponent implements OnInit, OnChanges {
         { value: null, disabled: this.modoSoloLectura },
         Validators.required,
       ],
-      sede: [
+      id_sede: [
         { value: '', disabled: this.modoSoloLectura },
         Validators.required,
       ],
-      tipoEvento: [
+      id_tipo_actividad: [
         { value: '', disabled: this.modoSoloLectura },
         Validators.required,
       ],
-      responsable: [
+      id_responsable: [
         { value: '', disabled: this.modoSoloLectura },
         Validators.required,
       ],
-      aliado: [
+      id_aliado: [
         { value: '', disabled: this.modoSoloLectura },
         Validators.required,
       ],
-      nombreEvento: [
+      nombre_actividad: [
         { value: '', disabled: this.modoSoloLectura },
         Validators.required,
       ],
-      descripcionGrupo: [
+      descripcion: [
         { value: '', disabled: this.modoSoloLectura },
         Validators.required,
       ],
-      fecha: [
+      fecha_actividad: [
         {
           value: this._fechaPreseleccionada ?? '',
           disabled: this.modoSoloLectura,
@@ -225,7 +225,7 @@ export class EventComponent implements OnInit, OnChanges {
         { value: '', disabled: this.modoSoloLectura },
         Validators.required,
       ],
-      frecuencia: [
+      id_frecuencia: [
         { value: '', disabled: this.modoSoloLectura },
         Validators.required,
       ],
@@ -236,10 +236,11 @@ export class EventComponent implements OnInit, OnChanges {
     // 🔹 Cargar datos desde el backend simulado
     this.cargarConfiguracionFormulario();
 
-    // Suscribir cambios en tipoEvento para mantener la lista filtrada
+    // Suscribir cambios en id_tipo_actividad para mantener la lista filtrada
     this.eventoForm
-      .get('tipoEvento')
+      .get('id_tipo_actividad')
       ?.valueChanges.subscribe((tipoId: string) => {
+        //console.log("Cambia Tipo de Actividad");
         this.filtrarEventosPorTipo(tipoId);
       });
 
@@ -283,19 +284,21 @@ export class EventComponent implements OnInit, OnChanges {
   private filtrarEventosPorTipo(tipoId: string | null | undefined): void {
     //console.log('📦 tipoId filtrarEventosPorTipo:', tipoId);
     if (!tipoId) {
-      this.eventosFiltrados = [];
+      this.nombresDeEventosFiltrados = [];
       return;
     }
     // nombreDeEventos viene del mock; filtramos por id_parametro_detalle (padre)
     //console.log('📦 nombreDeEventos:', this.nombreDeEventos);
-    this.eventosFiltrados = (this.nombreDeEventos || []).filter(
+    this.nombresDeEventosFiltrados = (this.nombreDeEventos || []).filter(
       (n) => n.id_tipo_actividad === tipoId,
     );
+    //console.log('📦 nombresDeEventosFiltrados:', this.nombresDeEventosFiltrados);
   }
 
-  // 🔹 Lógica para saber si nombreEvento es select o input
+  // 🔹 Lógica para saber si nombre_actividad es select o input
   esListaNombreEvento(): boolean {
-    const tipoId: string = this.eventoForm.get('tipoEvento')?.value as string;
+    const tipoId: string = this.eventoForm.get('id_tipo_actividad')
+      ?.value as string;
 
     if (tipoId === null || tipoId === undefined) {
       return false;
@@ -326,11 +329,11 @@ export class EventComponent implements OnInit, OnChanges {
       this.tiposDeActividad = parametros.tiposDeActividad || [];
       this.aliados = parametros.aliados || [];
       this.responsables = parametros.responsables || [];
-      this.nombreDeEventos = parametros.nombreDeActividades || [];
+      this.nombreDeEventos = parametros.nombresDeActividad || [];
       this.frecuencias = parametros.frecuencias || [];
       // si ya hay un tipo seleccionado, actualizamos la lista filtrada
       this.filtrarEventosPorTipo(
-        this.eventoForm?.get('tipoEvento')?.value as string,
+        this.eventoForm?.get('id_tipo_actividad')?.value as string,
       );
 
       return;
@@ -339,7 +342,7 @@ export class EventComponent implements OnInit, OnChanges {
     this.eventService
       .obtenerConfiguracionEvento(idUsuario)
       .subscribe((data: PreCreateActividad) => {
-        console.log('📦 datos de configuración:', data);
+        //console.log('📦 datos de configuración:', data);
         this.id_programa = data.id_programa;
         //console.log('📦 id_programa:', this.id_programa);
         this.eventoForm.get('id_programa')?.setValue(this.id_programa);
@@ -361,36 +364,47 @@ export class EventComponent implements OnInit, OnChanges {
           const nombreB = b.nombre ?? '';
           return nombreA.localeCompare(nombreB);
         });
-        this.nombreDeEventos = data.nombreDeActividades;
+        this.nombreDeEventos = data.nombresDeActividad;
+        //console.log("nombre de eventos:", this.nombreDeEventos);
         this.nombreDeEventos.sort((a, b) => {
+          const nombreA = a.nombre;
+          const nombreB = b.nombre;
+          return nombreA.localeCompare(nombreB);
+        });
+        this.frecuencias = data.frecuencias;
+        this.frecuencias.sort((a, b) => {
           const nombreA = a.nombre ?? '';
           const nombreB = b.nombre ?? '';
           return nombreA.localeCompare(nombreB);
-          this.frecuencias = data.frecuencias;
-          this.frecuencias.sort((a, b) => {
-            const nombreA = a.nombre ?? '';
-            const nombreB = b.nombre ?? '';
-            return nombreA.localeCompare(nombreB);
-          }); //console.log('📦 frecuencias:', this.frecuencias);
-          // actualizar eventos filtrados si ya hay un tipo seleccionado
+        }); //console.log('📦 frecuencias:', this.frecuencias);
+        // actualizar eventos filtrados si ya hay un tipo seleccionado
 
-          // ✅ Lógica de sede
-          if (!this.estaEditando && this.sedes.length === 1) {
-            this.eventoForm.get('sede')?.enable({ emitEvent: false });
-            this.eventoForm
-              .get('sede')
-              ?.setValue(this.sedes[0].id_sede, { emitEvent: false });
-            this.eventoForm.get('sede')?.disable({ emitEvent: false });
-            //console.log('✅ Sede única asignada:',this.eventoForm.get('sede')?.value);
-          } else {
-            this.eventoForm.get('sede')?.enable({ emitEvent: false });
-          }
+        // ✅ Lógica de sede
+        //console.log("Cantidad de sedes:", this.sedes.length);
+        if (!this.estaEditando && this.sedes.length === 1) {
+          this.eventoForm.get('id_sede')?.enable({ emitEvent: false });
+          this.eventoForm
+            .get('id_sede')
+            ?.setValue(this.sedes[0].id_sede, { emitEvent: false });
+          this.eventoForm.get('id_sede')?.disable({ emitEvent: false });
+          //console.log('✅ Sede única asignada:',this.eventoForm.get('sede')?.value);
+        } else {
+          this.eventoForm.get('id_sede')?.enable({ emitEvent: false });
+        }
 
-          this.filtrarEventosPorTipo(
-            this.eventoForm?.get('tipoEvento')?.value as string,
-          );
-        });
-        //console.log('📦 configuración cargada:',this.sedes,this.tiposDeActividad,this.aliados,this.responsables,this.nombreDeEventos,this.frecuencias);
+        this.filtrarEventosPorTipo(
+          this.eventoForm?.get('id_tipo_actividad')?.value as string,
+        );
+        this.loadingService.hide(); // 🔄 ocultar
+        console.log(
+          '📦 configuración cargada:',
+          this.sedes,
+          this.tiposDeActividad,
+          this.aliados,
+          this.responsables,
+          this.nombreDeEventos,
+          this.frecuencias,
+        );
       });
   }
 
@@ -450,7 +464,7 @@ export class EventComponent implements OnInit, OnChanges {
               resp.sesiones.map((s: Sesiones) => ({
                 id_sesion: s.id_sesion ?? '',
                 id_actividad: resp.actividad.id_actividad ?? '',
-                fecha: s.fecha_actividad ?? '',
+                fecha_actividad: s.fecha_actividad ?? '',
                 hora_inicio: s.hora_inicio ?? '',
                 hora_fin: s.hora_fin ?? '',
                 nro_asistentes: s.nro_asistentes,
@@ -474,14 +488,14 @@ export class EventComponent implements OnInit, OnChanges {
           this.snack.error('No fue posible cargar el evento');
         });
     } finally {
-      console.log('Fin obtenerEventoPorId');
+      //console.log('Fin obtenerEventoPorId');
     }
   }
 
   // ✅ Ajustado para aceptar tanto campos "id_*" del backend como los antiguos del mock
   precargarFormulario(evento: EventoSeleccionado | null): void {
     if (evento !== null) {
-      console.log('📦 evento para precargar:', evento);
+      //console.log('📦 evento para precargar:', evento);
       if (!this.eventoForm) return;
       //console.log('📦 DESPUES DEL IF eventoForm:', this.eventoForm);
       this.eventoForm.patchValue({
@@ -489,16 +503,16 @@ export class EventComponent implements OnInit, OnChanges {
           typeof evento.institucional === 'string'
             ? evento.institucional === 'S'
             : !!evento.institucional,
-        sede: evento.id_sede,
-        tipoEvento: evento.id_tipo_actividad,
-        responsable: evento.id_responsable,
-        aliado: evento.id_aliado,
-        nombreEvento: evento.nombre_actividad,
-        descripcionGrupo: evento.descripcion,
-        fecha: evento.fecha_actividad,
+        id_sede: evento.id_sede,
+        id_tipo_actividad: evento.id_tipo_actividad,
+        id_responsable: evento.id_responsable,
+        id_aliado: evento.id_aliado,
+        nombre_actividad: evento.nombre_actividad,
+        descripcion: evento.descripcion,
+        fecha_actividad: evento.fecha_actividad,
         hora_inicio: evento.hora_inicio,
         hora_fin: evento.hora_fin,
-        frecuencia: evento.id_frecuencia,
+        id_frecuencia: evento.id_frecuencia,
       });
 
       // En edición, dejamos el form en solo lectura (si quieres permitir edición, comenta esto)
@@ -531,16 +545,29 @@ export class EventComponent implements OnInit, OnChanges {
         });
       }
     }
-    //console.log('Justo despues de cargar las sesiones:', this.sesiones);
+    //console.log('Justo despues de cargar las sesiones:');
+    //this.sesiones.controls.forEach((control, index) => {
+    //console.log(`Sesión ${index + 1}:`);
+    //console.log('Fecha de Actividad:', control.get('fecha_actividad')?.value);
+    //console.log('Hora de Inicio:', control.get('hora_inicio')?.value);
+    //console.log('Hora de Fin:', control.get('hora_fin')?.value);
+    //console.log('ID de Sesión:', control.get('id_sesion')?.value);
+    //console.log('ID de Actividad:', control.get('id_actividad')?.value);
+    //console.log('Número de Asistentes:', control.get('nro_asistentes')?.value);
+    // });
   }
 
   guardarEvento() {
-    console.log('📦 eventoFormguardar:', this.eventoForm);
+    //console.log("Formulario novalido:", this.eventoForm.invalid);
+    //console.log('📦 eventoFormguardar:', this.eventoForm);
+    //console.log('markAllAsTouched:', this.eventoForm.markAllAsTouched());
     if (this.eventoForm.invalid) {
       this.eventoForm.markAllAsTouched();
       this.snack.error(
         'Formulario no válido. Todos los campos son obligatorios.',
       );
+      //console.log("Debio mostrar error");
+      return;
     }
     //console.log('📦 esta editando:', this.estaEditando);
     //console.log('📦 evento para editar:', this.eventoParaEditar?.id);
@@ -572,9 +599,9 @@ export class EventComponent implements OnInit, OnChanges {
     const sesiones: Sesiones[] = [];
 
     //console.log('📋 Evento base:', evento);
-    console.log('Fecha base:', evento.fecha_actividad);
+    //console.log('Fecha base:', evento.fecha_actividad);
     const fechaBase: Date = new Date(evento.fecha_actividad ?? Date.now());
-    let finMes: Date;
+    let finMes: Date = new Date();
     if (
       evento.fecha_actividad !== null &&
       evento.fecha_actividad !== undefined
@@ -595,15 +622,15 @@ export class EventComponent implements OnInit, OnChanges {
       console.error('fecha_actividad es undefined');
     }
 
-    console.log('📋 actual:', actual);
+    //console.log('📋 actual:', actual);
 
     const nombreFrecuencia =
       this.frecuencias.find((f) => f.id_frecuencia === evento.id_frecuencia)
         ?.nombre || '';
 
     // Frecuencias
-    console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
-    console.log('📋 Actual:', actual, 'Fin de mes:', finMes);
+    //console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
+    //console.log('📋 Actual:', actual, 'Fin de mes:', finMes);
     if (nombreFrecuencia.toLowerCase() === 'a diario') {
       while (actual != null && actual <= finMes) {
         if (actual.getDay() >= 1 && actual.getDay() <= 6) {
@@ -683,17 +710,17 @@ export class EventComponent implements OnInit, OnChanges {
 
     // 📤 Construir payload para el back
     //console.log('📦 Evento basessssss:', evento);
-    // traducir nombreEvento si vino como id desde la lista
+    // traducir nombre_actividad si vino como id desde la lista
     let nombreActividad = evento.nombre_actividad;
 
     // Si estamos en modo lista (esListaNombreEvento) y el valor es un id,
     // buscar el objeto en eventosFiltrados por id_parametro_detalle y usar su nombre.
     if (this.esListaNombreEvento()) {
-      const seleccionado = this.eventosFiltrados.find(
-        (n) => n.nombre_actividad === evento.nombre_actividad,
+      const seleccionado = this.nombresDeEventosFiltrados.find(
+        (n) => n.nombre === evento.nombre_actividad,
       );
       if (seleccionado) {
-        nombreActividad = seleccionado.nombre_actividad;
+        nombreActividad = seleccionado.nombre;
       } else {
         // fallback: si no está en eventosFiltrados intentar buscar en nombreDeEventos
         const buscado = (this.nombreDeEventos || []).find(
@@ -717,6 +744,7 @@ export class EventComponent implements OnInit, OnChanges {
       fecha_actividad: evento.fecha_actividad as string,
       hora_inicio: evento.hora_inicio as string,
       hora_fin: evento.hora_fin as string,
+      estado: 'A',
       id_creado_por: this.authService.getUserUuid(),
       fecha_creacion: new Date().toISOString().split('T')[0],
       id_modificado_por: null,
@@ -824,7 +852,7 @@ export class EventComponent implements OnInit, OnChanges {
     const idGenerado = crypto.randomUUID();
     const sesion: Sesiones = {
       id_sesion: idGenerado,
-      id_actividad: base.id_actividad,
+      id_actividad: base.id_actividad ?? '',
       fecha_actividad: fecha,
       hora_inicio: hora_inicio,
       hora_fin: hora_fin,

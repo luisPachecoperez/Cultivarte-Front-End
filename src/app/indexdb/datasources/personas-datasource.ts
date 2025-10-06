@@ -1,6 +1,7 @@
 import { indexDB } from '../services/database.service';
 import { PersonasDB } from '../interfaces/personas.interface';
 import { Injectable } from '@angular/core';
+import { Aliados } from '../../eventos/interfaces/lista-aliados.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -15,7 +16,6 @@ export class PersonasDataSource {
   }
 
   async bulkAdd(data: PersonasDB[]): Promise<void> {
-    await this.deleteFull();
     const withSyncStatus = data.map((item) => ({
       ...item,
       syncStatus: item.syncStatus ?? 'synced',
@@ -27,23 +27,21 @@ export class PersonasDataSource {
     await indexDB.personas.clear();
   }
 
-  async getAliados(
-    idUsuario: string,
-  ): Promise<{ id_aliado: string; nombre: string }[]> {
+  async getAliados(idUsuario: string): Promise<Aliados[]> {
     // 1. Buscar las sedes del usuario
     const sedesUsuario = await indexDB.personas_sedes
       .where('id_persona')
       .equals(idUsuario)
       .toArray();
 
-    const idsSedesUsuario = sedesUsuario.map((s) => s.id_sede);
-
+    const idsSedesUsuario: string[] = sedesUsuario.map((s) => s.id_sede);
+    //console.log("sedes del usuario para buscar aliado:",idsSedesUsuario);
     // 2. Ubicar el grupo de interés "ALIADO_CULTIVARTE"
     const paramGeneralGrupoInteres = await indexDB.parametros_generales
       .where('nombre_parametro')
       .equals('GRUPOS_INTERES_CULTIVARTE')
       .first();
-
+    //console.log("Grupo deinteres cultivarte:",paramGeneralGrupoInteres);
     if (!paramGeneralGrupoInteres) {
       console.warn(
         '❌ No se encontró el parámetro GRUPOS_INTERES_CULTIVARTE en parametros_generales',
@@ -56,7 +54,7 @@ export class PersonasDataSource {
       .equals(paramGeneralGrupoInteres.id_parametro_general)
       .filter((pd) => pd.nombre.toUpperCase() === 'ALIADO_CULTIVARTE')
       .first();
-
+    //console.log("grupo-interes-aliado-cultivarte:",paramAliadoCultivarte)
     if (!paramAliadoCultivarte) {
       console.warn(
         '❌ No se encontró detalle "ALIADO_CULTIVARTE" en parametros_detalle',
@@ -73,13 +71,14 @@ export class PersonasDataSource {
     const idsPersonasAliados = personasGrupoInteres.map(
       (pgi) => pgi.id_persona,
     );
+    //console.log("1- id de aliados:",idsPersonasAliados);
 
     // 4. Buscar personas aliadas
     const aliados = await indexDB.personas
       .where('id_persona')
       .anyOf(idsPersonasAliados)
       .toArray();
-
+    //console.log("2- personas que son aliados:",aliados);
     // 5. Si el usuario no tiene sedes → devolver todos los aliados
     if (idsSedesUsuario.length === 0) {
       return aliados.map((a) => ({
@@ -89,11 +88,13 @@ export class PersonasDataSource {
       }));
     }
 
-    // 6. Filtrar aliados por sedes
+    // 6. Filtrar personas por sedes
     const personasSedesAliados = await indexDB.personas_sedes
       .where('id_persona')
       .anyOf(idsPersonasAliados)
+      .and((ps) => idsSedesUsuario.includes(ps.id_sede))
       .toArray();
+    //console.log("Nro. de aliados de la sede:",personasSedesAliados.length);
 
     const aliadosFiltrados = aliados.filter((a) =>
       personasSedesAliados.some(
@@ -102,7 +103,6 @@ export class PersonasDataSource {
           idsSedesUsuario.includes(ps.id_sede),
       ),
     );
-
     return aliadosFiltrados.map((a) => ({
       id_aliado: a.id_persona,
       nombre:

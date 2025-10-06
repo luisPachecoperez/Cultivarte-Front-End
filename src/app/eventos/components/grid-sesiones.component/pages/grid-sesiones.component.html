@@ -75,9 +75,9 @@
         <td>
           <input
             type="date"
-            formControlName="fecha"
+            formControlName="fecha_actividad"
             class="form-control"
-            [ngClass]="{ 'is-invalid': nuevaSesionForm.get('fecha')?.invalid && nuevaSesionForm.get('fecha')?.touched }"
+            [ngClass]="{ 'is-invalid': nuevaSesionForm.get('fecha_actividad')?.invalid && nuevaSesionForm.get('fecha_actividad')?.touched }"
             (keydown.enter)="$event.stopPropagation()"
           />
         </td>

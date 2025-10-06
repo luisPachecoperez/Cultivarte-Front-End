@@ -3,7 +3,7 @@ export interface AsistenciaPayLoad {
   id_actividad?: string | null;
   id_sesion?: string;
   imagen?: string | null;
-  nro_asistentes?: number;
+  numero_asistentes?: number;
   descripcion?: string;
   nuevos:
     | {

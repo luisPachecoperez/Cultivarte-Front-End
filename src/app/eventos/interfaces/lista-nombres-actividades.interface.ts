@@ -1,4 +1,4 @@
-export interface NombresDeActividades {
-  id_tipo_actividad: string | null;
-  nombre: string | null;
+export interface NombresDeActividad {
+  id_tipo_actividad: string;
+  nombre: string;
 }

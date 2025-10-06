@@ -14,7 +14,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SesionFormValue } from '../../../interfaces/sesion-form-value.interface';
 type EstadoSesion = 'original' | 'nuevo' | 'modificado';
 
-interface Eliminados {
+export interface Eliminados {
   id_sesion: string;
 }
 
@@ -133,7 +133,7 @@ export class Grid_sesionesComponent {
 
     if (sesion.metaEstado !== 'nuevo') {
       // solo id_sesion en eliminados
-      this.eliminadosBuffer.push({ id_sesion: sesion.id_sesion });
+      this.eliminadosBuffer.push({ id_sesion: sesion.id_sesion??'' });
     }
 
     this.formArray().removeAt(index);

@@ -47,7 +47,7 @@ export class AsistenciaService {
     getPreAsistencia(id_sesion: $id_sesion) {
       id_sesion
       id_sede
-      nro_asistentes
+      numero_asistentes
       foto
       descripcion
       imagen
@@ -64,7 +64,7 @@ export class AsistenciaService {
         identificacion
       }
 
-      nro_asistenteses {
+      asistentes_sesiones {
         id_persona
         eliminar
       }
@@ -104,12 +104,13 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
               })
               .pipe(
                 map((res) => {
-                  //console.log('👉 preAsistencia desde backend:', preAsistencia);
+                  //console.log('👉 preAsistencia desde backend:', res);
                   this.LoadingService.hide();
                   return <PreAsistencia>res.getPreAsistencia;
                 }),
               );
           } else {
+            //console.log("Se fue por el else");
             return from(
               this.actividadesDataSource.getPreAsistencia(id_sesion),
             ).pipe(
@@ -196,7 +197,7 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
   async guardarAsistenciaFotografica(
     input: Sesiones,
   ): Promise<GraphQLResponse> {
-    console.log('Evidencia fotográfica:', input);
+    //console.log('Evidencia fotográfica:', input);
 
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
