@@ -32,16 +32,16 @@ describe('SesionesDataSource', () => {
     service = TestBed.inject(SesionesDataSource);
 
     (indexDB as any).sesiones = {
-      toArray: jest.fn('toArray').and.returnValue(dexiePromise([mockSesion])),
-      get: jest.fn('get').and.returnValue(dexiePromise(mockSesion)),
-      add: jest.fn('add').and.returnValue(dexiePromise(undefined)),
-      update: jest.fn('update').and.returnValue(dexiePromise(undefined)),
-      delete: jest.fn('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jest.fn('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jest.fn('clear').and.returnValue(dexiePromise(undefined)),
-      where: jest.fn('where').and.returnValue({
-        equals: jest.fn('equals').and.returnValue({
-          toArray: jest.fn('toArray').and.returnValue(dexiePromise([mockSesion])),
+      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockSesion])),
+      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockSesion)),
+      add: jasmine.createSpy('add').and.returnValue(dexiePromise(undefined)),
+      update: jasmine.createSpy('update').and.returnValue(dexiePromise(undefined)),
+      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
+      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
+      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
+      where: jasmine.createSpy('where').and.returnValue({
+        equals: jasmine.createSpy('equals').and.returnValue({
+          toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockSesion])),
         }),
       }),
     };
@@ -199,8 +199,8 @@ describe('SesionesDataSource', () => {
 
     it('debe manejar error en sesionesPorActividad()', async () => {
       (indexDB.sesiones.where as jasmine.Spy).and.returnValue({
-        equals: jest.fn('equals').and.returnValue({
-          toArray: jest.fn('toArray').and.returnValue(Promise.reject('error')),
+        equals: jasmine.createSpy('equals').and.returnValue({
+          toArray: jasmine.createSpy('toArray').and.returnValue(Promise.reject('error')),
         }),
       });
       try {

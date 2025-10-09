@@ -13,18 +13,18 @@ import { GraphQLResponse } from '../../app/shared/interfaces/graphql-response.in
 
 // 🧱 Mocks de dependencias
 class GraphQLServiceMock {
-  mutation = jest.fn('mutation');
+  mutation = jasmine.createSpy('mutation');
 }
 class AuthServiceMock {
-  getUserUuid = jest.fn('getUserUuid').and.returnValue('USER-123');
+  getUserUuid = jasmine.createSpy('getUserUuid').and.returnValue('USER-123');
 }
 class LoadIndexDBServiceMock {
-  ping = jest.fn('ping');
+  ping = jasmine.createSpy('ping');
 }
 class SesionesDataSourceMock {
-  create = jest.fn('create');
-  update = jest.fn('update');
-  delete = jest.fn('delete');
+  create = jasmine.createSpy('create');
+  update = jasmine.createSpy('update');
+  delete = jasmine.createSpy('delete');
 }
 
 describe('🧩 Grid_sesionesService (Cobertura 95%)', () => {

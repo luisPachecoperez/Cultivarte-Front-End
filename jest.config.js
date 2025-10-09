@@ -1,20 +1,21 @@
 module.exports = {
     preset: 'jest-preset-angular',
     rootDir: '.',
-    setupFilesAfterEnv: ['<rootDir>/src/tests/test.ts'],
+    setupFilesAfterEnv: ['<rootDir>/setup-jest.ts'], 
     
     testMatch: ['**/*.spec.ts'],
     transform: {
-      '^.+\\.(ts|js|mjs|html)$': 'jest-preset-angular',
+      '^.+\\.(ts|js|mjs|html)$': [
+        'jest-preset-angular',
+        {
+          tsconfig: '<rootDir>/tsconfig.spec.json',
+          stringifyContentPathRegex: '\\.html$',
+        },
+      ],
     },
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     testEnvironment: 'jsdom',
-    globals: {
-      'ts-jest': {
-        tsconfig: '<rootDir>/tsconfig.spec.json',
-        stringifyContentPathRegex: '\\.html$',
-      },
-    },
+   
     transformIgnorePatterns: [
       'node_modules/(?!@angular|rxjs|zone\\.js)',
     ],
@@ -27,10 +28,7 @@ module.exports = {
             }
         },
         
-        
-        transform: {
-            '^.+\\.(t|j)s$': 'ts-jest'
-        },
+
         collectCoverageFrom: [
             '**/*.(t|j)s',
             '!**/*.route.ts',

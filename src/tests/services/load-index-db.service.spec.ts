@@ -22,51 +22,51 @@ import { SesionesDataSource } from '../../app/indexdb/datasources/sesiones-datas
 
 // === Mocks ===
 class MockGraphQL {
-  query = jest.fn('query');
+  query = jasmine.createSpy('query');
 }
 
 class MockDatabaseService {}
 
 // DataSource mocks
 class MockParametrosGeneralesDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
 }
 class MockParametrosDetalleDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
 }
 class MockPersonasDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jest.fn('deleteFull').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
+  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
 }
 class MockPoblacionesDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
 }
 class MockSedesDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
 }
 class MockPersonasSedesDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jest.fn('deleteFull').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
+  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
 }
 class MockPersonasProgramasDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jest.fn('deleteFull').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
+  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
 }
 class MockPersonasGrupoInteresDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jest.fn('deleteFull').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
+  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
 }
 class MockActividadesDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jest.fn('deleteFull').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
+  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
 }
 class MockAsistenciasDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jest.fn('deleteFull').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
+  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
 }
 class MockSesionesDS {
-  bulkAdd = jest.fn('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jest.fn('deleteFull').and.returnValue(Promise.resolve());
+  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
+  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
 }
 
 // === Helpers para crear objetos completos ===

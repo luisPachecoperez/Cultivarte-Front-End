@@ -27,19 +27,19 @@ describe('✅ CalendarComponent (Cobertura 90%)', () => {
   let component: CalendarComponent;
   let fixture: ComponentFixture<CalendarComponent>;
 
-  let calendarServiceMock: jest.Mocked<CalendarService>;
-  let asistenciaServiceMock: jest.Mocked<AsistenciaService>;
-  let snackMock: jest.Mocked<SnackbarService>;
-  let authMock: jest.Mocked<AuthService>;
-  let loadingMock: jest.Mocked<LoadingService>;
-  let eventoComponentMock: jest.Mocked<EventComponent>;
+  let calendarServiceMock: jasmine.SpyObj<CalendarService>;
+  let asistenciaServiceMock: jasmine.SpyObj<AsistenciaService>;
+  let snackMock: jasmine.SpyObj<SnackbarService>;
+  let authMock: jasmine.SpyObj<AuthService>;
+  let loadingMock: jasmine.SpyObj<LoadingService>;
+  let eventoComponentMock: jasmine.SpyObj<EventComponent>;
   beforeEach(async () => {
-    calendarServiceMock = jest.fnObj('CalendarService', ['obtenerSesiones']);
-    asistenciaServiceMock = jest.fnObj('AsistenciaService', ['obtenerDetalleAsistencia']);
-    snackMock = jest.fnObj('SnackbarService', ['error', 'warning', 'success']);
-    authMock = jest.fnObj('AuthService', ['getUserUuid']);
-    loadingMock = jest.fnObj('LoadingService', ['show', 'hide']);
-    eventoComponentMock = jest.fnObj('EventComponent', ['cargarEdicionDesdeBackend', 'precargarFormulario']);
+    calendarServiceMock = jasmine.createSpyObj('CalendarService', ['obtenerSesiones']);
+    asistenciaServiceMock = jasmine.createSpyObj('AsistenciaService', ['obtenerDetalleAsistencia']);
+    snackMock = jasmine.createSpyObj('SnackbarService', ['error', 'warning', 'success']);
+    authMock = jasmine.createSpyObj('AuthService', ['getUserUuid']);
+    loadingMock = jasmine.createSpyObj('LoadingService', ['show', 'hide']);
+    eventoComponentMock = jasmine.createSpyObj('EventComponent', ['cargarEdicionDesdeBackend', 'precargarFormulario']);
 
     // ⚡ Creamos un stub temporal de CalendarComponent sin template real
     @Component({

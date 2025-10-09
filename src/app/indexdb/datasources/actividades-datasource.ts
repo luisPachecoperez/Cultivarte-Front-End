@@ -241,8 +241,11 @@ export class ActividadesDataSource {
     const programas = getDetalle('Programa', 'id_programa', 'nombre');
 
     //console.log('PreCreateActividad Programas:', programas);
-    
-    let programa: string=programas.find((a:Programas) => a?.nombre?.toUpperCase()==="CULTIVARTE")?.id_programa??'';
+
+    let programa: string =
+      programas.find(
+        (a: Programas) => a?.nombre?.toUpperCase() === 'CULTIVARTE',
+      )?.id_programa ?? '';
     if (programa === null) programa = ' ';
     //console.log('PreCreateActividad Frecuencias:', frecuencias);
 

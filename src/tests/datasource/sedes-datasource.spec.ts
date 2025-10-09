@@ -29,13 +29,13 @@ describe('SedesDataSource', () => {
     service = TestBed.inject(SedesDataSource);
 
     (indexDB as any).sedes = {
-      toArray: jest.fn('toArray').and.returnValue(dexiePromise([mockSede])),
-      get: jest.fn('get').and.returnValue(dexiePromise(mockSede)),
-      add: jest.fn('add').and.returnValue(dexiePromise('S1')),
-      update: jest.fn('update').and.returnValue(dexiePromise(1)),
-      delete: jest.fn('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jest.fn('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jest.fn('clear').and.returnValue(dexiePromise(undefined)),
+      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockSede])),
+      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockSede)),
+      add: jasmine.createSpy('add').and.returnValue(dexiePromise('S1')),
+      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
+      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
+      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
+      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
     };
   });
 

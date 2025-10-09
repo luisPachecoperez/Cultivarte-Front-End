@@ -2,41 +2,72 @@
 <div class="modal-backdrop fade show"></div>
 
 <!-- Modal -->
-<div class="modal fade show d-block" id="eventoModal" tabindex="-1" aria-labelledby="eventoModalLabel" aria-modal="true"
-  role="dialog">
+<div
+  class="modal fade show d-block"
+  id="eventoModal"
+  tabindex="-1"
+  aria-labelledby="eventoModalLabel"
+  aria-modal="true"
+  role="dialog"
+>
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
-
       <!-- Header -->
       <div class="modal-header">
         <h5 class="modal-title" id="eventoModalLabel">
-          {{ estaEditando ? 'Editar Evento' : 'Crear Evento' }}
+          {{ estaEditando ? "Editar Evento" : "Crear Evento" }}
         </h5>
-        <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarFormulario.emit()"></button>
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Cerrar"
+          (click)="cerrarFormulario.emit()"
+        ></button>
       </div>
 
       <!-- Body -->
       <div class="modal-body">
         <form [formGroup]="eventoForm">
-
-          <input type="text" class="form-control" [value]="eventoForm.get('id_programa')?.value" style="display: none;"/>
+          <input
+            type="text"
+            class="form-control"
+            [value]="eventoForm.get('id_programa')?.value"
+            style="display: none"
+          />
 
           <!-- ¿Es institucional? -->
           <div class="mb-3 d-flex align-items-center gap-2">
-            <label  for="institucional"  class="form-label mb-0">¿Es institucional?</label>
-            <div class="form-check ms-2"
+            <label for="institucional" class="form-label mb-0"
+              >¿Es institucional?</label
             >
-              <input class="form-check-input" type="radio" formControlName="institucional" [value]="true"
+            <div class="form-check ms-2">
+              <input
+                class="form-check-input"
+                type="radio"
+                formControlName="institucional"
+                [value]="true"
                 id="institucionalSi"
-                [ngClass]="{'is-invalid': eventoForm.get('institucional')?.invalid && eventoForm.get('institucional')?.touched}"
-                />
+                [ngClass]="{
+                  'is-invalid':
+                    eventoForm.get('institucional')?.invalid &&
+                    eventoForm.get('institucional')?.touched,
+                }"
+              />
               <label class="form-check-label" for="institucionalSi">Sí</label>
             </div>
             <div class="form-check ms-2">
-              <input class="form-check-input" type="radio" formControlName="institucional" [value]="false"
+              <input
+                class="form-check-input"
+                type="radio"
+                formControlName="institucional"
+                [value]="false"
                 id="institucionalNo"
-                [ngClass]="{'is-invalid': eventoForm.get('institucional')?.invalid && eventoForm.get('institucional')?.touched}"
-                />
+                [ngClass]="{
+                  'is-invalid':
+                    eventoForm.get('institucional')?.invalid &&
+                    eventoForm.get('institucional')?.touched,
+                }"
+              />
               <label class="form-check-label" for="institucionalNo">No</label>
             </div>
           </div>
@@ -44,61 +75,105 @@
           <!-- Selects principales -->
           <div class="row g-2 mb-3">
             <div class="col">
-              <label for ="id_tipo_actividad" class="form-label">Tipo de evento</label>
-              <select class="form-control form-control-select" formControlName="id_tipo_actividad"
-              [ngClass]="{'is-invalid': eventoForm.get('id_tipo_actividad')?.invalid && eventoForm.get('id_tipo_actividad')?.touched}"
-
+              <label for="id_tipo_actividad" class="form-label"
+                >Tipo de evento</label
+              >
+              <select
+                class="form-control form-control-select"
+                formControlName="id_tipo_actividad"
+                [ngClass]="{
+                  'is-invalid':
+                    eventoForm.get('id_tipo_actividad')?.invalid &&
+                    eventoForm.get('id_tipo_actividad')?.touched,
+                }"
               >
                 <option value="" disabled>Selecciona tipo</option>
                 @for (tipo of tiposDeActividad; track tipo.id_tipo_actividad) {
-                <option [value]="tipo.id_tipo_actividad">{{ tipo.nombre }}</option>
+                  <option [value]="tipo.id_tipo_actividad">
+                    {{ tipo.nombre }}
+                  </option>
                 }
               </select>
             </div>
             <div class="col">
               <label for="id_responsable" class="form-label">Responsable</label>
-              <select class="form-control form-control-select" formControlName="id_responsable"
-              [ngClass]="{'is-invalid': eventoForm.get('id_responsable')?.invalid && eventoForm.get('id_responsable')?.touched}"
+              <select
+                class="form-control form-control-select"
+                formControlName="id_responsable"
+                [ngClass]="{
+                  'is-invalid':
+                    eventoForm.get('id_responsable')?.invalid &&
+                    eventoForm.get('id_responsable')?.touched,
+                }"
               >
                 <option value="" disabled>Selecciona responsable</option>
                 @for (r of responsables; track r.id_responsable) {
-                <option [value]="r.id_responsable">{{ r.nombre }}</option>
+                  <option [value]="r.id_responsable">{{ r.nombre }}</option>
                 }
               </select>
             </div>
             <!-- Campo de Aliado con Autocomplete -->
             <div class="col position-relative">
               <label class="form-label">Nombre de aliado</label>
-              <input type="text" class="form-control form-control-select" [value]="aliadoTexto" (input)="onAliadoInput($event)"
-              (focus)="!estaEditando && (mostrarSugerencias = true)"
-              [readonly]="estaEditando" placeholder="Escribe para buscar" autocomplete="off"
-              [ngClass]="{'is-invalid': eventoForm.get('id_aliado')?.invalid && eventoForm.get('id_aliado')?.touched}"/>
+              <input
+                type="text"
+                class="form-control form-control-select"
+                [value]="aliadoTexto"
+                (input)="onAliadoInput($event)"
+                (focus)="!estaEditando && (mostrarSugerencias = true)"
+                [readonly]="estaEditando"
+                placeholder="Escribe para buscar"
+                autocomplete="off"
+                [ngClass]="{
+                  'is-invalid':
+                    eventoForm.get('id_aliado')?.invalid &&
+                    eventoForm.get('id_aliado')?.touched,
+                }"
+              />
 
               <!-- Lista de aliados filtrados -->
-              @if (!estaEditando && mostrarSugerencias && aliadosFiltrados.length > 0) {
-              <ul class="list-group position-absolute w-100"
-                style="z-index: 1050; max-height: 200px; overflow-y: auto;">
-                @for (a of aliadosFiltrados; track a) {
-                <li class="list-group-item list-group-item-action" (click)="seleccionarAliado(a)">
-                  {{ a.nombre }}
-                </li>
-                }
-              </ul>
+              @if (
+                !estaEditando &&
+                mostrarSugerencias &&
+                aliadosFiltrados.length > 0
+              ) {
+                <ul
+                  class="list-group position-absolute w-100"
+                  style="z-index: 1050; max-height: 200px; overflow-y: auto"
+                >
+                  @for (a of aliadosFiltrados; track a) {
+                    <li
+                      class="list-group-item list-group-item-action"
+                      (click)="seleccionarAliado(a)"
+                    >
+                      {{ a.nombre }}
+                    </li>
+                  }
+                </ul>
               }
             </div>
-
           </div>
 
           <!-- Nombre del evento -->
           <div class="row g-2 mb-3">
             <div class="col">
-              <label for="nombre_actividad" class="form-label">Nombre del Evento</label>
+              <label for="nombre_actividad" class="form-label"
+                >Nombre del Evento</label
+              >
 
               @if (esListaNombreEvento()) {
-                <select class="form-control form-control-select" formControlName="nombre_actividad"
-                [ngClass]="{'is-invalid': eventoForm.get('nombre_actividad')?.invalid && eventoForm.get('nombre_actividad')?.touched}"
+                <select
+                  class="form-control form-control-select"
+                  formControlName="nombre_actividad"
+                  [ngClass]="{
+                    'is-invalid':
+                      eventoForm.get('nombre_actividad')?.invalid &&
+                      eventoForm.get('nombre_actividad')?.touched,
+                  }"
                 >
-                  <option value="" disabled selected>Seleccione un nombre</option>
+                  <option value="" disabled selected>
+                    Seleccione un nombre
+                  </option>
                   @for (n of nombresDeEventosFiltrados; track n.nombre) {
                     <!-- Guardamos directamente el nombre -->
                     <option [value]="n.nombre">{{ n.nombre }}</option>
@@ -109,21 +184,31 @@
                   type="text"
                   class="form-control"
                   formControlName="nombre_actividad"
-                  [ngClass]="{'is-invalid': eventoForm.get('nombre_actividad')?.invalid && eventoForm.get('nombre_actividad')?.touched}"
+                  [ngClass]="{
+                    'is-invalid':
+                      eventoForm.get('nombre_actividad')?.invalid &&
+                      eventoForm.get('nombre_actividad')?.touched,
+                  }"
                   placeholder="Escriba el nombre del evento"
                 />
               }
             </div>
 
-
             <!-- Sede -->
             <div class="col-4">
-              <label for ="id_sede" class="form-label">Sede</label>
-              <select class="form-control form-control-select" formControlName="id_sede"
-              [ngClass]="{'is-invalid': eventoForm.get('id_sede')?.invalid && eventoForm.get('id_sede')?.touched}">
+              <label for="id_sede" class="form-label">Sede</label>
+              <select
+                class="form-control form-control-select"
+                formControlName="id_sede"
+                [ngClass]="{
+                  'is-invalid':
+                    eventoForm.get('id_sede')?.invalid &&
+                    eventoForm.get('id_sede')?.touched,
+                }"
+              >
                 <option value="" disabled>Selecciona sede</option>
                 @for (s of sedes; track s.id_sede) {
-                <option [value]="s.id_sede">{{ s.nombre }}</option>
+                  <option [value]="s.id_sede">{{ s.nombre }}</option>
                 }
               </select>
             </div>
@@ -131,18 +216,36 @@
 
           <!-- Descripción -->
           <div class="mb-3">
-            <label for ="descripcion" class="form-label">Descripción del evento</label>
-            <textarea class="form-control" placeholder="Descripción del evento"
-              formControlName="descripcion" [ngClass]="{'is-invalid': eventoForm.get('descripcion')?.invalid && eventoForm.get('descripcion')?.touched}"></textarea>
+            <label for="descripcion" class="form-label"
+              >Descripción del evento</label
+            >
+            <textarea
+              class="form-control"
+              placeholder="Descripción del evento"
+              formControlName="descripcion"
+              [ngClass]="{
+                'is-invalid':
+                  eventoForm.get('descripcion')?.invalid &&
+                  eventoForm.get('descripcion')?.touched,
+              }"
+            ></textarea>
           </div>
 
           <!-- Frecuencia -->
           <div class="mb-3">
-            <label for ="id_frecuencia" class="form-label ">Frecuencia</label>
-            <select class="form-control form-control-select" formControlName="id_frecuencia" [ngClass]="{'is-invalid': eventoForm.get('id_frecuencia')?.invalid && eventoForm.get('id_frecuencia')?.touched}">
+            <label for="id_frecuencia" class="form-label">Frecuencia</label>
+            <select
+              class="form-control form-control-select"
+              formControlName="id_frecuencia"
+              [ngClass]="{
+                'is-invalid':
+                  eventoForm.get('id_frecuencia')?.invalid &&
+                  eventoForm.get('id_frecuencia')?.touched,
+              }"
+            >
               <option value="" disabled>Selecciona frecuencia</option>
               @for (f of frecuencias; track f.id_frecuencia) {
-              <option [value]="f.id_frecuencia">{{ f.nombre }}</option>
+                <option [value]="f.id_frecuencia">{{ f.nombre }}</option>
               }
             </select>
           </div>
@@ -151,18 +254,39 @@
           <label for="fecha_actividad" class="form-label mt-3">¿Cuándo?</label>
           <div class="row g-2 align-items-center mb-3">
             <div class="col-4">
-              <input type="date" class="form-control" formControlName="fecha_actividad"
-              [ngClass]="{'input-invalid': eventoForm.get('fecha_actividad')?.invalid && eventoForm.get('fecha')?.touched}"
+              <input
+                type="date"
+                class="form-control"
+                formControlName="fecha_actividad"
+                [ngClass]="{
+                  'input-invalid':
+                    eventoForm.get('fecha_actividad')?.invalid &&
+                    eventoForm.get('fecha')?.touched,
+                }"
               />
             </div>
             <div class="col-3">
-              <input type="time" class="form-control" formControlName="hora_inicio"
-              [ngClass]="{'input-invalid': eventoForm.get('hora_inicio')?.invalid && eventoForm.get('hora_inicio')?.touched}"
+              <input
+                type="time"
+                class="form-control"
+                formControlName="hora_inicio"
+                [ngClass]="{
+                  'input-invalid':
+                    eventoForm.get('hora_inicio')?.invalid &&
+                    eventoForm.get('hora_inicio')?.touched,
+                }"
               />
             </div>
             <div class="col-3">
-              <input type="time" class="form-control" formControlName="hora_fin"
-              [ngClass]="{'input-invalid': eventoForm.get('hora_fin')?.invalid && eventoForm.get('hora_fin')?.touched}"
+              <input
+                type="time"
+                class="form-control"
+                formControlName="hora_fin"
+                [ngClass]="{
+                  'input-invalid':
+                    eventoForm.get('hora_fin')?.invalid &&
+                    eventoForm.get('hora_fin')?.touched,
+                }"
               />
             </div>
           </div>
@@ -170,22 +294,32 @@
 
         <!-- Grid de sesiones -->
         @if (estaEditando) {
-        <app-grid-sesiones [formArray]="sesiones" [soloLectura]="modoSoloLectura"
-          [idEvento]="eventoParaEditar?.id_actividad || eventoSeleccionado()?.id_actividad || null"
-          (cambios)="onCambiosSesiones($event)">
-        </app-grid-sesiones>
+          <app-grid-sesiones
+            [formArray]="sesiones"
+            [soloLectura]="modoSoloLectura"
+            [idEvento]="
+              eventoParaEditar?.id_actividad ||
+              eventoSeleccionado()?.id_actividad ||
+              null
+            "
+            (cambios)="onCambiosSesiones($event)"
+          >
+          </app-grid-sesiones>
         }
       </div>
 
       <!-- Footer -->
       @if (!modoSoloLectura) {
-      <div class="modal-footer justify-content-center">
-        <button class="btn btn-danger rounded-pill px-4" type="button" (click)="guardarEvento()">
-          {{ estaEditando ? 'Actualizar' : 'Guardar' }}
-        </button>
-      </div>
+        <div class="modal-footer justify-content-center">
+          <button
+            class="btn btn-danger rounded-pill px-4"
+            type="button"
+            (click)="guardarEvento()"
+          >
+            {{ estaEditando ? "Actualizar" : "Guardar" }}
+          </button>
+        </div>
       }
-
     </div>
   </div>
 </div>

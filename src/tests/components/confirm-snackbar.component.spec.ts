@@ -12,12 +12,12 @@ import { By } from '@angular/platform-browser';
 
 // ✅ Mock del SnackbarService
 class SnackbarServiceMock {
-  resolveConfirm = jest.fn('resolveConfirm');
+  resolveConfirm = jasmine.createSpy('resolveConfirm');
 }
 
 // ✅ Mock del MatSnackBarRef
 class MatSnackBarRefMock {
-  dismiss = jest.fn('dismiss');
+  dismiss = jasmine.createSpy('dismiss');
 }
 
 describe('✅ ConfirmSnackbarComponent', () => {

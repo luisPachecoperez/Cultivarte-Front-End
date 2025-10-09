@@ -35,13 +35,13 @@ describe('Parametros_detalleDataSource', () => {
     service = TestBed.inject(Parametros_detalleDataSource);
 
     (indexDB as any).parametros_detalle = {
-      toArray: jest.fn('toArray').and.returnValue(dexiePromise([mockDetalle])),
-      get: jest.fn('get').and.returnValue(dexiePromise(mockDetalle)),
-      add: jest.fn('add').and.returnValue(dexiePromise('D1')),
-      update: jest.fn('update').and.returnValue(dexiePromise(1)),
-      delete: jest.fn('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jest.fn('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jest.fn('clear').and.returnValue(dexiePromise(undefined)),
+      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockDetalle])),
+      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockDetalle)),
+      add: jasmine.createSpy('add').and.returnValue(dexiePromise('D1')),
+      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
+      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
+      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
+      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
     };
   });
 

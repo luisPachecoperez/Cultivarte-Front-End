@@ -12,14 +12,14 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let cookieService: jest.Mocked<CookieService>;
-  let graphQLService: jest.Mocked<GraphQLService>;
-  let router: jest.Mocked<Router>;
+  let cookieService: jasmine.SpyObj<CookieService>;
+  let graphQLService: jasmine.SpyObj<GraphQLService>;
+  let router: jasmine.SpyObj<Router>;
 
   beforeEach(() => {
-    const cookieSpy = jest.fnObj('CookieService', ['getCookie', 'deleteCookie']);
-    const graphQLSpy = jest.fnObj('GraphQLService', ['mutation']);
-    const routerSpy = jest.fnObj('Router', ['navigate']);
+    const cookieSpy = jasmine.createSpyObj('CookieService', ['getCookie', 'deleteCookie']);
+    const graphQLSpy = jasmine.createSpyObj('GraphQLService', ['mutation']);
+    const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule], // ✅ Provee HttpClient
@@ -32,9 +32,9 @@ describe('AuthService', () => {
     });
 
     service = TestBed.inject(AuthService);
-    cookieService = TestBed.inject(CookieService) as jest.Mocked<CookieService>;
-    graphQLService = TestBed.inject(GraphQLService) as jest.Mocked<GraphQLService>;
-    router = TestBed.inject(Router) as jest.Mocked<Router>;
+    cookieService = TestBed.inject(CookieService) as jasmine.SpyObj<CookieService>;
+    graphQLService = TestBed.inject(GraphQLService) as jasmine.SpyObj<GraphQLService>;
+    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
   });
 
   describe('isAuthenticated', () => {

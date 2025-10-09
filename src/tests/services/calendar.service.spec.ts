@@ -7,13 +7,13 @@ import { Sesiones } from '../../app/eventos/interfaces/sesiones.interface';
 import { of, throwError } from 'rxjs';
 
 class GraphQLServiceMock {
-  query = jest.fn('query');
+  query = jasmine.createSpy('query');
 }
 class ActividadesDataSourceMock {
-  consultarFechaCalendario = jest.fn('consultarFechaCalendario');
+  consultarFechaCalendario = jasmine.createSpy('consultarFechaCalendario');
 }
 class LoadIndexDBServiceMock {
-  ping = jest.fn('ping');
+  ping = jasmine.createSpy('ping');
 }
 
 describe('🗓️ CalendarService', () => {

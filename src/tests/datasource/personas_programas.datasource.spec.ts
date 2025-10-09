@@ -31,13 +31,13 @@ describe('Personas_programasDataSource', () => {
     service = TestBed.inject(Personas_programasDataSource);
 
     (indexDB as any).personas_programas = {
-      toArray: jest.fn('toArray').and.returnValue(dexiePromise([mockRegistro])),
-      get: jest.fn('get').and.returnValue(dexiePromise(mockRegistro)),
-      add: jest.fn('add').and.returnValue(dexiePromise('PP1')),
-      update: jest.fn('update').and.returnValue(dexiePromise(1)),
-      delete: jest.fn('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jest.fn('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jest.fn('clear').and.returnValue(dexiePromise(undefined)),
+      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockRegistro])),
+      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockRegistro)),
+      add: jasmine.createSpy('add').and.returnValue(dexiePromise('PP1')),
+      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
+      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
+      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
+      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
     };
   });
 

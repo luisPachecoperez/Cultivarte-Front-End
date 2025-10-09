@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Personas_sedesDataSource } from '../../app/indexdb/datasources/personas_sedes-datasource';
 import { indexDB } from '../../app/indexdb/services/database.service';
 import { Personas_sedesDB } from '../../app/indexdb/interfaces/personas_sedes.interface';
+import 'jest-preset-angular/setup-jest';
 
 // 🔹 Helper Dexie Promise compatible
 function dexiePromise<T = any>(value?: T): any {
@@ -30,14 +31,14 @@ describe('Personas_sedesDataSource', () => {
     service = TestBed.inject(Personas_sedesDataSource);
 
     (indexDB as any).personas_sedes = {
-      toArray: jest.fn('toArray').and.returnValue(dexiePromise([mockRegistro])),
-      get: jest.fn('get').and.returnValue(dexiePromise(mockRegistro)),
-      add: jest.fn('add').and.returnValue(dexiePromise('PS1')),
-      update: jest.fn('update').and.returnValue(dexiePromise(1)),
-      delete: jest.fn('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jest.fn('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jest.fn('clear').and.returnValue(dexiePromise(undefined)),
-      where: jest.fn('where'),
+      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockRegistro])),
+      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockRegistro)),
+      add: jasmine.createSpy('add').and.returnValue(dexiePromise('PS1')),
+      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
+      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
+      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
+      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
+      where: jasmine.createSpy('where'),
     };
   });
 

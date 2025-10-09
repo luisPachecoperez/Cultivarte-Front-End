@@ -13,7 +13,7 @@ import { LoadingService } from '../../app/shared/services/loading.service';
 
 // ✅ Servicios mockeados
 class EventServiceMock {
-  obtenerConfiguracionEvento = jest.fn().and.returnValue({
+  obtenerConfiguracionEvento = jasmine.createSpy().and.returnValue({
     subscribe: (cb: any) =>
       cb({
         id_programa: 'P1',
@@ -26,7 +26,7 @@ class EventServiceMock {
       }),
   });
 
-  obtenerEventoPorId = jest.fn().and.returnValue(
+  obtenerEventoPorId = jasmine.createSpy().and.returnValue(
     Promise.resolve({
       actividad: {
         id_actividad: 'A1',
@@ -54,7 +54,7 @@ class EventServiceMock {
     })
   );
 
-  crearEvento = jest.fn().and.returnValue(
+  crearEvento = jasmine.createSpy().and.returnValue(
     Promise.resolve({ exitoso: 'S', mensaje: 'Evento creado correctamente' })
   );
 }
@@ -66,17 +66,17 @@ class GridSesionesServiceMock {
 }
 
 class AuthServiceMock {
-  getUserUuid = jest.fn().and.returnValue('USER-1');
+  getUserUuid = jasmine.createSpy().and.returnValue('USER-1');
 }
 
 class SnackbarServiceMock {
-  success = jest.fn('success');
-  error = jest.fn('error');
+  success = jasmine.createSpy('success');
+  error = jasmine.createSpy('error');
 }
 
 class LoadingServiceMock {
-  show = jest.fn('show');
-  hide = jest.fn('hide');
+  show = jasmine.createSpy('show');
+  hide = jasmine.createSpy('hide');
 }
 
 describe('EventComponent (Angular 20)', () => {

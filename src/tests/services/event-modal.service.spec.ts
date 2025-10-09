@@ -9,13 +9,13 @@ import { GraphQLResponse } from '../../app/shared/interfaces/graphql-response.in
 
 // 🧱 Mocks simulados
 class ActividadesDataSourceMock {
-  delete = jest.fn('delete').and.returnValue(Promise.resolve(true));
+  delete = jasmine.createSpy('delete').and.returnValue(Promise.resolve(true));
 }
 class LoadIndexDBServiceMock {
-  ping = jest.fn('ping');
+  ping = jasmine.createSpy('ping');
 }
 class GraphQLServiceMock {
-  mutation = jest.fn('mutation');
+  mutation = jasmine.createSpy('mutation');
 }
 
 describe('🧩 EventModalService', () => {

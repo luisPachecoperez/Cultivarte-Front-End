@@ -14,7 +14,7 @@ function mockDexiePromise<T>(value: T): any {
   (p as any).timeout = () => Promise.resolve(value);
   return p;
 }
-const safeFn = (value?: any) => jest.fn().and.returnValue(mockDexiePromise(value));
+const safeFn = (value?: any) => jasmine.createSpy().and.returnValue(mockDexiePromise(value));
 
 const safeTableMock = () => ({
   toArray: safeFn([]),
@@ -24,20 +24,20 @@ const safeTableMock = () => ({
   delete: safeFn(undefined),
   clear: safeFn(undefined),
   bulkAdd: safeFn(undefined),
-  where: jest.fn().and.returnValue({
-    anyOf: jest.fn().and.returnValue({
+  where: jasmine.createSpy().and.returnValue({
+    anyOf: jasmine.createSpy().and.returnValue({
       toArray: safeFn([]),
-      filter: jest.fn().and.returnValue({ toArray: safeFn([]) }),
+      filter: jasmine.createSpy().and.returnValue({ toArray: safeFn([]) }),
     }),
-    equals: jest.fn().and.returnValue({
+    equals: jasmine.createSpy().and.returnValue({
       toArray: safeFn([]),
       count: safeFn(0),
     }),
-    between: jest.fn().and.returnValue({
-      filter: jest.fn().and.returnValue({ toArray: safeFn([]) }),
+    between: jasmine.createSpy().and.returnValue({
+      filter: jasmine.createSpy().and.returnValue({ toArray: safeFn([]) }),
     }),
   }),
-  filter: jest.fn().and.returnValue({
+  filter: jasmine.createSpy().and.returnValue({
     toArray: safeFn([]),
     first: safeFn(undefined),
   }),
@@ -246,7 +246,7 @@ describe('ActividadesDataSource', () => {
       // Mock que lanza error
       mockIndexDB({
         actividades: {
-          add: jest.fn().and.returnValue(Promise.reject('DB error')),
+          add: jasmine.createSpy().and.returnValue(Promise.reject('DB error')),
         } as any,
       });
 
@@ -451,7 +451,7 @@ describe('ActividadesDataSource', () => {
   it('should handle thrown exception during creation', async () => {
     mockIndexDB({
       actividades: {
-        add: jest.fn().and.throwError('Unexpected DB crash'),
+        add: jasmine.createSpy().and.throwError('Unexpected DB crash'),
       } as any,
     });
 
@@ -463,7 +463,7 @@ describe('ActividadesDataSource', () => {
   it('should handle exception thrown during update', async () => {
     mockIndexDB({
       actividades: {
-        update: jest.fn().and.throwError('DB locked'),
+        update: jasmine.createSpy().and.throwError('DB locked'),
       } as any,
     });
 

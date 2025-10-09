@@ -5,8 +5,8 @@ import { SnackbarService } from '../../app/shared/services/snackbar.service';
 import { ConfirmSnackbarComponent } from '../../app/shared/components/confirm-snackbar/confirm-snackbar.component';
 import { Subject } from 'rxjs';
 class MockMatSnackBar {
-  open = jest.fn('open');
-  openFromComponent = jest.fn('openFromComponent');
+  open = jasmine.createSpy('open');
+  openFromComponent = jasmine.createSpy('openFromComponent');
 }
 
 describe('SnackbarService', () => {

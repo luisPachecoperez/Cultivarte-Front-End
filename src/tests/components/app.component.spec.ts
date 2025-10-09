@@ -5,26 +5,24 @@ import { DataSyncService } from '../../app/indexdb/services/data-sync.service';
 import { AuthService } from '../../app/shared/services/auth.service';
 import { LoadingService } from '../../app/shared/services/loading.service';
 import { LoadIndexDBService } from '../../app/indexdb/services/load-index-db.service';
-import { exitCode } from 'process';
+import 'jest-preset-angular/setup-jest';
 
 // Mocks
 class MockDataSyncService {
-  
-  startSync= jest.fn().mockResolvedValue(undefined);
-
+  startSync = jasmine.createSpy('startSync').and.returnValue(Promise.resolve());
 }
 
 class MockAuthService {
-  getUserUuid = jest.fn().mockReturnValue('mock-uuid');
+  getUserUuid = jasmine.createSpy('getUserUuid').and.returnValue('mock-uuid');
 }
 
 class MockLoadIndexDBService {
-  cargarDatosIniciales = jest.fn();
+  cargarDatosIniciales = jasmine.createSpy('cargarDatosIniciales');
 }
 
 class MockLoadingService {
-  show = jest.fn();
-  hide = jest.fn();
+  show = jasmine.createSpy('show');
+  hide = jasmine.createSpy('hide');
 }
 
 describe('AppComponent', () => {
@@ -72,15 +70,10 @@ describe('AppComponent', () => {
     });
 
     it('should hide loading even if an error occurs during sync', async () => {
-      
-      dataSyncService.startSync.mockRejectedValue('Sync failed');
+      dataSyncService.startSync.and.returnValue(Promise.reject('Sync failed'));
 
-      try{
-        await component.ngOnInit();
-      }catch (error){
-        expect(error).toBe('Sync failed');
-      }
-      
+      await expectAsync(component.ngOnInit()).toBeRejected();
+
       expect(loadingService.show).toHaveBeenCalled();
       expect(loadingService.hide).toHaveBeenCalled(); // finally block
     });

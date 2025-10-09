@@ -29,13 +29,13 @@ describe('Parametros_generalesDataSource', () => {
 
     // Mock general de Dexie tabla
     (indexDB as any).parametros_generales = {
-      toArray: jest.fn().and.returnValue(dexiePromise([mockData])),
-      get: jest.fn().and.returnValue(dexiePromise(mockData)),
-      add: jest.fn().and.returnValue(dexiePromise('P1')),
-      update: jest.fn().and.returnValue(dexiePromise(1)),
-      delete: jest.fn().and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jest.fn().and.returnValue(dexiePromise(undefined)),
-      clear: jest.fn().and.returnValue(dexiePromise(undefined)),
+      toArray: jasmine.createSpy().and.returnValue(dexiePromise([mockData])),
+      get: jasmine.createSpy().and.returnValue(dexiePromise(mockData)),
+      add: jasmine.createSpy().and.returnValue(dexiePromise('P1')),
+      update: jasmine.createSpy().and.returnValue(dexiePromise(1)),
+      delete: jasmine.createSpy().and.returnValue(dexiePromise(undefined)),
+      bulkAdd: jasmine.createSpy().and.returnValue(dexiePromise(undefined)),
+      clear: jasmine.createSpy().and.returnValue(dexiePromise(undefined)),
     };
   });
 

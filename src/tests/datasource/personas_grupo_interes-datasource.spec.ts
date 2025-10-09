@@ -31,13 +31,13 @@ describe('Personas_grupo_interesDataSource', () => {
     service = TestBed.inject(Personas_grupo_interesDataSource);
 
     (indexDB as any).personas_grupo_interes = {
-      toArray: jest.fn('toArray').and.returnValue(dexiePromise([mockRegistro])),
-      get: jest.fn('get').and.returnValue(dexiePromise(mockRegistro)),
-      add: jest.fn('add').and.returnValue(dexiePromise('PGI1')),
-      update: jest.fn('update').and.returnValue(dexiePromise(1)),
-      delete: jest.fn('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jest.fn('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jest.fn('clear').and.returnValue(dexiePromise(undefined)),
+      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockRegistro])),
+      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockRegistro)),
+      add: jasmine.createSpy('add').and.returnValue(dexiePromise('PGI1')),
+      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
+      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
+      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
+      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
     };
   });
 

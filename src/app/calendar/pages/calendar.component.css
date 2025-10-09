@@ -9,7 +9,7 @@
 }
 
 :host ::ng-deep .fc-daygrid-day::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 10%;
@@ -33,7 +33,7 @@
 }
 
 :host ::ng-deep .fc-event {
-  background-color: #F1635A !important;
+  background-color: #f1635a !important;
   color: white !important;
   border: none;
   font-weight: bold;

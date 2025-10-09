@@ -8,9 +8,9 @@ import { of } from 'rxjs';
 
 // ✅ Mock del SnackbarService
 class SnackbarServiceMock {
-  error = jest.fn('error');
-  warning = jest.fn('warning');
-  success = jest.fn('success');
+  error = jasmine.createSpy('error');
+  warning = jasmine.createSpy('warning');
+  success = jasmine.createSpy('success');
 }
 
 describe('✅ Grid_sesionesComponent (Angular 20)', () => {

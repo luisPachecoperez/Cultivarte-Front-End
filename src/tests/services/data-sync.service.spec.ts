@@ -11,20 +11,20 @@ import { LoadIndexDBService } from '../../app/indexdb/services/load-index-db.ser
 import { indexDB } from '../../app/indexdb/services/database.service';
 
 class MockGraphQL {
-  mutation = jest.fn('mutation');
+  mutation = jasmine.createSpy('mutation');
 }
 class MockHttp {}
 class MockLoadIndexDB {
-  ping = jest.fn('ping').and.returnValue(of('pong'));
+  ping = jasmine.createSpy('ping').and.returnValue(of('pong'));
 }
 class MockActividadesDS {
-  update = jest.fn('update');
+  update = jasmine.createSpy('update');
 }
 class MockSesionesDS {
-  update = jest.fn('update');
+  update = jasmine.createSpy('update');
 }
 class MockAsistenciasDS {
-  update = jest.fn('update');
+  update = jasmine.createSpy('update');
 }
 
 // ✅ helper Dexie Promise compatible
@@ -63,16 +63,16 @@ describe('🧩 DataSyncService (Angular 20 compatible)', () => {
     load = TestBed.inject(LoadIndexDBService) as any;
 
     (indexDB as any).actividades = {
-      get: jest.fn('get').and.returnValue(dexiePromise(undefined)),
-      update: jest.fn('update').and.returnValue(dexiePromise(1)),
+      get: jasmine.createSpy('get').and.returnValue(dexiePromise(undefined)),
+      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
     };
     (indexDB as any).sesiones = {
-      get: jest.fn('get').and.returnValue(dexiePromise(undefined)),
-      update: jest.fn('update').and.returnValue(dexiePromise(1)),
+      get: jasmine.createSpy('get').and.returnValue(dexiePromise(undefined)),
+      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
     };
     (indexDB as any).asistencias = {
-      filter: jest.fn('filter').and.returnValue({ toArray: () => dexiePromise([]) }),
-      update: jest.fn('update').and.returnValue(dexiePromise(1)),
+      filter: jasmine.createSpy('filter').and.returnValue({ toArray: () => dexiePromise([]) }),
+      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
     };
 
   });

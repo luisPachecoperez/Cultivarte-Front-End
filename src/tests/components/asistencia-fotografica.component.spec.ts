@@ -14,22 +14,15 @@ import { NgZone } from '@angular/core';
 describe('✅ AsistenciaFotograficaComponent (Cobertura 90%)', () => {
   let component: AsistenciaFotograficaComponent;
   let fixture: ComponentFixture<AsistenciaFotograficaComponent>;
-  let asistenciaServiceMock: jest.Mocked<AsistenciaService>;
-  let snackbarMock: jest.Mocked<SnackbarService>;
-  
+  let asistenciaServiceMock: jasmine.SpyObj<AsistenciaService>;
+  let snackbarMock: jasmine.SpyObj<SnackbarService>;
+
   beforeEach(async () => {
-    asistenciaServiceMock = {
-      obtenerDetalleAsistencia:jest.fn(),
-      guardarAsistenciaFotografica:jest.fn(),
-    } as unknown as jest.Mocked<AsistenciaService>;
-
-
-    snackbarMock = {
-      warning: jest.fn(),
-      error: jest.fn(),
-      success: jest.fn(),
-    } as unknown as jest.Mocked<SnackbarService>;
-
+    asistenciaServiceMock = jasmine.createSpyObj('AsistenciaService', [
+      'obtenerDetalleAsistencia',
+      'guardarAsistenciaFotografica',
+    ]);
+    snackbarMock = jasmine.createSpyObj('SnackbarService', ['warning', 'error', 'success']);
 
     await TestBed.configureTestingModule({
       imports: [CommonModule, ReactiveFormsModule, AsistenciaFotograficaComponent],
@@ -56,8 +49,8 @@ describe('✅ AsistenciaFotograficaComponent (Cobertura 90%)', () => {
 
   it('⚙️ ngOnInit() no debe llamar servicio si evento es undefined', async () => {
     fixture.componentRef.setInput('evento', undefined);
-    (asistenciaServiceMock.obtenerDetalleAsistencia as jest.Mock).mockClear();
-    
+    asistenciaServiceMock.obtenerDetalleAsistencia.calls.reset();
+
     await component.ngOnInit();
 
     expect(asistenciaServiceMock.obtenerDetalleAsistencia).not.toHaveBeenCalled();
@@ -78,23 +71,21 @@ describe('✅ AsistenciaFotograficaComponent (Cobertura 90%)', () => {
     };
 
     fixture.componentRef.setInput('evento', mockSesion);
-    
-    (asistenciaServiceMock.obtenerDetalleAsistencia as jest.Mock).mockReturnValue(Promise.resolve(mockData));
+    asistenciaServiceMock.obtenerDetalleAsistencia.and.returnValue(Promise.resolve(mockData));
 
     await component.ngOnInit();
 
     expect(asistenciaServiceMock.obtenerDetalleAsistencia).toHaveBeenCalledWith('10');
     expect(component.imagenPrevia).toBe(mockData.imagen);
-    expect(component.asistenciaForm.disabled).toBe(true);
-    expect(component.bloqueado).toBe(true);
-
+    expect(component.asistenciaForm.disabled).toBeTrue();
+    expect(component.bloqueado).toBeTrue();
   });
 
   it('❌ ngOnInit() debe manejar error si obtenerDetalleAsistencia falla', async () => {
     const mockSesion: Sesiones = { id_sesion: 'X', id_actividad: 'Y' } as any;
     fixture.componentRef.setInput('evento', mockSesion);
-    (asistenciaServiceMock.obtenerDetalleAsistencia as jest.Mock).mockRejectedValue('Error de red');
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    asistenciaServiceMock.obtenerDetalleAsistencia.and.returnValue(Promise.reject('Error de red'));
+    spyOn(console, 'error');
 
     await component.ngOnInit();
     await fixture.whenStable();
@@ -119,8 +110,7 @@ describe('✅ AsistenciaFotograficaComponent (Cobertura 90%)', () => {
       }
     }
 
-    jest.spyOn(window as any, 'FileReader').mockImplementation(() => new MockFileReader());
-
+    spyOn(window as any, 'FileReader').and.returnValue(new MockFileReader());
 
     // Ejecutar
     component.onFileSelected(event);
@@ -152,9 +142,9 @@ describe('✅ AsistenciaFotograficaComponent (Cobertura 90%)', () => {
     });
 
     const response = { exitoso: 'S', mensaje: 'ok' };
-    (asistenciaServiceMock.guardarAsistenciaFotografica as jest.Mock).mockResolvedValue(response);
-    jest.spyOn(component.asistenciaGuardada, 'emit');
-    jest.spyOn(component.cerrar, 'emit');
+    asistenciaServiceMock.guardarAsistenciaFotografica.and.returnValue(Promise.resolve(response));
+    spyOn(component.asistenciaGuardada, 'emit');
+    spyOn(component.cerrar, 'emit');
 
     await component.guardar();
 
@@ -172,9 +162,10 @@ describe('✅ AsistenciaFotograficaComponent (Cobertura 90%)', () => {
       foto: null,
     });
 
-    (asistenciaServiceMock.guardarAsistenciaFotografica as jest.Mock).mockRejectedValue(new Error('Falla HTTP'));
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-
+    asistenciaServiceMock.guardarAsistenciaFotografica.and.returnValue(
+      Promise.reject(new Error('Falla HTTP'))
+    );
+    spyOn(console, 'error');
 
     await component.guardar();
 

@@ -36,19 +36,19 @@ describe('✅ EventModalComponent', () => {
   let component: EventModalComponent;
   let fixture: ComponentFixture<EventModalComponent>;
 
-  let modalServiceMock: jest.Mocked<EventModalService>;
+  let modalServiceMock: jasmine.SpyObj<EventModalService>;
   let snackMock: any;
-  let loadingMock: jest.Mocked<LoadingService>;
+  let loadingMock: jasmine.SpyObj<LoadingService>;
   beforeEach(async () => {
-    modalServiceMock = jest.fnObj('EventModalService', [
+    modalServiceMock = jasmine.createSpyObj('EventModalService', [
       'eliminarEvento',
     ]);
-    loadingMock = jest.fnObj('LoadingService', ['show', 'hide']);
+    loadingMock = jasmine.createSpyObj('LoadingService', ['show', 'hide']);
 
     snackMock = {
-      confirm: jest.fn('confirm'),
-      success: jest.fn('success'),
-      error: jest.fn('error'),
+      confirm: jasmine.createSpy('confirm'),
+      success: jasmine.createSpy('success'),
+      error: jasmine.createSpy('error'),
     };
 
     await TestBed.configureTestingModule({

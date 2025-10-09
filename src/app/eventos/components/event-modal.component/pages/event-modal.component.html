@@ -2,65 +2,97 @@
 <div class="modal-backdrop fade show"></div>
 
 <!-- Modal -->
-<div class="modal fade show d-block" role="dialog" aria-modal="true" aria-labelledby="modalAccionesLabel">
-  
+<div
+  class="modal fade show d-block"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalAccionesLabel"
+>
   <div class="modal-dialog modal-sm modal-dialog-centered">
-    
     <div class="modal-content">
-      <div style="background-color: transparent;width: 100%;display: flex;justify-content: end;">
-      <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrar.emit()"></button>
-    </div>
+      <div
+        style="
+          background-color: transparent;
+          width: 100%;
+          display: flex;
+          justify-content: end;
+        "
+      >
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Cerrar"
+          (click)="cerrar.emit()"
+        ></button>
+      </div>
       <!-- Header -->
       <div class="modal-header">
-        
         <h5 class="modal-title w-100 text-center" id="modalAccionesLabel">
-          <strong class="d-block mb-1 text-uppercase fs-5">{{ evento()?.nombre_actividad }}</strong>
-          
+          <strong class="d-block mb-1 text-uppercase fs-5">{{
+            evento()?.nombre_actividad
+          }}</strong>
+
           <small class="text-muted">
             {{ evento()?.fecha_actividad }} |
-            {{ evento()?.fecha_actividad + 'T' + evento()?.hora_inicio | date: 'hh:mm a' }}
+            {{
+              evento()?.fecha_actividad + "T" + evento()?.hora_inicio
+                | date: "hh:mm a"
+            }}
             a
-            {{ evento()?.fecha_actividad + 'T' + evento()?.hora_fin | date: 'hh:mm a' }}
+            {{
+              evento()?.fecha_actividad + "T" + evento()?.hora_fin
+                | date: "hh:mm a"
+            }}
           </small>
         </h5>
-        
       </div>
 
       <!-- Body -->
       <div class="modal-body text-center d-flex flex-column gap-2">
-        <button class="btn btn-outline-primary" (click)="seleccionarAccion('editar')">
+        <button
+          class="btn btn-outline-primary"
+          (click)="seleccionarAccion('editar')"
+        >
           Editar evento
         </button>
-        <button class="btn btn-outline-success" (click)="seleccionarAccion('asistencia')">
+        <button
+          class="btn btn-outline-success"
+          (click)="seleccionarAccion('asistencia')"
+        >
           Tomar asistencia
         </button>
 
         <!-- Botón Eliminar -->
         @if ((evento()?.asistentes_evento ?? 0) > 0) {
-        <button class="btn btn-outline-danger" disabled
-          [attr.title]="'No se puede eliminar. Asistentes: ' + evento()?.asistentes_evento" data-bs-toggle="tooltip">
-          Eliminar evento
-        </button>
+          <button
+            class="btn btn-outline-danger"
+            disabled
+            [attr.title]="
+              'No se puede eliminar. Asistentes: ' + evento()?.asistentes_evento
+            "
+            data-bs-toggle="tooltip"
+          >
+            Eliminar evento
+          </button>
+        } @else {
+          <button class="btn btn-outline-danger" (click)="eliminarEvento()">
+            Eliminar evento
+          </button>
         }
-        @else {
-        <button class="btn btn-outline-danger" (click)="eliminarEvento()">
-          Eliminar evento
-        </button>
-        }
-
-
 
         <!-- Mensaje de error/éxito -->
         @if (mensajeResultado) {
-        <div class="alert mt-2" [ngClass]="{
+          <div
+            class="alert mt-2"
+            [ngClass]="{
               'alert-success': exitoAccion,
-              'alert-danger': !exitoAccion
-            }">
-          {{ mensajeResultado }}
-        </div>
+              'alert-danger': !exitoAccion,
+            }"
+          >
+            {{ mensajeResultado }}
+          </div>
         }
       </div>
-
     </div>
   </div>
 </div>

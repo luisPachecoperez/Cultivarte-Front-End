@@ -14,25 +14,25 @@ import { Sesiones } from '../../app/eventos/interfaces/sesiones.interface';
 
 // 🧩 Mock services
 class LoadIndexDBServiceMock {
-  ping = jest.fn('ping');
+  ping = jasmine.createSpy('ping');
 }
 class ActividadesDataSourceMock {
-  getPreAsistencia = jest.fn('getPreAsistencia');
+  getPreAsistencia = jasmine.createSpy('getPreAsistencia');
 }
 class AsistenciasDataSourceMock {
-  create = jest.fn('create');
+  create = jasmine.createSpy('create');
 }
 class SesionesDataSourceMock {
-  getById = jest.fn('getById');
-  update = jest.fn('update');
+  getById = jasmine.createSpy('getById');
+  update = jasmine.createSpy('update');
 }
 class GraphQLServiceMock {
-  query = jest.fn('query');
-  mutation = jest.fn('mutation');
+  query = jasmine.createSpy('query');
+  mutation = jasmine.createSpy('mutation');
 }
 class LoadingServiceMock {
-  show = jest.fn('show');
-  hide = jest.fn('hide');
+  show = jasmine.createSpy('show');
+  hide = jasmine.createSpy('hide');
 }
 
 describe('🧠 AsistenciaService', () => {

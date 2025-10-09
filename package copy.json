@@ -1,0 +1,81 @@
+{
+  "name": "amis-front-end",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:cov": "jest --coverage",
+    "lint": "ng lint"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^20.1.2",
+    "@angular/cdk": "^20.2.2",
+    "@angular/common": "^20.0.0",
+    "@angular/compiler": "^20.0.0",
+    "@angular/core": "^20.0.0",
+    "@angular/forms": "^20.0.0",
+    "@angular/material": "^20.2.2",
+    "@angular/platform-browser": "^20.0.0",
+    "@angular/router": "^20.0.0",
+    "agent-base": "^7.1.4",
+    "bootstrap": "^5.3.7",
+    "crypto-js": "^4.2.0",
+    "dexie": "^4.2.0",
+    "jwt-decode": "^4.0.0",
+    "ngx-cookie-service": "^20.1.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "uuid": "^11.1.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-builders/jest": "^20.0.0",
+    "@angular-devkit/build-angular": "^20.1.1",
+    "@angular-eslint/builder": "20.x.x",
+    "@angular-eslint/eslint-plugin": "20.x.x",
+    "@angular-eslint/eslint-plugin-template": "20.x.x",
+    "@angular-eslint/schematics": "20.x.x",
+    "@angular-eslint/template-parser": "20.x.x",
+    "@angular/build": "^20.0.4",
+    "@angular/cli": "^20.0.4",
+    "@angular/compiler-cli": "^20.0.0",
+    "@fullcalendar/angular": "^6.1.18",
+    "@fullcalendar/core": "^6.1.18",
+    "@fullcalendar/daygrid": "^6.1.18",
+    "@fullcalendar/interaction": "^6.1.18",
+    "@fullcalendar/list": "^6.1.18",
+    "@fullcalendar/timegrid": "^6.1.18",
+    "@types/bootstrap": "^5.2.10",
+    "@types/crypto-js": "^4.2.2",
+    "@types/dexie": "^1.3.32",
+    "@types/jasmine": "~5.1.0",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/parser": "^8.43.0",
+    "eslint": "^9.0.0",
+    "jasmine-core": "~5.7.0",
+    "jest": "^30.2.0",
+    "jest-preset-angular": "^15.0.2",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "ts-jest": "^29.4.4",
+    "typescript": "~5.8.2"
+  }
+}

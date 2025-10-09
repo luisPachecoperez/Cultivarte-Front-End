@@ -83,7 +83,7 @@ describe('PersonasDataSource', () => {
     personasSedesAliados?: any[];
   }) {
     (indexDB as any).personas_sedes = {
-      where: jest.fn('where').and.callFake(() => ({
+      where: jasmine.createSpy('where').and.callFake(() => ({
         equals: () => ({
           toArray: () => mockDexiePromise(opts.sedesUsuario ?? []),
         }),
@@ -96,7 +96,7 @@ describe('PersonasDataSource', () => {
     };
 
     (indexDB as any).parametros_generales = {
-      where: jest.fn('where').and.callFake(() => ({
+      where: jasmine.createSpy('where').and.callFake(() => ({
         equals: () => ({
           first: () => mockDexiePromise(opts.paramGeneral),
         }),
@@ -104,7 +104,7 @@ describe('PersonasDataSource', () => {
     };
 
     (indexDB as any).parametros_detalle = {
-      where: jest.fn('where').and.callFake(() => ({
+      where: jasmine.createSpy('where').and.callFake(() => ({
         equals: () => ({
           filter: () => ({
             first: () => mockDexiePromise(opts.paramDetalle),
@@ -114,7 +114,7 @@ describe('PersonasDataSource', () => {
     };
 
     (indexDB as any).personas_grupo_interes = {
-      where: jest.fn('where').and.callFake(() => ({
+      where: jasmine.createSpy('where').and.callFake(() => ({
         equals: () => ({
           toArray: () => mockDexiePromise(opts.personasGrupo ?? []),
         }),
@@ -122,7 +122,7 @@ describe('PersonasDataSource', () => {
     };
 
     (indexDB as any).personas = {
-      where: jest.fn('where').and.callFake(() => ({
+      where: jasmine.createSpy('where').and.callFake(() => ({
         anyOf: () => ({
           toArray: () => mockDexiePromise(opts.aliados ?? []),
         }),

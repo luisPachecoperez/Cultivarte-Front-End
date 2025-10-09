@@ -20,29 +20,29 @@ import { PreEditActividad } from '../../app/eventos/interfaces/pre-edit-activida
 
 // 🧱 Mock classes
 class GraphQLServiceMock {
-  query = jest.fn('query');
-  mutation = jest.fn('mutation');
+  query = jasmine.createSpy('query');
+  mutation = jasmine.createSpy('mutation');
 }
 class AuthServiceMock {
-  getUserUuid = jest.fn('getUserUuid').and.returnValue('USER-001');
+  getUserUuid = jasmine.createSpy('getUserUuid').and.returnValue('USER-001');
 }
 class ActividadesDataSourceMock {
-  create = jest.fn('create');
-  getPreEditActividad = jest.fn('getPreEditActividad').and.returnValue(Promise.resolve({ offline: true }));
-  getPreCreateActividad = jest.fn('getPreCreateActividad').and.returnValue(Promise.resolve({ offline: true }));
+  create = jasmine.createSpy('create');
+  getPreEditActividad = jasmine.createSpy('getPreEditActividad').and.returnValue(Promise.resolve({ offline: true }));
+  getPreCreateActividad = jasmine.createSpy('getPreCreateActividad').and.returnValue(Promise.resolve({ offline: true }));
 }
 class SesionesDataSourceMock {
-  create = jest.fn('create');
+  create = jasmine.createSpy('create');
 }
 class GridSesionesServiceMock {
-  guardarCambiosSesiones = jest.fn('guardarCambiosSesiones').and.returnValue(Promise.resolve({ exitoso: 'S' }));
+  guardarCambiosSesiones = jasmine.createSpy('guardarCambiosSesiones').and.returnValue(Promise.resolve({ exitoso: 'S' }));
 }
 class LoadIndexDBServiceMock {
-  ping = jest.fn('ping');
+  ping = jasmine.createSpy('ping');
 }
 class LoadingServiceMock {
-  show = jest.fn('show');
-  hide = jest.fn('hide');
+  show = jasmine.createSpy('show');
+  hide = jasmine.createSpy('hide');
 }
 
 describe('🧩 EventService (Cobertura 97%)', () => {

@@ -9,21 +9,22 @@ import { PreAsistencia } from '../../app/asistencia/interfaces/pre-asistencia.in
 import { Beneficiarios } from '../../app/eventos/interfaces/lista-beneficiarios.interface';
 import { Asistente } from '../../app/asistencia/interfaces/asistente.interface';
 import { fakeAsync, tick } from '@angular/core/testing';
+import 'jest-preset-angular/setup-jest';
 
 
 describe('✅ AsistenciaComponent (Cobertura 90%)', () => {
   let component: AsistenciaComponent;
   let fixture: ComponentFixture<AsistenciaComponent>;
-  let asistenciaServiceMock: jest.Mocked<AsistenciaService>;
-  let snackbarMock: jest.Mocked<SnackbarService>;
+  let asistenciaServiceMock: jasmine.SpyObj<AsistenciaService>;
+  let snackbarMock: jasmine.SpyObj<SnackbarService>;
 
   beforeEach(async () => {
-    asistenciaServiceMock = jest.fnObj('AsistenciaService', [
+    asistenciaServiceMock = jasmine.createSpyObj('AsistenciaService', [
       'obtenerDetalleAsistencia',
       'guardarAsistencia'
     ]);
 
-    snackbarMock = jest.fnObj('SnackbarService', [
+    snackbarMock = jasmine.createSpyObj('SnackbarService', [
       'success',
       'warning',
       'error'
