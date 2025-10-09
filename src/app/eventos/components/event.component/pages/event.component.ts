@@ -24,8 +24,8 @@ import {
   ReactiveFormsModule,
   FormArray,
 } from '@angular/forms';
-import { EventService } from '../services/event.services';
-import { Grid_sesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';
+import { EventService } from '../services/event.service';
+import { Grid_sesionesService } from '../../grid-sesiones.component/services/grid-sesiones.service';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../../../shared/services/snackbar.service';

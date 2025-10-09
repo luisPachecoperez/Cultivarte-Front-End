@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
 import { EventModalComponent } from '../../eventos/components/event-modal.component/pages/event-modal.component';
 import { AsistenciaComponent } from '../../asistencia/asistencia-lista/pages/asistencia.component';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { CalendarService } from '../../calendar/services/calendar.services';
+import { CalendarService } from '../services/calendar.service';
 import { AsistenciaFotograficaComponent } from '../../asistencia/asistencia-fotografica/pages/asistencia-fotografica.component';
 import { AsistenciaService } from '../../asistencia/asistencia-lista/services/asistencia.service';
 import { SnackbarService } from '../../shared/services/snackbar.service';

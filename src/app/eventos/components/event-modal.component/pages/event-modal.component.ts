@@ -1,6 +1,6 @@
 import { Component, input, output, AfterViewInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EventModalService } from '../services/event-modal.services';
+import { EventModalService } from '../services/event-modal.service';
 import { Tooltip } from 'bootstrap';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../../../shared/services/snackbar.service'; // ajusta la ruta}
