@@ -11,7 +11,7 @@ function dexiePromise<T = any>(value?: T): any {
   return p;
 }
 
-describe('SesionesDataSource', () => {
+describe('SesionesDataSource (Jest)', () => {
   let service: SesionesDataSource;
 
   const mockSesion: SesionesDB = {
@@ -32,22 +32,25 @@ describe('SesionesDataSource', () => {
     service = TestBed.inject(SesionesDataSource);
 
     (indexDB as any).sesiones = {
-      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockSesion])),
-      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockSesion)),
-      add: jasmine.createSpy('add').and.returnValue(dexiePromise(undefined)),
-      update: jasmine.createSpy('update').and.returnValue(dexiePromise(undefined)),
-      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
-      where: jasmine.createSpy('where').and.returnValue({
-        equals: jasmine.createSpy('equals').and.returnValue({
-          toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockSesion])),
+      toArray: jest.fn().mockReturnValue(dexiePromise([mockSesion])),
+      get: jest.fn().mockReturnValue(dexiePromise(mockSesion)),
+      add: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      update: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      delete: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      bulkAdd: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      clear: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      where: jest.fn().mockReturnValue({
+        equals: jest.fn().mockReturnValue({
+          toArray: jest.fn().mockReturnValue(dexiePromise([mockSesion])),
         }),
       }),
     };
   });
 
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    jest.clearAllMocks();
+  });
 
   // --- getAll ---
   it('🟢 getAll debe retornar todas las sesiones', async () => {
@@ -61,7 +64,7 @@ describe('SesionesDataSource', () => {
   it('🟢 getById debe retornar una sesión por id', async () => {
     const result = await service.getById('S1');
     expect(result?.id_actividad).toBe('A1');
-    expect((indexDB.sesiones.get as jasmine.Spy).calls.count()).toBeGreaterThan(0);
+    expect(indexDB.sesiones.get).toHaveBeenCalledWith('S1');
   });
 
   // --- create ---
@@ -77,19 +80,14 @@ describe('SesionesDataSource', () => {
       expect(result.exitoso).toBe('S');
       expect(result.mensaje).toContain('adicionado');
       expect(indexDB.sesiones.add).toHaveBeenCalled();
-      const calledWith = (indexDB.sesiones.add as jasmine.Spy).calls.argsFor(0)[0];
+      const calledWith = (indexDB.sesiones.add as jest.Mock).mock.calls[0][0];
       expect(typeof calledWith.fecha_actividad).toBe('string');
-      expect(calledWith.fecha_actividad?.includes('-')).toBeFalse();
+      expect(calledWith.fecha_actividad?.includes('-')).toBe(false);
     });
 
     it('debe manejar error en add()', async () => {
-      (indexDB.sesiones.add as jasmine.Spy).and.returnValue(Promise.reject('DB error'));
-      try {
-        await service.create(mockSesion);
-        fail('Debe lanzar error');
-      } catch (err) {
-        expect(err).toBe('DB error');
-      }
+      (indexDB.sesiones.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+      await expect(service.create(mockSesion)).rejects.toBe('DB error');
     });
   });
 
@@ -103,38 +101,33 @@ describe('SesionesDataSource', () => {
     });
 
     it('debe retornar mensaje si no encuentra la sesión', async () => {
-      (indexDB.sesiones.get as jasmine.Spy).and.returnValue(dexiePromise(undefined));
+      (indexDB.sesiones.get as jest.Mock).mockReturnValue(dexiePromise(undefined));
       const result = await service.update('NO_EXISTE', { hora_inicio: '09:00' });
       expect(result.exitoso).toBe('N');
       expect(result.mensaje).toContain('No se encontró sesión');
     });
 
     it('debe mantener syncStatus= pending-create si estaba así', async () => {
-      (indexDB.sesiones.get as jasmine.Spy).and.returnValue(
+      (indexDB.sesiones.get as jest.Mock).mockReturnValue(
         dexiePromise({ ...mockSesion, syncStatus: 'pending-create' })
       );
       await service.update('S1', { nombre_actividad: 'Modificada' });
-      const args = (indexDB.sesiones.update as jasmine.Spy).calls.mostRecent().args[1];
+      const args = (indexDB.sesiones.update as jest.Mock).mock.calls[0][1];
       expect(args.syncStatus).toBe('pending-create');
     });
 
     it('debe pasar a pending-update si estaba synced', async () => {
-      (indexDB.sesiones.get as jasmine.Spy).and.returnValue(
+      (indexDB.sesiones.get as jest.Mock).mockReturnValue(
         dexiePromise({ ...mockSesion, syncStatus: 'synced' })
       );
       await service.update('S1', { nombre_actividad: 'Modificada' });
-      const args = (indexDB.sesiones.update as jasmine.Spy).calls.mostRecent().args[1];
+      const args = (indexDB.sesiones.update as jest.Mock).mock.calls[0][1];
       expect(args.syncStatus).toBe('pending-update');
     });
 
     it('debe manejar error en update()', async () => {
-      (indexDB.sesiones.update as jasmine.Spy).and.returnValue(Promise.reject('update error'));
-      try {
-        await service.update('S1', {});
-        fail('Debe lanzar error');
-      } catch (err) {
-        expect(err).toBe('update error');
-      }
+      (indexDB.sesiones.update as jest.Mock).mockReturnValue(Promise.reject('update error'));
+      await expect(service.update('S1', {})).rejects.toBe('update error');
     });
   });
 
@@ -151,13 +144,8 @@ describe('SesionesDataSource', () => {
     });
 
     it('debe manejar error en delete()', async () => {
-      (indexDB.sesiones.delete as jasmine.Spy).and.returnValue(Promise.reject('delete error'));
-      try {
-        await service.delete('S1', false);
-        fail('Debe lanzar error');
-      } catch (err) {
-        expect(err).toBe('delete error');
-      }
+      (indexDB.sesiones.delete as jest.Mock).mockReturnValue(Promise.reject('delete error'));
+      await expect(service.delete('S1', false)).rejects.toBe('delete error');
     });
   });
 
@@ -167,18 +155,13 @@ describe('SesionesDataSource', () => {
       const data = [{ ...mockSesion, syncStatus: null as any }];
       await service.bulkAdd(data);
       expect(indexDB.sesiones.bulkAdd).toHaveBeenCalled();
-      const arg = (indexDB.sesiones.bulkAdd as jasmine.Spy).calls.argsFor(0)[0];
+      const arg = (indexDB.sesiones.bulkAdd as jest.Mock).mock.calls[0][0];
       expect(arg[0].syncStatus).toBe('synced');
     });
 
     it('debe manejar error en bulkAdd()', async () => {
-      (indexDB.sesiones.bulkAdd as jasmine.Spy).and.returnValue(Promise.reject('bulk error'));
-      try {
-        await service.bulkAdd([mockSesion]);
-        fail('Debe lanzar error');
-      } catch (err) {
-        expect(err).toBe('bulk error');
-      }
+      (indexDB.sesiones.bulkAdd as jest.Mock).mockReturnValue(Promise.reject('bulk error'));
+      await expect(service.bulkAdd([mockSesion])).rejects.toBe('bulk error');
     });
   });
 
@@ -198,17 +181,12 @@ describe('SesionesDataSource', () => {
     });
 
     it('debe manejar error en sesionesPorActividad()', async () => {
-      (indexDB.sesiones.where as jasmine.Spy).and.returnValue({
-        equals: jasmine.createSpy('equals').and.returnValue({
-          toArray: jasmine.createSpy('toArray').and.returnValue(Promise.reject('error')),
+      (indexDB.sesiones.where as jest.Mock).mockReturnValue({
+        equals: jest.fn().mockReturnValue({
+          toArray: jest.fn().mockReturnValue(Promise.reject('error')),
         }),
       });
-      try {
-        await service.sesionesPorActividad('A1');
-        fail('Debe lanzar error');
-      } catch (err) {
-        expect(err).toBe('error');
-      }
+      await expect(service.sesionesPorActividad('A1')).rejects.toBe('error');
     });
   });
 });

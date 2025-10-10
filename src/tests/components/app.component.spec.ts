@@ -5,27 +5,28 @@ import { DataSyncService } from '../../app/indexdb/services/data-sync.service';
 import { AuthService } from '../../app/shared/services/auth.service';
 import { LoadingService } from '../../app/shared/services/loading.service';
 import { LoadIndexDBService } from '../../app/indexdb/services/load-index-db.service';
-import 'jest-preset-angular/setup-jest';
 
-// Mocks
+
+// ---- Mocks con Jest ----
 class MockDataSyncService {
-  startSync = jasmine.createSpy('startSync').and.returnValue(Promise.resolve());
+  startSync = jest.fn().mockResolvedValue(undefined);
 }
 
 class MockAuthService {
-  getUserUuid = jasmine.createSpy('getUserUuid').and.returnValue('mock-uuid');
+  getUserUuid = jest.fn().mockReturnValue('mock-uuid');
 }
 
 class MockLoadIndexDBService {
-  cargarDatosIniciales = jasmine.createSpy('cargarDatosIniciales');
+  cargarDatosIniciales = jest.fn();
 }
 
 class MockLoadingService {
-  show = jasmine.createSpy('show');
-  hide = jasmine.createSpy('hide');
+  show = jest.fn();
+  hide = jest.fn();
 }
 
-describe('AppComponent', () => {
+// ---- Tests ----
+describe('AppComponent (Jest)', () => {
   let component: AppComponent;
   let dataSyncService: MockDataSyncService;
   let authService: MockAuthService;
@@ -44,10 +45,16 @@ describe('AppComponent', () => {
     });
 
     component = TestBed.inject(AppComponent);
-    dataSyncService = TestBed.inject(DataSyncService) as unknown as MockDataSyncService;
+    dataSyncService = TestBed.inject(
+      DataSyncService,
+    ) as unknown as MockDataSyncService;
     authService = TestBed.inject(AuthService) as unknown as MockAuthService;
-    loadIndexDBService = TestBed.inject(LoadIndexDBService) as unknown as MockLoadIndexDBService;
-    loadingService = TestBed.inject(LoadingService) as unknown as MockLoadingService;
+    loadIndexDBService = TestBed.inject(
+      LoadIndexDBService,
+    ) as unknown as MockLoadIndexDBService;
+    loadingService = TestBed.inject(
+      LoadingService,
+    ) as unknown as MockLoadingService;
   });
 
   it('should create the app', () => {
@@ -65,14 +72,22 @@ describe('AppComponent', () => {
       expect(loadingService.show).toHaveBeenCalled();
       expect(dataSyncService.startSync).toHaveBeenCalled();
       expect(authService.getUserUuid).toHaveBeenCalled();
-      expect(loadIndexDBService.cargarDatosIniciales).toHaveBeenCalledWith('mock-uuid');
+      expect(loadIndexDBService.cargarDatosIniciales).toHaveBeenCalledWith(
+        'mock-uuid',
+      );
       expect(loadingService.hide).toHaveBeenCalled();
     });
 
     it('should hide loading even if an error occurs during sync', async () => {
-      dataSyncService.startSync.and.returnValue(Promise.reject('Sync failed'));
+      dataSyncService.startSync.mockRejectedValueOnce(new Error('Sync failed'));
 
-      await expectAsync(component.ngOnInit()).toBeRejected();
+      try {
+        await component.ngOnInit();
+        fail('Expected ngOnInit() to throw');
+      } catch (err) {
+        expect(err).toBeInstanceOf(Error);
+        expect((err as Error).message).toBe('Sync failed');
+      }
 
       expect(loadingService.show).toHaveBeenCalled();
       expect(loadingService.hide).toHaveBeenCalled(); // finally block

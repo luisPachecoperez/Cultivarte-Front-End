@@ -6,21 +6,22 @@ import { LoadIndexDBService } from '../../app/indexdb/services/load-index-db.ser
 import { Sesiones } from '../../app/eventos/interfaces/sesiones.interface';
 import { of, throwError } from 'rxjs';
 
+// ✅ Clases mockeadas adaptadas a Jest
 class GraphQLServiceMock {
-  query = jasmine.createSpy('query');
+  query = jest.fn();
 }
 class ActividadesDataSourceMock {
-  consultarFechaCalendario = jasmine.createSpy('consultarFechaCalendario');
+  consultarFechaCalendario = jest.fn();
 }
 class LoadIndexDBServiceMock {
-  ping = jasmine.createSpy('ping');
+  ping = jest.fn();
 }
 
-describe('🗓️ CalendarService', () => {
+describe('🗓️ CalendarService (Jest)', () => {
   let service: CalendarService;
-  let graphqlService: GraphQLServiceMock;
-  let actividadesDS: ActividadesDataSourceMock;
-  let loadIndexDBService: LoadIndexDBServiceMock;
+  let graphqlService: jest.Mocked<GraphQLServiceMock>;
+  let actividadesDS: jest.Mocked<ActividadesDataSourceMock>;
+  let loadIndexDBService: jest.Mocked<LoadIndexDBServiceMock>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -36,6 +37,10 @@ describe('🗓️ CalendarService', () => {
     graphqlService = TestBed.inject(GraphQLService) as any;
     actividadesDS = TestBed.inject(ActividadesDataSource) as any;
     loadIndexDBService = TestBed.inject(LoadIndexDBService) as any;
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   // ✅ Caso 1: backend activo y GraphQL devuelve sesiones
@@ -54,8 +59,8 @@ describe('🗓️ CalendarService', () => {
       } as any,
     ];
 
-    loadIndexDBService.ping.and.returnValue(of('pong'));
-    graphqlService.query.and.returnValue(of({ consultarFechaCalendario: mockSesiones }));
+    loadIndexDBService.ping.mockReturnValue(of('pong'));
+    graphqlService.query.mockReturnValue(of({ consultarFechaCalendario: mockSesiones }) as any);
 
     const result = await service.obtenerSesiones(fechaInicio, fechaFin, idUsuario);
 
@@ -67,8 +72,8 @@ describe('🗓️ CalendarService', () => {
 
   // ⚙️ Caso 1b: backend activo pero sin resultados
   it('⚙️ debe devolver arreglo vacío si GraphQL responde vacío', async () => {
-    loadIndexDBService.ping.and.returnValue(of('pong'));
-    graphqlService.query.and.returnValue(of({ consultarFechaCalendario: [] }));
+    loadIndexDBService.ping.mockReturnValue(of('pong'));
+    graphqlService.query.mockReturnValue(of({ consultarFechaCalendario: [] }) as any);
 
     const result = await service.obtenerSesiones('2025-01-01', '2025-01-02', 'USER2');
     expect(result).toEqual([]);
@@ -76,8 +81,8 @@ describe('🗓️ CalendarService', () => {
 
   // ⚙️ Caso 1c: GraphQL responde undefined (branch de seguridad)
   it('⚙️ debe manejar respuesta undefined de GraphQL sin romper', async () => {
-    loadIndexDBService.ping.and.returnValue(of('pong'));
-    graphqlService.query.and.returnValue(of(undefined as any));
+    loadIndexDBService.ping.mockReturnValue(of('pong'));
+    graphqlService.query.mockReturnValue(of(undefined as any));
 
     const result = await service.obtenerSesiones('2025-02-01', '2025-02-02', 'USER3');
     expect(result).toEqual([]);
@@ -89,9 +94,9 @@ describe('🗓️ CalendarService', () => {
       { id_sesion: 'F1', nombre_actividad: 'Evento Offline', desde: '2025-10-03', hasta: '2025-10-03' },
     ];
 
-    loadIndexDBService.ping.and.returnValue(of('pong'));
-    graphqlService.query.and.returnValue(throwError(() => new Error('GraphQL error')));
-    actividadesDS.consultarFechaCalendario.and.returnValue(Promise.resolve(fallbackSesiones));
+    loadIndexDBService.ping.mockReturnValue(of('pong'));
+    graphqlService.query.mockReturnValue(throwError(() => new Error('GraphQL error')));
+    actividadesDS.consultarFechaCalendario.mockResolvedValue(fallbackSesiones);
 
     const result = await service.obtenerSesiones('2025-10-01', '2025-10-05', 'USER4');
 
@@ -100,44 +105,42 @@ describe('🗓️ CalendarService', () => {
     expect(result[0].id_sesion).toBe('F1');
   });
 
-
-// 📴 Caso 3: backend inactivo → usa IndexedDB directamente
-it('📴 debe obtener sesiones desde IndexedDB cuando ping ≠ pong', async () => {
-  const offlineSesiones = [
-    {
-      id: 'O1',
-      title: 'Capacitación',
-      start: '2025-10-11T08:00',
-      end: '2025-10-11T10:00',
-      extendedProps: {
-        id_sesion: 'O1',
-        id_actividad: 'A1',
-        nombre_actividad: 'Capacitación',
-        desde: '2025-10-11T08:00',
-        hasta: '2025-10-11T10:00',
-        asistentes_evento: 12,
+  // 📴 Caso 3: backend inactivo → usa IndexedDB directamente
+  it('📴 debe obtener sesiones desde IndexedDB cuando ping ≠ pong', async () => {
+    const offlineSesiones = [
+      {
+        id: 'O1',
+        title: 'Capacitación',
+        start: '2025-10-11T08:00',
+        end: '2025-10-11T10:00',
+        extendedProps: {
+          id_sesion: 'O1',
+          id_actividad: 'A1',
+          nombre_actividad: 'Capacitación',
+          desde: '2025-10-11T08:00',
+          hasta: '2025-10-11T10:00',
+          asistentes_evento: 12,
+        },
       },
-    },
-  ];
+    ];
 
-  loadIndexDBService.ping.and.returnValue(of('offline'));
-  actividadesDS.consultarFechaCalendario.and.returnValue(Promise.resolve(offlineSesiones));
+    loadIndexDBService.ping.mockReturnValue(of('offline'));
+    actividadesDS.consultarFechaCalendario.mockResolvedValue(offlineSesiones);
 
-  const result = await service.obtenerSesiones('2025-10-10', '2025-10-12', 'USER5');
+    const result = await service.obtenerSesiones('2025-10-10', '2025-10-12', 'USER5');
 
-  expect(actividadesDS.consultarFechaCalendario).toHaveBeenCalled();
-  expect(result[0].extendedProps.id_sesion).toBe('O1'); // ✅ FIX
-  expect(result[0].extendedProps.nombre_actividad).toBe('Capacitación');
-});
+    expect(actividadesDS.consultarFechaCalendario).toHaveBeenCalled();
+    expect(result[0].extendedProps.id_sesion).toBe('O1');
+    expect(result[0].extendedProps.nombre_actividad).toBe('Capacitación');
+  });
 
   // ⚠️ Caso 4: Fallback offline con error inesperado
   it('🚨 debe lanzar error si el fallback IndexedDB también falla', async () => {
-    loadIndexDBService.ping.and.returnValue(of('pong'));
-    graphqlService.query.and.returnValue(throwError(() => new Error('Network fail')));
-    actividadesDS.consultarFechaCalendario.and.returnValue(Promise.reject('IndexedDB error'));
+    loadIndexDBService.ping.mockReturnValue(of('pong'));
+    graphqlService.query.mockReturnValue(throwError(() => new Error('Network fail')));
+    actividadesDS.consultarFechaCalendario.mockRejectedValue('IndexedDB error');
 
-    await expectAsync(
-      service.obtenerSesiones('2025-10-10', '2025-10-11', 'USER6'),
-    ).toBeRejectedWith('IndexedDB error');
+    await expect(service.obtenerSesiones('2025-10-10', '2025-10-11', 'USER6'))
+      .rejects.toBe('IndexedDB error');
   });
 });

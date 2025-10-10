@@ -10,7 +10,7 @@ function dexiePromise<T = any>(value?: T): any {
   return p;
 }
 
-describe('Personas_programasDataSource', () => {
+describe('Personas_programasDataSource (Jest)', () => {
   let service: Personas_programasDataSource;
 
   const mockRegistro: Personas_programasDB = {
@@ -31,17 +31,20 @@ describe('Personas_programasDataSource', () => {
     service = TestBed.inject(Personas_programasDataSource);
 
     (indexDB as any).personas_programas = {
-      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockRegistro])),
-      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockRegistro)),
-      add: jasmine.createSpy('add').and.returnValue(dexiePromise('PP1')),
-      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
-      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
+      toArray: jest.fn().mockReturnValue(dexiePromise([mockRegistro])),
+      get: jest.fn().mockReturnValue(dexiePromise(mockRegistro)),
+      add: jest.fn().mockReturnValue(dexiePromise('PP1')),
+      update: jest.fn().mockReturnValue(dexiePromise(1)),
+      delete: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      bulkAdd: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      clear: jest.fn().mockReturnValue(dexiePromise(undefined)),
     };
   });
 
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    jest.clearAllMocks();
+  });
 
   // --- getAll ---
   it('🟢 getAll debe retornar todos los registros', async () => {
@@ -55,8 +58,7 @@ describe('Personas_programasDataSource', () => {
   it('🟢 getById debe retornar un registro por id', async () => {
     const result = await service.getById('PP1');
     expect(result?.id_persona).toBe('U1');
-    // 👇 evitamos error de TS2554
-    expect((indexDB.personas_programas.get as jasmine.Spy).calls.count()).toBeGreaterThan(0);
+    expect(indexDB.personas_programas.get).toHaveBeenCalledWith('PP1');
   });
 
   // --- create ---
@@ -68,13 +70,8 @@ describe('Personas_programasDataSource', () => {
     });
 
     it('debe manejar error en add()', async () => {
-      (indexDB.personas_programas.add as jasmine.Spy).and.returnValue(Promise.reject('DB error'));
-      try {
-        await service.create(mockRegistro);
-        fail('Debe lanzar error');
-      } catch (err) {
-        expect(err).toBe('DB error');
-      }
+      (indexDB.personas_programas.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+      await expect(service.create(mockRegistro)).rejects.toBe('DB error');
     });
   });
 
@@ -83,17 +80,12 @@ describe('Personas_programasDataSource', () => {
     it('debe actualizar correctamente', async () => {
       const result = await service.update('PP1', { id_programa: 'PR2' });
       expect(result).toBe(1);
-      expect(indexDB.personas_programas.update).toHaveBeenCalled();
+      expect(indexDB.personas_programas.update).toHaveBeenCalledWith('PP1', { id_programa: 'PR2' });
     });
 
     it('debe manejar error en update()', async () => {
-      (indexDB.personas_programas.update as jasmine.Spy).and.returnValue(Promise.reject('update error'));
-      try {
-        await service.update('PP1', {});
-        fail('Debe lanzar error');
-      } catch (err) {
-        expect(err).toBe('update error');
-      }
+      (indexDB.personas_programas.update as jest.Mock).mockReturnValue(Promise.reject('update error'));
+      await expect(service.update('PP1', {})).rejects.toBe('update error');
     });
   });
 
@@ -101,17 +93,12 @@ describe('Personas_programasDataSource', () => {
   describe('🟢 delete', () => {
     it('debe eliminar correctamente', async () => {
       await service.delete('PP1');
-      expect(indexDB.personas_programas.delete).toHaveBeenCalled();
+      expect(indexDB.personas_programas.delete).toHaveBeenCalledWith('PP1');
     });
 
     it('debe manejar error en delete()', async () => {
-      (indexDB.personas_programas.delete as jasmine.Spy).and.returnValue(Promise.reject('delete error'));
-      try {
-        await service.delete('PP1');
-        fail('Debe lanzar error');
-      } catch (err) {
-        expect(err).toBe('delete error');
-      }
+      (indexDB.personas_programas.delete as jest.Mock).mockReturnValue(Promise.reject('delete error'));
+      await expect(service.delete('PP1')).rejects.toBe('delete error');
     });
   });
 
@@ -121,18 +108,13 @@ describe('Personas_programasDataSource', () => {
       const data = [{ ...mockRegistro, syncStatus: null as any }];
       await service.bulkAdd(data);
       expect(indexDB.personas_programas.bulkAdd).toHaveBeenCalled();
-      const added = (indexDB.personas_programas.bulkAdd as jasmine.Spy).calls.argsFor(0)[0];
+      const added = (indexDB.personas_programas.bulkAdd as jest.Mock).mock.calls[0][0];
       expect(added[0].syncStatus).toBe('synced');
     });
 
     it('debe manejar error en bulkAdd()', async () => {
-      (indexDB.personas_programas.bulkAdd as jasmine.Spy).and.returnValue(Promise.reject('bulk error'));
-      try {
-        await service.bulkAdd([mockRegistro]);
-        fail('Debe lanzar error');
-      } catch (err) {
-        expect(err).toBe('bulk error');
-      }
+      (indexDB.personas_programas.bulkAdd as jest.Mock).mockReturnValue(Promise.reject('bulk error'));
+      await expect(service.bulkAdd([mockRegistro])).rejects.toBe('bulk error');
     });
   });
 

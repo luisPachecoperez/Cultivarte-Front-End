@@ -1,15 +1,16 @@
-// src/app/shared/services/snackbar.service.spec.ts
+// ✅ src/tests/services/snackbar.service.spec.ts (versión Jest)
 import { TestBed } from '@angular/core/testing';
-import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../app/shared/services/snackbar.service';
 import { ConfirmSnackbarComponent } from '../../app/shared/components/confirm-snackbar/confirm-snackbar.component';
-import { Subject } from 'rxjs';
+
+// Mock de MatSnackBar
 class MockMatSnackBar {
-  open = jasmine.createSpy('open');
-  openFromComponent = jasmine.createSpy('openFromComponent');
+  open = jest.fn();
+  openFromComponent = jest.fn();
 }
 
-describe('SnackbarService', () => {
+describe('🧩 SnackbarService (Jest)', () => {
   let service: SnackbarService;
   let matSnackBar: MockMatSnackBar;
 
@@ -25,44 +26,45 @@ describe('SnackbarService', () => {
     matSnackBar = TestBed.inject(MatSnackBar) as unknown as MockMatSnackBar;
   });
 
-  it('should be created', () => {
+  it('✅ debe crearse correctamente', () => {
     expect(service).toBeTruthy();
   });
 
   // --- Pruebas para success, warning, error ---
-  ['success', 'warning', 'error'].forEach(method => {
-    it(`should open ${method} snackbar`, () => {
+  ['success', 'warning', 'error'].forEach((method) => {
+    it(`✅ debe abrir snackbar para ${method}`, () => {
       (service as any)[method]('Test message');
       expect(matSnackBar.open).toHaveBeenCalledWith(
         'Test message',
         'Cerrar',
-        jasmine.any(Object)
+        expect.any(Object)
       );
     });
   });
 
-  // --- Prueba para confirm (sin mock de import) ---
-  it('should expose confirm result via resolveConfirm', (done) => {
-    // Espiamos el método protegido si lo refactorizaste
+  // --- Prueba para confirm (mock dinámico del componente) ---
+  it('✅ debe emitir resultado al confirmar', (done) => {
+    // Mock dinámico del import si existe el método loadConfirmComponent
     if ((service as any).loadConfirmComponent) {
-      spyOn(service as any, 'loadConfirmComponent').and.returnValue(
-        Promise.resolve({ ConfirmSnackbarComponent })
-      );
+      jest
+        .spyOn(service as any, 'loadConfirmComponent')
+        .mockResolvedValue({ ConfirmSnackbarComponent });
     }
 
-    const confirm$ = service.confirm('Test?');
+    const confirm$ = service.confirm('¿Seguro?');
 
-    // Simulamos que el componente llama a resolveConfirm
+    // Simulamos resolución del observable (como si el usuario confirmara)
     setTimeout(() => {
       service.resolveConfirm(true);
     }, 10);
 
     confirm$.subscribe((result: boolean) => {
-      expect(result).toBeTrue();
+      expect(result).toBe(true);
+
       if ((service as any).loadConfirmComponent) {
         expect(matSnackBar.openFromComponent).toHaveBeenCalledWith(
           ConfirmSnackbarComponent,
-          jasmine.any(Object)
+          expect.any(Object)
         );
       }
       done();

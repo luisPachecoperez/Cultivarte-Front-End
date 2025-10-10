@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { Personas_sedesDataSource } from '../../app/indexdb/datasources/personas_sedes-datasource';
 import { indexDB } from '../../app/indexdb/services/database.service';
 import { Personas_sedesDB } from '../../app/indexdb/interfaces/personas_sedes.interface';
-import 'jest-preset-angular/setup-jest';
 
 // 🔹 Helper Dexie Promise compatible
 function dexiePromise<T = any>(value?: T): any {
@@ -11,8 +10,9 @@ function dexiePromise<T = any>(value?: T): any {
   return p;
 }
 
-describe('Personas_sedesDataSource', () => {
+describe('Personas_sedesDataSource (Jest)', () => {
   let service: Personas_sedesDataSource;
+
   const mockRegistro: Personas_sedesDB = {
     id_personas_sede: 'PS1',
     id_persona: 'U1',
@@ -31,15 +31,20 @@ describe('Personas_sedesDataSource', () => {
     service = TestBed.inject(Personas_sedesDataSource);
 
     (indexDB as any).personas_sedes = {
-      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockRegistro])),
-      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockRegistro)),
-      add: jasmine.createSpy('add').and.returnValue(dexiePromise('PS1')),
-      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
-      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
-      where: jasmine.createSpy('where'),
+      toArray: jest.fn().mockReturnValue(dexiePromise([mockRegistro])),
+      get: jest.fn().mockReturnValue(dexiePromise(mockRegistro)),
+      add: jest.fn().mockReturnValue(dexiePromise('PS1')),
+      update: jest.fn().mockReturnValue(dexiePromise(1)),
+      delete: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      bulkAdd: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      clear: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      where: jest.fn(),
     };
+  });
+
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    jest.clearAllMocks();
   });
 
   // --- getAll ---
@@ -53,8 +58,7 @@ describe('Personas_sedesDataSource', () => {
   it('🟢 getById debe retornar un registro por id', async () => {
     const result = await service.getById('PS1');
     expect(result?.id_persona).toBe('U1');
-    // ✅ ajustado: omitimos el check estricto con argumentos tipados
-    expect((indexDB.personas_sedes.get as jasmine.Spy).calls.count()).toBeGreaterThan(0);
+    expect(indexDB.personas_sedes.get).toHaveBeenCalledWith('PS1');
   });
 
   // --- create ---
@@ -65,26 +69,21 @@ describe('Personas_sedesDataSource', () => {
   });
 
   it('🟠 create debe manejar error', async () => {
-    (indexDB.personas_sedes.add as jasmine.Spy).and.returnValue(Promise.reject('DB error'));
-    try {
-      await service.create(mockRegistro);
-      fail('Debe lanzar error');
-    } catch (err) {
-      expect(err).toBe('DB error');
-    }
+    (indexDB.personas_sedes.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+    await expect(service.create(mockRegistro)).rejects.toBe('DB error');
   });
 
   // --- update ---
   it('🟢 update debe actualizar correctamente', async () => {
     const result = await service.update('PS1', { id_sede: 'S2' });
     expect(result).toBe(1);
-    expect(indexDB.personas_sedes.update).toHaveBeenCalled();
+    expect(indexDB.personas_sedes.update).toHaveBeenCalledWith('PS1', { id_sede: 'S2' });
   });
 
   // --- delete ---
   it('🟢 delete debe eliminar correctamente', async () => {
     await service.delete('PS1');
-    expect(indexDB.personas_sedes.delete).toHaveBeenCalled();
+    expect(indexDB.personas_sedes.delete).toHaveBeenCalledWith('PS1');
   });
 
   // --- bulkAdd ---
@@ -92,7 +91,7 @@ describe('Personas_sedesDataSource', () => {
     const data = [{ ...mockRegistro, syncStatus: null as any }];
     await service.bulkAdd(data);
     expect(indexDB.personas_sedes.bulkAdd).toHaveBeenCalled();
-    const added = (indexDB.personas_sedes.bulkAdd as jasmine.Spy).calls.argsFor(0)[0];
+    const added = (indexDB.personas_sedes.bulkAdd as jest.Mock).mock.calls[0][0];
     expect(added[0].syncStatus).toBe('synced');
   });
 
@@ -105,25 +104,27 @@ describe('Personas_sedesDataSource', () => {
   // --- getSedesByUsuario ---
   describe('🧩 getSedesByUsuario', () => {
     it('✅ debe retornar sedes del usuario', async () => {
-      (indexDB.personas_sedes.where as jasmine.Spy).and.returnValue({
-        equals: () => ({
-          toArray: () =>
+      (indexDB.personas_sedes.where as jest.Mock).mockReturnValue({
+        equals: jest.fn().mockReturnValue({
+          toArray: jest.fn().mockReturnValue(
             dexiePromise([
               { id_persona: 'U1', id_sede: 'S1' },
               { id_persona: 'U1', id_sede: 'S2' },
-            ]),
+            ])
+          ),
         }),
       });
 
       const result = await service.getSedesByUsuario('U1');
       expect(result).toEqual(['S1', 'S2']);
-      // 🔧 Ajuste: no verificamos el valor del argumento, solo que se llamó
       expect(indexDB.personas_sedes.where).toHaveBeenCalled();
     });
 
     it('⚠️ debe retornar [] si no hay registros', async () => {
-      (indexDB.personas_sedes.where as jasmine.Spy).and.returnValue({
-        equals: () => ({ toArray: () => dexiePromise([]) }),
+      (indexDB.personas_sedes.where as jest.Mock).mockReturnValue({
+        equals: jest.fn().mockReturnValue({
+          toArray: jest.fn().mockReturnValue(dexiePromise([])),
+        }),
       });
       const result = await service.getSedesByUsuario('U2');
       expect(result).toEqual([]);

@@ -1,4 +1,3 @@
-// ✅ src/tests/datasource/personas-datasource.spec.ts
 import { TestBed } from '@angular/core/testing';
 import { PersonasDataSource } from '../../app/indexdb/datasources/personas-datasource';
 import { indexDB } from '../../app/indexdb/services/database.service';
@@ -12,7 +11,7 @@ function mockDexiePromise<T>(value: T): any {
   return p;
 }
 
-describe('PersonasDataSource', () => {
+describe('PersonasDataSource (Jest)', () => {
   let service: PersonasDataSource;
 
   const mockPersona: PersonasDB = {
@@ -29,18 +28,23 @@ describe('PersonasDataSource', () => {
     });
     service = TestBed.inject(PersonasDataSource);
 
-    // Reset global mock del indexDB
     (indexDB as any).personas = {
-      toArray: () => mockDexiePromise([mockPersona]),
-      get: () => mockDexiePromise(mockPersona),
-      bulkAdd: () => mockDexiePromise(undefined),
-      clear: () => mockDexiePromise(undefined),
-      where: () => ({
-        anyOf: () => ({ toArray: () => mockDexiePromise([]) }),
-        equals: () => ({ toArray: () => mockDexiePromise([]) }),
+      toArray: jest.fn().mockReturnValue(mockDexiePromise([mockPersona])),
+      get: jest.fn().mockReturnValue(mockDexiePromise(mockPersona)),
+      bulkAdd: jest.fn().mockReturnValue(mockDexiePromise(undefined)),
+      clear: jest.fn().mockReturnValue(mockDexiePromise(undefined)),
+      where: jest.fn().mockReturnValue({
+        anyOf: jest.fn().mockReturnValue({
+          toArray: jest.fn().mockReturnValue(mockDexiePromise([])),
+        }),
+        equals: jest.fn().mockReturnValue({
+          toArray: jest.fn().mockReturnValue(mockDexiePromise([])),
+        }),
       }),
     };
   });
+
+  afterEach(() => jest.clearAllMocks());
 
   // ✅ getAll
   it('getAll debe devolver todas las personas', async () => {
@@ -58,14 +62,14 @@ describe('PersonasDataSource', () => {
   // ✅ bulkAdd agrega syncStatus si falta
   it('bulkAdd agrega syncStatus si no está definido', async () => {
     const data: PersonasDB[] = [{ id_persona: 'P2' } as any];
-    const spy = spyOn(indexDB.personas, 'bulkAdd').and.callThrough();
+    const spy = jest.spyOn(indexDB.personas, 'bulkAdd');
     await service.bulkAdd(data);
     expect(spy).toHaveBeenCalled();
   });
 
   // ✅ deleteFull
   it('deleteFull debe limpiar todas las personas', async () => {
-    const spy = spyOn(indexDB.personas, 'clear').and.callThrough();
+    const spy = jest.spyOn(indexDB.personas, 'clear');
     await service.deleteFull();
     expect(spy).toHaveBeenCalled();
   });
@@ -83,50 +87,50 @@ describe('PersonasDataSource', () => {
     personasSedesAliados?: any[];
   }) {
     (indexDB as any).personas_sedes = {
-      where: jasmine.createSpy('where').and.callFake(() => ({
-        equals: () => ({
-          toArray: () => mockDexiePromise(opts.sedesUsuario ?? []),
+      where: jest.fn().mockReturnValue({
+        equals: jest.fn().mockReturnValue({
+          toArray: jest.fn().mockReturnValue(mockDexiePromise(opts.sedesUsuario ?? [])),
         }),
-        anyOf: () => ({
-          and: () => ({
-            toArray: () => mockDexiePromise(opts.personasSedesAliados ?? []),
+        anyOf: jest.fn().mockReturnValue({
+          and: jest.fn().mockReturnValue({
+            toArray: jest.fn().mockReturnValue(mockDexiePromise(opts.personasSedesAliados ?? [])),
           }),
         }),
-      })),
+      }),
     };
 
     (indexDB as any).parametros_generales = {
-      where: jasmine.createSpy('where').and.callFake(() => ({
-        equals: () => ({
-          first: () => mockDexiePromise(opts.paramGeneral),
+      where: jest.fn().mockReturnValue({
+        equals: jest.fn().mockReturnValue({
+          first: jest.fn().mockReturnValue(mockDexiePromise(opts.paramGeneral)),
         }),
-      })),
+      }),
     };
 
     (indexDB as any).parametros_detalle = {
-      where: jasmine.createSpy('where').and.callFake(() => ({
-        equals: () => ({
-          filter: () => ({
-            first: () => mockDexiePromise(opts.paramDetalle),
+      where: jest.fn().mockReturnValue({
+        equals: jest.fn().mockReturnValue({
+          filter: jest.fn().mockReturnValue({
+            first: jest.fn().mockReturnValue(mockDexiePromise(opts.paramDetalle)),
           }),
         }),
-      })),
+      }),
     };
 
     (indexDB as any).personas_grupo_interes = {
-      where: jasmine.createSpy('where').and.callFake(() => ({
-        equals: () => ({
-          toArray: () => mockDexiePromise(opts.personasGrupo ?? []),
+      where: jest.fn().mockReturnValue({
+        equals: jest.fn().mockReturnValue({
+          toArray: jest.fn().mockReturnValue(mockDexiePromise(opts.personasGrupo ?? [])),
         }),
-      })),
+      }),
     };
 
     (indexDB as any).personas = {
-      where: jasmine.createSpy('where').and.callFake(() => ({
-        anyOf: () => ({
-          toArray: () => mockDexiePromise(opts.aliados ?? []),
+      where: jest.fn().mockReturnValue({
+        anyOf: jest.fn().mockReturnValue({
+          toArray: jest.fn().mockReturnValue(mockDexiePromise(opts.aliados ?? [])),
         }),
-      })),
+      }),
     };
   }
 

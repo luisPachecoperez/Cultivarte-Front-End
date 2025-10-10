@@ -1,6 +1,4 @@
-// src/app/shared/services/auth.service.spec.ts
 import { TestBed } from '@angular/core/testing';
-
 import { AuthService } from '../../app/shared/services/auth.service';
 import { CookieService } from '../../app/shared/services/cookie.service';
 import { GraphQLService } from '../../app/shared/services/graphql.service';
@@ -10,19 +8,28 @@ import * as CryptoJS from 'crypto-js';
 import { Usuario } from '../../app/shared/interfaces/usuario.interface';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 
-describe('AuthService', () => {
+describe('AuthService (Jest)', () => {
   let service: AuthService;
-  let cookieService: jasmine.SpyObj<CookieService>;
-  let graphQLService: jasmine.SpyObj<GraphQLService>;
-  let router: jasmine.SpyObj<Router>;
+  let cookieService: jest.Mocked<CookieService>;
+  let graphQLService: jest.Mocked<GraphQLService>;
+  let router: jest.Mocked<Router>;
 
   beforeEach(() => {
-    const cookieSpy = jasmine.createSpyObj('CookieService', ['getCookie', 'deleteCookie']);
-    const graphQLSpy = jasmine.createSpyObj('GraphQLService', ['mutation']);
-    const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    const cookieSpy: jest.Mocked<CookieService> = {
+      getCookie: jest.fn(),
+      deleteCookie: jest.fn(),
+    } as any;
+
+    const graphQLSpy: jest.Mocked<GraphQLService> = {
+      mutation: jest.fn(),
+    } as any;
+
+    const routerSpy: jest.Mocked<Router> = {
+      navigate: jest.fn(),
+    } as any;
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule], // ✅ Provee HttpClient
+      imports: [HttpClientTestingModule],
       providers: [
         AuthService,
         { provide: CookieService, useValue: cookieSpy },
@@ -32,74 +39,81 @@ describe('AuthService', () => {
     });
 
     service = TestBed.inject(AuthService);
-    cookieService = TestBed.inject(CookieService) as jasmine.SpyObj<CookieService>;
-    graphQLService = TestBed.inject(GraphQLService) as jasmine.SpyObj<GraphQLService>;
-    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    cookieService = TestBed.inject(CookieService) as jest.Mocked<CookieService>;
+    graphQLService = TestBed.inject(GraphQLService) as jest.Mocked<GraphQLService>;
+    router = TestBed.inject(Router) as jest.Mocked<Router>;
   });
 
+  // -------------------------------------------------------------------------
   describe('isAuthenticated', () => {
-    it('should return false if no cookie exists', () => {
-      cookieService.getCookie.and.returnValue(null);
+    it('🔴 debe retornar false si no hay cookie', () => {
+      cookieService.getCookie.mockReturnValue(null);
       expect(service.isAuthenticated()).toBe(false);
     });
 
-    it('should return false if cookie is corrupt or empty', () => {
-      cookieService.getCookie.and.returnValue('invalid');
-      spyOn(CryptoJS.AES, 'decrypt').and.returnValue({
+    it('🔴 debe retornar false si cookie es inválida o vacía', () => {
+      cookieService.getCookie.mockReturnValue('invalid');
+      jest.spyOn(CryptoJS.AES, 'decrypt').mockReturnValue({
         toString: () => '',
       } as any);
 
       expect(service.isAuthenticated()).toBe(false);
     });
 
-    it('should return false if token is expired', () => {
+    it('🔴 debe retornar false si token expiró', () => {
       const expiredUser: Usuario = {
         id: '1',
         email: 'test@example.com',
         nombre: 'Test',
         photoUrl: '',
-        exp: Math.floor(Date.now() / 1000) - 100, // expirado
+        exp: Math.floor(Date.now() / 1000) - 100,
       };
-      cookieService.getCookie.and.returnValue('encrypted');
-      spyOn(CryptoJS.AES, 'decrypt').and.returnValue({
+
+      cookieService.getCookie.mockReturnValue('encrypted');
+      jest.spyOn(CryptoJS.AES, 'decrypt').mockReturnValue({
         toString: () => JSON.stringify(expiredUser),
       } as any);
 
       expect(service.isAuthenticated()).toBe(false);
     });
 
-    it('should return true if valid, non-expired user in cookie', () => {
+    it('🟢 debe retornar true si el usuario es válido y no expirado', () => {
       const validUser: Usuario = {
         id: '1',
         email: 'test@example.com',
         nombre: 'Test User',
         photoUrl: '',
-        exp: Math.floor(Date.now() / 1000) + 3600, // válido
+        exp: Math.floor(Date.now() / 1000) + 3600,
       };
-      cookieService.getCookie.and.returnValue('encrypted');
-      spyOn(CryptoJS.AES, 'decrypt').and.returnValue({
+
+      cookieService.getCookie.mockReturnValue('encrypted');
+      jest.spyOn(CryptoJS.AES, 'decrypt').mockReturnValue({
         toString: () => JSON.stringify(validUser),
       } as any);
 
       expect(service.isAuthenticated()).toBe(true);
     });
 
-    it('should return false if decryption throws', () => {
-      cookieService.getCookie.and.returnValue('encrypted');
-      spyOn(CryptoJS.AES, 'decrypt').and.throwError('Decryption failed');
+    it('🔴 debe retornar false si ocurre un error en decryption', () => {
+      cookieService.getCookie.mockReturnValue('encrypted');
+      jest.spyOn(CryptoJS.AES, 'decrypt').mockImplementation(() => {
+        throw new Error('Decryption failed');
+      });
 
       expect(service.isAuthenticated()).toBe(false);
     });
   });
 
+  // -------------------------------------------------------------------------
   describe('getUserUuid', () => {
-    it('should return hardcoded UUID', () => {
+    it('🧩 debe retornar el UUID fijo', () => {
       expect(service.getUserUuid()).toBe('07fc57f3-6955-4657-82f2-cf91ec9c83dd');
     });
   });
 
+  // -------------------------------------------------------------------------
   describe('clear', () => {
-    it('should set user signal to null', () => {
+    it('🧹 debe limpiar el usuario (user() = null)', () => {
       const mockUser: Usuario = {
         id: '1',
         email: 'test@example.com',
@@ -107,8 +121,9 @@ describe('AuthService', () => {
         photoUrl: '',
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
-      graphQLService.mutation.and.returnValue(
-        of({ googleLogin: { success: true, message: '', user: mockUser } })
+
+      graphQLService.mutation.mockReturnValue(
+        of({ googleLogin: { success: true, message: '', user: mockUser } }) as any
       );
 
       service.googleLogin('fake-token').subscribe();
@@ -119,8 +134,9 @@ describe('AuthService', () => {
     });
   });
 
+  // -------------------------------------------------------------------------
   describe('googleLogin', () => {
-    it('should set user signal on successful login', () => {
+    it('🟢 debe setear el usuario en login exitoso', () => {
       const mockUser: Usuario = {
         id: '1',
         email: 'test@example.com',
@@ -128,29 +144,33 @@ describe('AuthService', () => {
         photoUrl: '',
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
-      graphQLService.mutation.and.returnValue(
-        of({ googleLogin: { success: true, message: '', user: mockUser } })
+
+      graphQLService.mutation.mockReturnValue(
+        of({ googleLogin: { success: true, message: '', user: mockUser } }) as any
       );
 
       service.googleLogin('fake-token').subscribe();
       expect(service.user()).toEqual(mockUser);
     });
 
-    it('should clear user signal on failed login', () => {
-      graphQLService.mutation.and.returnValue(
-        of({ googleLogin: { success: false, message: 'Error' } })
+    it('🔴 debe limpiar usuario en login fallido', () => {
+      graphQLService.mutation.mockReturnValue(
+        of({ googleLogin: { success: false, message: 'Error' } }) as any
       );
 
       service.googleLogin('fake-token').subscribe();
       expect(service.user()).toBeNull();
     });
 
-    it('should handle error in mutation and clear user', () => {
-      graphQLService.mutation.and.returnValue(throwError(() => new Error('Network error')));
+    it('🔴 debe manejar error de red y limpiar usuario', () => {
+      graphQLService.mutation.mockReturnValue(
+        throwError(() => new Error('Network error'))
+      );
 
       service.googleLogin('fake-token').subscribe({
         error: () => {},
       });
+
       expect(service.user()).toBeNull();
     });
   });

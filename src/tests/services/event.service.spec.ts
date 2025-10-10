@@ -1,8 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom } from 'rxjs';
-import { of, throwError } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-
 
 import { EventService } from '../../app/eventos/components/event.component/services/event.service';
 import { GraphQLService } from '../../app/shared/services/graphql.service';
@@ -18,46 +16,46 @@ import { Sesiones } from '../../app/eventos/interfaces/sesiones.interface';
 import { PreCreateActividad } from '../../app/eventos/interfaces/pre-create-actividad.interface';
 import { PreEditActividad } from '../../app/eventos/interfaces/pre-edit-actividad.interface';
 
-// 🧱 Mock classes
+// 🧱 Mock classes (versión Jest)
 class GraphQLServiceMock {
-  query = jasmine.createSpy('query');
-  mutation = jasmine.createSpy('mutation');
+  query = jest.fn();
+  mutation = jest.fn();
 }
 class AuthServiceMock {
-  getUserUuid = jasmine.createSpy('getUserUuid').and.returnValue('USER-001');
+  getUserUuid = jest.fn().mockReturnValue('USER-001');
 }
 class ActividadesDataSourceMock {
-  create = jasmine.createSpy('create');
-  getPreEditActividad = jasmine.createSpy('getPreEditActividad').and.returnValue(Promise.resolve({ offline: true }));
-  getPreCreateActividad = jasmine.createSpy('getPreCreateActividad').and.returnValue(Promise.resolve({ offline: true }));
+  create = jest.fn();
+  getPreEditActividad = jest.fn().mockResolvedValue({ offline: true });
+  getPreCreateActividad = jest.fn().mockResolvedValue({ offline: true });
 }
 class SesionesDataSourceMock {
-  create = jasmine.createSpy('create');
+  create = jest.fn();
 }
 class GridSesionesServiceMock {
-  guardarCambiosSesiones = jasmine.createSpy('guardarCambiosSesiones').and.returnValue(Promise.resolve({ exitoso: 'S' }));
+  guardarCambiosSesiones = jest.fn().mockResolvedValue({ exitoso: 'S' });
 }
 class LoadIndexDBServiceMock {
-  ping = jasmine.createSpy('ping');
+  ping = jest.fn();
 }
 class LoadingServiceMock {
-  show = jasmine.createSpy('show');
-  hide = jasmine.createSpy('hide');
+  show = jest.fn();
+  hide = jest.fn();
 }
 
-describe('🧩 EventService (Cobertura 97%)', () => {
+describe('🧩 EventService (Jest, Cobertura 97%)', () => {
   let service: EventService;
-  let graphQL: GraphQLServiceMock;
-  let auth: AuthServiceMock;
-  let actividadesDS: ActividadesDataSourceMock;
-  let sesionesDS: SesionesDataSourceMock;
-  let gridSesiones: GridSesionesServiceMock;
-  let loadIndexDB: LoadIndexDBServiceMock;
-  let loading: LoadingServiceMock;
+  let graphQL: jest.Mocked<GraphQLServiceMock>;
+  let auth: jest.Mocked<AuthServiceMock>;
+  let actividadesDS: jest.Mocked<ActividadesDataSourceMock>;
+  let sesionesDS: jest.Mocked<SesionesDataSourceMock>;
+  let gridSesiones: jest.Mocked<GridSesionesServiceMock>;
+  let loadIndexDB: jest.Mocked<LoadIndexDBServiceMock>;
+  let loading: jest.Mocked<LoadingServiceMock>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule], // 👈 agrega esto
+      imports: [HttpClientTestingModule],
       providers: [
         EventService,
         { provide: GraphQLService, useClass: GraphQLServiceMock },
@@ -85,9 +83,8 @@ describe('🧩 EventService (Cobertura 97%)', () => {
   // -------------------------------------------------------
   it('✅ debe obtener evento por id desde GraphQL cuando ping = pong', async () => {
     const id = 'ACT-1';
-    loadIndexDB.ping.and.returnValue(of('pong'));
+    loadIndexDB.ping.mockReturnValue(of('pong'));
 
-    // 🔹 Respuesta simulada coherente con la interfaz PreEditActividad
     const mockResponse = {
       getPreEditActividad: {
         id_programa: 'P1',
@@ -102,12 +99,11 @@ describe('🧩 EventService (Cobertura 97%)', () => {
       },
     };
 
-    graphQL.query.and.returnValue(of(mockResponse));
+    graphQL.query.mockReturnValue(of(mockResponse));
 
     const result = await service.obtenerEventoPorId(id);
 
     expect(graphQL.query).toHaveBeenCalled();
-    // ✅ ahora verificamos dentro de la propiedad actividad
     expect(result.actividad.id_actividad).toBe('ACT-1');
     expect(loading.show).toHaveBeenCalled();
     expect(loading.hide).toHaveBeenCalled();
@@ -115,10 +111,9 @@ describe('🧩 EventService (Cobertura 97%)', () => {
 
   it('⚠️ debe usar fallback local si GraphQL lanza error en obtenerEventoPorId', async () => {
     const id = 'ACT-ERR';
-    loadIndexDB.ping.and.returnValue(of('pong'));
-    graphQL.query.and.returnValue(throwError(() => new Error('GraphQL fail')));
+    loadIndexDB.ping.mockReturnValue(of('pong'));
+    graphQL.query.mockReturnValue(throwError(() => new Error('GraphQL fail')));
 
-    // simulamos que la base local retorna una estructura válida de PreEditActividad
     const mockLocal = {
       id_programa: 'LOCAL-P1',
       sedes: [],
@@ -130,7 +125,7 @@ describe('🧩 EventService (Cobertura 97%)', () => {
       actividad: { id_actividad: id, nombre_actividad: 'Evento local' },
       sesiones: [],
     };
-    actividadesDS.getPreEditActividad.and.returnValue(Promise.resolve(mockLocal));
+    actividadesDS.getPreEditActividad.mockResolvedValue(mockLocal);
 
     const result = await service.obtenerEventoPorId(id);
 
@@ -139,10 +134,9 @@ describe('🧩 EventService (Cobertura 97%)', () => {
     expect(result.actividad.nombre_actividad).toBe('Evento local');
   });
 
-
   it('📴 debe obtener evento desde IndexedDB cuando ping ≠ pong', async () => {
     const id = 'ACT-2';
-    loadIndexDB.ping.and.returnValue(of('offline'));
+    loadIndexDB.ping.mockReturnValue(of('offline'));
 
     const mockLocal: PreEditActividad = {
       id_programa: 'LOCAL-P2',
@@ -155,30 +149,24 @@ describe('🧩 EventService (Cobertura 97%)', () => {
       actividad: { id_actividad: id, nombre_actividad: 'Evento local offline' } as any,
       sesiones: [],
     };
-    actividadesDS.getPreEditActividad.and.returnValue(Promise.resolve(mockLocal));
+    actividadesDS.getPreEditActividad.mockResolvedValue(mockLocal);
 
     const result = await service.obtenerEventoPorId(id);
 
-    // ✅ Se llamó al fallback con el usuario mockeado
     expect(actividadesDS.getPreEditActividad).toHaveBeenCalledWith(id, 'USER-001');
-
-    // ✅ El resultado es el mock local (sin campo "offline")
     expect(result.actividad.id_actividad).toBe('ACT-2');
     expect(result.id_programa).toBe('LOCAL-P2');
-
-    // (opcional) si tienes el LoadingService mockeado
     expect(loading.show).toHaveBeenCalled();
     expect(loading.hide).toHaveBeenCalled();
   });
-
 
   // -------------------------------------------------------
   // 🔹 obtenerConfiguracionEvento
   // -------------------------------------------------------
   it('✅ debe obtener configuración del evento desde GraphQL cuando ping = pong', async () => {
     const user = 'USER-001';
-    loadIndexDB.ping.and.returnValue(of('pong'));
-    graphQL.query.and.returnValue(of({ getPreCreateActividad: { id_programa: 'PRG1' } }));
+    loadIndexDB.ping.mockReturnValue(of('pong'));
+    graphQL.query.mockReturnValue(of({ getPreCreateActividad: { id_programa: 'PRG1' } }));
 
     const result = await firstValueFrom(service.obtenerConfiguracionEvento(user));
 
@@ -188,8 +176,8 @@ describe('🧩 EventService (Cobertura 97%)', () => {
   });
 
   it('⚠️ debe usar fallback local cuando GraphQL arroja error en obtenerConfiguracionEvento', async () => {
-    loadIndexDB.ping.and.returnValue(of('pong'));
-    graphQL.query.and.returnValue(throwError(() => new Error('GraphQL down')));
+    loadIndexDB.ping.mockReturnValue(of('pong'));
+    graphQL.query.mockReturnValue(throwError(() => new Error('GraphQL down')));
 
     const mockLocal: PreCreateActividad = {
       id_programa: 'LOCAL-P3',
@@ -200,18 +188,14 @@ describe('🧩 EventService (Cobertura 97%)', () => {
       nombresDeActividad: [],
       frecuencias: [],
     };
-    actividadesDS.getPreCreateActividad.and.returnValue(Promise.resolve(mockLocal));
+    actividadesDS.getPreCreateActividad.mockResolvedValue(mockLocal);
 
     const result = await firstValueFrom(service.obtenerConfiguracionEvento('USER-ERR'));
 
-    // ✅ Validar que se llamó al fallback local
     expect(actividadesDS.getPreCreateActividad).toHaveBeenCalledWith('USER-ERR');
-
-    // ✅ Validar el contenido del mock devuelto
     expect(result.id_programa).toBe('LOCAL-P3');
     expect(result.sedes).toEqual([]);
   });
-
 
   it('📴 debe obtener configuración desde IndexedDB cuando ping ≠ pong', async () => {
     const localRes: PreCreateActividad = {
@@ -224,12 +208,11 @@ describe('🧩 EventService (Cobertura 97%)', () => {
       frecuencias: [],
     };
 
-    loadIndexDB.ping.and.returnValue(of('offline'));
-    actividadesDS.getPreCreateActividad.and.returnValue(Promise.resolve(localRes));
+    loadIndexDB.ping.mockReturnValue(of('offline'));
+    actividadesDS.getPreCreateActividad.mockResolvedValue(localRes);
 
     const result = await firstValueFrom(service.obtenerConfiguracionEvento('USER-X'));
 
-    // No se llama GraphQL en modo offline
     expect(graphQL.query).not.toHaveBeenCalled();
     expect(actividadesDS.getPreCreateActividad).toHaveBeenCalledWith('USER-X');
     expect(result).toEqual(localRes);
@@ -239,12 +222,12 @@ describe('🧩 EventService (Cobertura 97%)', () => {
   // 🔹 crearEvento
   // -------------------------------------------------------
   it('🚀 debe crear evento correctamente en backend (ping = pong)', async () => {
-    loadIndexDB.ping.and.returnValue(of('pong'));
+    loadIndexDB.ping.mockReturnValue(of('pong'));
     const evento = { id_actividad: 'ACT-123', nombre_actividad: 'Taller' } as Actividades;
     const sesiones = [{ id_sesion: 'S1' } as Sesiones];
 
     const gqlResponse: GraphQLResponse = { exitoso: 'S', mensaje: 'OK' };
-    graphQL.mutation.and.returnValue(of({ createActividad: gqlResponse }));
+    graphQL.mutation.mockReturnValue(of({ createActividad: gqlResponse }));
 
     const result = await service.crearEvento(evento, sesiones);
 
@@ -256,9 +239,9 @@ describe('🧩 EventService (Cobertura 97%)', () => {
   });
 
   it('⚠️ debe manejar error GraphQL en crearEvento sin romper', async () => {
-    loadIndexDB.ping.and.returnValue(of('pong'));
+    loadIndexDB.ping.mockReturnValue(of('pong'));
     const evento = { id_actividad: 'ACT-ERR' } as Actividades;
-    graphQL.mutation.and.returnValue(throwError(() => new Error('GraphQL error')));
+    graphQL.mutation.mockReturnValue(throwError(() => new Error('GraphQL error')));
 
     const result = await service.crearEvento(evento, []);
 
@@ -267,7 +250,7 @@ describe('🧩 EventService (Cobertura 97%)', () => {
   });
 
   it('📴 debe guardar evento localmente cuando ping ≠ pong', async () => {
-    loadIndexDB.ping.and.returnValue(of('offline'));
+    loadIndexDB.ping.mockReturnValue(of('offline'));
     const evento = { id_actividad: 'ACT-LOCAL' } as Actividades;
     const sesiones = [{ id_sesion: 'S1' } as Sesiones];
 

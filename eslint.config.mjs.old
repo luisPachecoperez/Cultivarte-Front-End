@@ -31,6 +31,18 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+
+      // 🧩 Agrega esto 👇 para suavizar Prettier
+      'prettier/prettier': [
+        'warn',
+        {
+          endOfLine: 'auto', // evita conflictos de saltos de línea Windows/Linux
+          printWidth: 120, // permite líneas más largas sin romper
+          bracketSameLine: true, // evita multilíneas innecesarias
+          trailingComma: 'es5',
+          singleQuote: true,
+        },
+      ],
     },
   },
 );

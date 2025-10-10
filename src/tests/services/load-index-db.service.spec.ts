@@ -1,4 +1,4 @@
-// src/tests/services/load-index-db.service.spec.ts
+// ✅ src/tests/services/load-index-db.service.spec.ts (versión Jest)
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -22,54 +22,17 @@ import { SesionesDataSource } from '../../app/indexdb/datasources/sesiones-datas
 
 // === Mocks ===
 class MockGraphQL {
-  query = jasmine.createSpy('query');
+  query = jest.fn();
 }
-
 class MockDatabaseService {}
 
-// DataSource mocks
-class MockParametrosGeneralesDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-}
-class MockParametrosDetalleDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-}
-class MockPersonasDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
-}
-class MockPoblacionesDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-}
-class MockSedesDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-}
-class MockPersonasSedesDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
-}
-class MockPersonasProgramasDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
-}
-class MockPersonasGrupoInteresDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
-}
-class MockActividadesDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
-}
-class MockAsistenciasDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
-}
-class MockSesionesDS {
-  bulkAdd = jasmine.createSpy('bulkAdd').and.returnValue(Promise.resolve());
-  deleteFull = jasmine.createSpy('deleteFull').and.returnValue(Promise.resolve());
+// DataSource mocks con Jest
+class MockDS {
+  bulkAdd = jest.fn().mockResolvedValue(undefined);
+  deleteFull = jest.fn().mockResolvedValue(undefined);
 }
 
-// === Helpers para crear objetos completos ===
+// === Helpers para crear objetos ===
 const createParametrosGenerales = (override: Partial<any> = {}) => ({
   id_parametro_general: '1',
   nombre_parametro: 'test',
@@ -89,7 +52,7 @@ const createParametrosDetalle = (override: Partial<any> = {}) => ({
   nombre: 'det',
   codigo: 'C1',
   orden: 1,
-  valores: '', // ❌ No puede ser null si la interfaz espera string
+  valores: '',
   estado: 'A',
   id_creado_por: 'admin',
   fecha_creacion: '2025-01-01T00:00:00Z',
@@ -101,7 +64,7 @@ const createParametrosDetalle = (override: Partial<any> = {}) => ({
 
 const createPoblacion = (override: Partial<any> = {}) => ({
   id_poblacion: '1',
-  id_padre: '', // ❌ No puede ser null si la interfaz espera string
+  id_padre: '',
   nombre: 'Pob1',
   id_creado_por: 'admin',
   fecha_creacion: '2025-01-01T00:00:00Z',
@@ -124,14 +87,6 @@ const createSede = (override: Partial<any> = {}) => ({
   fecha_creacion: '2020-01-01T00:00:00Z',
   id_modificado_por: 'admin',
   fecha_modificacion: '2020-01-01T00:00:00Z',
-  // Campos faltantes (ajusta según tu interfaz real)
-  id_regional_davivienda: '',
-  id_regional_seguros_bolivar: '',
-  id_tipo_inmueble: '',
-  id_espacio: '',
-  direccion: '',
-  telefono: '',
-  correo: '',
   estado: 'A',
   syncStatus: 'synced',
   ...override,
@@ -144,33 +99,7 @@ const createPersona = (override: Partial<any> = {}) => ({
   identificacion: '123',
   nombres: 'Juan',
   apellidos: 'Pérez',
-  razon_social: '',
   email: 'a@b.com',
-  // Campos faltantes (ajusta según tu interfaz real)
-  id_colegio: '',
-  id_sexo: '',
-  id_ubicacion: '',
-  fecha_nacimiento: '',
-  celular: '',
-  telefono_fijo: '',
-  estado_civil: '',
-  nivel_educativo: '',
-  ocupacion: '',
-  eps: '',
-  regimen_salud: '',
-  discapacidad: '',
-  etnia: '',
-  condicion_vulnerabilidad: '',
-  id_poblacion: '',
-  id_municipio_residencia: '',
-  barrio: '',
-  direccion_residencia: '',
-  estrato: '',
-  cabeza_hogar: '',
-  personas_a_cargo: '',
-  ingresos_mensuales: '',
-  id_sede_registro: '',
-  id_usuario_registro: '',
   id_creado_por: 'admin',
   fecha_creacion: '2025-01-01T00:00:00Z',
   id_modificado_por: 'admin',
@@ -221,25 +150,15 @@ const createPersonasGrupoInteres = (override: Partial<any> = {}) => ({
 const createActividad = (override: Partial<any> = {}) => ({
   id_actividad: 'A1',
   id_programa: 'P1',
-  id_tipo_actividad: 'T1',
-  id_responsable: 'R1',
-  id_aliado: 'AL1',
-  id_sede: 'S1',
-  id_frecuencia: 'F1',
-  institucional: 'S', // ❌ Debe ser string, no boolean
   nombre_actividad: 'Act1',
   descripcion: 'Desc',
-  fecha_actividad: '2025-01-01',
-  hora_inicio: '08:00',
-  hora_fin: '10:00',
-  plazo_asistencia: '30', // ❌ Debe ser string
+  institucional: 'S',
   estado: 'A',
   id_creado_por: 'admin',
   fecha_creacion: '2025-01-01T00:00:00Z',
   id_modificado_por: 'admin',
   fecha_modificacion: '2025-01-01T00:00:00Z',
   syncStatus: 'synced',
-  deleted: false,
   ...override,
 });
 
@@ -249,14 +168,12 @@ const createSesion = (override: Partial<any> = {}) => ({
   fecha_actividad: '2025-01-01',
   hora_inicio: '08:00',
   hora_fin: '10:00',
-  imagen: null,
   nro_asistentes: 10,
   id_creado_por: 'admin',
   fecha_creacion: '2025-01-01T00:00:00Z',
   id_modificado_por: 'admin',
   fecha_modificacion: '2025-01-01T00:00:00Z',
   syncStatus: 'synced',
-  deleted: false,
   ...override,
 });
 
@@ -265,7 +182,7 @@ const createAsistencia = (override: Partial<any> = {}) => ({
   id_sesion: 'S1',
   id_persona: 'P1',
   id_creado_por: 'admin',
-  fecha_creacion: new Date('2025-01-01T00:00:00Z'), // ❌ Debe ser Date, no string
+  fecha_creacion: new Date('2025-01-01T00:00:00Z'),
   id_modificado_por: 'admin',
   fecha_modificacion: new Date('2025-01-01T00:00:00Z'),
   syncStatus: 'synced',
@@ -273,22 +190,21 @@ const createAsistencia = (override: Partial<any> = {}) => ({
   ...override,
 });
 
-describe('🧩 LoadIndexDBService', () => {
+describe('🧩 LoadIndexDBService (Jest)', () => {
   let service: LoadIndexDBService;
-  let gql: MockGraphQL;
+  let gql: jest.Mocked<MockGraphQL>;
 
-  // DataSources
-  let pgDS: MockParametrosGeneralesDS;
-  let pdDS: MockParametrosDetalleDS;
-  let personasDS: MockPersonasDS;
-  let poblacionesDS: MockPoblacionesDS;
-  let sedesDS: MockSedesDS;
-  let personasSedesDS: MockPersonasSedesDS;
-  let personasProgramasDS: MockPersonasProgramasDS;
-  let personasGrupoInteresDS: MockPersonasGrupoInteresDS;
-  let actividadesDS: MockActividadesDS;
-  let asistenciasDS: MockAsistenciasDS;
-  let sesionesDS: MockSesionesDS;
+  let pgDS: MockDS;
+  let pdDS: MockDS;
+  let personasDS: MockDS;
+  let poblacionesDS: MockDS;
+  let sedesDS: MockDS;
+  let personasSedesDS: MockDS;
+  let personasProgramasDS: MockDS;
+  let personasGrupoInteresDS: MockDS;
+  let actividadesDS: MockDS;
+  let asistenciasDS: MockDS;
+  let sesionesDS: MockDS;
 
   const userId = 'user123';
 
@@ -298,17 +214,17 @@ describe('🧩 LoadIndexDBService', () => {
         LoadIndexDBService,
         { provide: GraphQLService, useClass: MockGraphQL },
         { provide: DatabaseService, useClass: MockDatabaseService },
-        { provide: Parametros_generalesDataSource, useClass: MockParametrosGeneralesDS },
-        { provide: Parametros_detalleDataSource, useClass: MockParametrosDetalleDS },
-        { provide: PersonasDataSource, useClass: MockPersonasDS },
-        { provide: PoblacionesDataSource, useClass: MockPoblacionesDS },
-        { provide: SedesDataSource, useClass: MockSedesDS },
-        { provide: Personas_sedesDataSource, useClass: MockPersonasSedesDS },
-        { provide: Personas_programasDataSource, useClass: MockPersonasProgramasDS },
-        { provide: Personas_grupo_interesDataSource, useClass: MockPersonasGrupoInteresDS },
-        { provide: ActividadesDataSource, useClass: MockActividadesDS },
-        { provide: AsistenciasDataSource, useClass: MockAsistenciasDS },
-        { provide: SesionesDataSource, useClass: MockSesionesDS },
+        { provide: Parametros_generalesDataSource, useClass: MockDS },
+        { provide: Parametros_detalleDataSource, useClass: MockDS },
+        { provide: PersonasDataSource, useClass: MockDS },
+        { provide: PoblacionesDataSource, useClass: MockDS },
+        { provide: SedesDataSource, useClass: MockDS },
+        { provide: Personas_sedesDataSource, useClass: MockDS },
+        { provide: Personas_programasDataSource, useClass: MockDS },
+        { provide: Personas_grupo_interesDataSource, useClass: MockDS },
+        { provide: ActividadesDataSource, useClass: MockDS },
+        { provide: AsistenciasDataSource, useClass: MockDS },
+        { provide: SesionesDataSource, useClass: MockDS },
       ],
     });
 
@@ -329,17 +245,17 @@ describe('🧩 LoadIndexDBService', () => {
   });
 
   // --- ping ---
-  it('ping devuelve "pong" en éxito', (done) => {
-    gql.query.and.returnValue(of({ ping: { ping: 'pong' } }));
+  it('✅ ping devuelve "pong" en éxito', (done) => {
+    gql.query.mockReturnValue(of({ ping: { ping: 'pong' } }));
     service.ping().subscribe((res) => {
       expect(res).toBe('pong');
       done();
     });
   });
 
-  it('ping maneja error HTTP', (done) => {
+  it('⚠️ ping maneja error HTTP', (done) => {
     const error = new HttpErrorResponse({ status: 500, statusText: 'Server Error' });
-    gql.query.and.returnValue(throwError(() => error));
+    gql.query.mockReturnValue(throwError(() => error));
     service.ping().subscribe((res) => {
       expect(res).toContain('Server Error');
       done();
@@ -347,141 +263,127 @@ describe('🧩 LoadIndexDBService', () => {
   });
 
   // --- loadParametrosGenerales ---
-  it('loadParametrosGenerales carga datos', async () => {
-    const mockData = [createParametrosGenerales()];
-    gql.query.and.returnValue(of({ getParametrosGenerales: mockData }));
+  it('✅ loadParametrosGenerales carga datos', async () => {
+    gql.query.mockReturnValue(of({ getParametrosGenerales: [createParametrosGenerales()] }));
     await service.loadParametrosGenerales();
     expect(pgDS.bulkAdd).toHaveBeenCalled();
   });
 
   // --- loadParametrosDetalle ---
-  it('loadParametrosDetalle carga datos', async () => {
-    const mockData = [createParametrosDetalle()];
-    gql.query.and.returnValue(of({ getParametrosDetalle: mockData }));
+  it('✅ loadParametrosDetalle carga datos', async () => {
+    gql.query.mockReturnValue(of({ getParametrosDetalle: [createParametrosDetalle()] }));
     await service.loadParametrosDetalle();
     expect(pdDS.bulkAdd).toHaveBeenCalled();
   });
 
   // --- loadPoblaciones ---
-  it('loadPoblaciones carga datos', async () => {
-    const mockData = [createPoblacion()];
-    gql.query.and.returnValue(of({ getPoblaciones: mockData }));
+  it('✅ loadPoblaciones carga datos', async () => {
+    gql.query.mockReturnValue(of({ getPoblaciones: [createPoblacion()] }));
     await service.loadPoblaciones();
     expect(poblacionesDS.bulkAdd).toHaveBeenCalled();
   });
 
   // --- loadSedes ---
-  it('loadSedes carga datos', async () => {
-    const mockData = [createSede()];
-    gql.query.and.returnValue(of({ getSedes: mockData }));
+  it('✅ loadSedes carga datos', async () => {
+    gql.query.mockReturnValue(of({ getSedes: [createSede()] }));
     await service.loadSedes();
     expect(sedesDS.bulkAdd).toHaveBeenCalled();
   });
 
   // --- loadPersonas ---
-  it('loadPersonas carga con paginación', async () => {
+  it('✅ loadPersonas carga con paginación', async () => {
     let call = 0;
-    gql.query.and.callFake(() => {
+    gql.query.mockImplementation(() => {
       call++;
-      const data = call === 1
-        ? Array(2500).fill(createPersona()) // primera página llena
-        : [createPersona({ id_persona: '2' })]; // segunda página corta
-      return of({ getPersonas: data });
+      return of({
+        getPersonas: call === 1 ? Array(2500).fill(createPersona()) : [createPersona({ id_persona: '2' })],
+      });
     });
 
     await service.loadPersonas();
 
     expect(personasDS.deleteFull).toHaveBeenCalled();
-    expect(personasDS.bulkAdd).toHaveBeenCalledTimes(2); // 2 páginas procesadas
+    expect(personasDS.bulkAdd).toHaveBeenCalledTimes(2);
     expect(gql.query).toHaveBeenCalledTimes(2);
   });
 
-
-
   // --- loadPersonasSedes ---
-  it('loadPersonasSedes carga con paginación', async () => {
-    const data = [createPersonasSede()];
-    gql.query.and.returnValue(of({ getPersonasSedes: data }));
+  it('✅ loadPersonasSedes carga con paginación', async () => {
+    gql.query.mockReturnValue(of({ getPersonasSedes: [createPersonasSede()] }));
     await service.loadPersonasSedes();
     expect(personasSedesDS.deleteFull).toHaveBeenCalled();
     expect(personasSedesDS.bulkAdd).toHaveBeenCalled();
   });
 
   // --- loadPersonaProgramas ---
-  it('loadPersonaProgramas carga con paginación', async () => {
-    const data = [createPersonasPrograma()];
-    gql.query.and.returnValue(of({ getPersonaProgramas: data }));
+  it('✅ loadPersonaProgramas carga con paginación', async () => {
+    gql.query.mockReturnValue(of({ getPersonaProgramas: [createPersonasPrograma()] }));
     await service.loadPersonaProgramas();
     expect(personasProgramasDS.deleteFull).toHaveBeenCalled();
     expect(personasProgramasDS.bulkAdd).toHaveBeenCalled();
   });
 
   // --- loadPersonasGrupoInteres ---
-  it('loadPersonasGrupoInteres carga con paginación', async () => {
-    const data = [createPersonasGrupoInteres()];
-    gql.query.and.returnValue(of({ getPersonasGrupoInteres: data }));
+  it('✅ loadPersonasGrupoInteres carga con paginación', async () => {
+    gql.query.mockReturnValue(of({ getPersonasGrupoInteres: [createPersonasGrupoInteres()] }));
     await service.loadPersonasGrupoInteres();
     expect(personasGrupoInteresDS.deleteFull).toHaveBeenCalled();
     expect(personasGrupoInteresDS.bulkAdd).toHaveBeenCalled();
   });
 
   // --- loadActividadesSede ---
-  it('loadActividadesSede carga actividades por usuario', async () => {
-    const data = [createActividad()];
-    gql.query.and.returnValue(of({ getActividadSedes: data }));
+  it('✅ loadActividadesSede carga actividades por usuario', async () => {
+    gql.query.mockReturnValue(of({ getActividadSedes: [createActividad()] }));
     await service.loadActividadesSede(userId);
     expect(actividadesDS.deleteFull).toHaveBeenCalled();
     expect(actividadesDS.bulkAdd).toHaveBeenCalled();
   });
 
   // --- loadSesionesSede ---
-  it('loadSesionesSede carga sesiones por usuario', async () => {
-    const data = [createSesion()];
-    gql.query.and.returnValue(of({ getSesionesSedes: data }));
+  it('✅ loadSesionesSede carga sesiones por usuario', async () => {
+    gql.query.mockReturnValue(of({ getSesionesSedes: [createSesion()] }));
     await service.loadSesionesSede(userId);
     expect(sesionesDS.deleteFull).toHaveBeenCalled();
     expect(sesionesDS.bulkAdd).toHaveBeenCalled();
   });
 
   // --- loadAsistenciasSede ---
-  it('loadAsistenciasSede carga asistencias por usuario', async () => {
-    const data = [createAsistencia()];
-    gql.query.and.returnValue(of({ getAsistenciasSede: data }));
+  it('✅ loadAsistenciasSede carga asistencias por usuario', async () => {
+    gql.query.mockReturnValue(of({ getAsistenciasSede: [createAsistencia()] }));
     await service.loadAsistenciasSede(userId);
     expect(asistenciasDS.deleteFull).toHaveBeenCalled();
     expect(asistenciasDS.bulkAdd).toHaveBeenCalled();
   });
 
   // --- cargarDatosIniciales ---
-  it('cargarDatosIniciales ejecuta todo si ping = "pong"', async () => {
-    gql.query.and.callFake((query: string) => {
-      if (query.includes('Ping')) {
-        return of({ ping: { ping: 'pong' } });
-      }
-      return of({
-        getParametrosGenerales: [],
-        getParametrosDetalle: [],
-        getPoblaciones: [],
-        getSedes: [],
-        getPersonas: [],
-        getPersonasSedes: [],
-        getPersonaProgramas: [],
-        getPersonasGrupoInteres: [],
-        getActividadSedes: [],
-        getSesionesSedes: [],
-        getAsistenciasSede: [],
-      });
-    });
+  it('✅ cargarDatosIniciales ejecuta todo si ping = "pong"', async () => {
+    gql.query.mockImplementation((query: string) =>
+      query.includes('Ping')
+        ? of({ ping: { ping: 'pong' } })
+        : of({
+            getParametrosGenerales: [],
+            getParametrosDetalle: [],
+            getPoblaciones: [],
+            getSedes: [],
+            getPersonas: [],
+            getPersonasSedes: [],
+            getPersonaProgramas: [],
+            getPersonasGrupoInteres: [],
+            getActividadSedes: [],
+            getSesionesSedes: [],
+            getAsistenciasSede: [],
+          })
+    );
 
-    const spy = spyOn(service, 'loadParametrosGenerales').and.callThrough();
+    const spy = jest.spyOn(service, 'loadParametrosGenerales').mockResolvedValue(undefined);
     service.cargarDatosIniciales(userId);
     await new Promise((r) => setTimeout(r, 50));
     expect(spy).toHaveBeenCalled();
   });
 
-  it('cargarDatosIniciales no carga si ping falla', async () => {
-    gql.query.and.returnValue(of({ ping: { ping: 'fail' } }));
-    const spy = spyOn(service, 'loadParametrosGenerales');
+  it('⚪ cargarDatosIniciales no carga si ping falla', async () => {
+    gql.query.mockReturnValue(of({ ping: { ping: 'fail' } }));
+    const spy = jest.spyOn(service, 'loadParametrosGenerales');
     service.cargarDatosIniciales(userId);
     await new Promise((r) => setTimeout(r, 50));
     expect(spy).not.toHaveBeenCalled();

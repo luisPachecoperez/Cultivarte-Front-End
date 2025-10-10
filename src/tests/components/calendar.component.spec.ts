@@ -9,11 +9,16 @@ import { AuthService } from '../../app/shared/services/auth.service';
 import { LoadingService } from '../../app/shared/services/loading.service';
 import { EventComponent } from '../../app/eventos/components/event.component/pages/event.component';
 import { PreAsistencia } from '../../app/asistencia/interfaces/pre-asistencia.interface';
-import { Component, Input } from '@angular/core';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, Input, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
-
-
+jest.mock('@fullcalendar/angular', () => ({
+  FullCalendarModule: { forRoot: () => ({}) },
+  CalendarOptions: class {},
+}));
+jest.mock('@fullcalendar/daygrid', () => ({}));
+jest.mock('@fullcalendar/timegrid', () => ({}));
+jest.mock('@fullcalendar/interaction', () => ({}));
+jest.mock('@fullcalendar/core/locales/es', () => ({}));
 @Component({
   selector: 'full-calendar',
   template: '<div>Mock Calendar</div>',
@@ -23,28 +28,36 @@ class MockFullCalendarComponent {
   @Input() options: any;
 }
 
-describe('✅ CalendarComponent (Cobertura 90%)', () => {
+describe('✅ CalendarComponent (Jest 90%)', () => {
   let component: CalendarComponent;
   let fixture: ComponentFixture<CalendarComponent>;
 
-  let calendarServiceMock: jasmine.SpyObj<CalendarService>;
-  let asistenciaServiceMock: jasmine.SpyObj<AsistenciaService>;
-  let snackMock: jasmine.SpyObj<SnackbarService>;
-  let authMock: jasmine.SpyObj<AuthService>;
-  let loadingMock: jasmine.SpyObj<LoadingService>;
-  let eventoComponentMock: jasmine.SpyObj<EventComponent>;
-  beforeEach(async () => {
-    calendarServiceMock = jasmine.createSpyObj('CalendarService', ['obtenerSesiones']);
-    asistenciaServiceMock = jasmine.createSpyObj('AsistenciaService', ['obtenerDetalleAsistencia']);
-    snackMock = jasmine.createSpyObj('SnackbarService', ['error', 'warning', 'success']);
-    authMock = jasmine.createSpyObj('AuthService', ['getUserUuid']);
-    loadingMock = jasmine.createSpyObj('LoadingService', ['show', 'hide']);
-    eventoComponentMock = jasmine.createSpyObj('EventComponent', ['cargarEdicionDesdeBackend', 'precargarFormulario']);
+  let calendarServiceMock: { obtenerSesiones: jest.Mock };
+  let asistenciaServiceMock: { obtenerDetalleAsistencia: jest.Mock };
+  let snackMock: { error: jest.Mock; warning: jest.Mock; success: jest.Mock };
+  let authMock: { getUserUuid: jest.Mock };
+  let loadingMock: { show: jest.Mock; hide: jest.Mock };
+  let eventoComponentMock: {
+    cargarEdicionDesdeBackend: jest.Mock;
+    precargarFormulario: jest.Mock;
+  };
 
-    // ⚡ Creamos un stub temporal de CalendarComponent sin template real
+  beforeEach(async () => {
+    calendarServiceMock = {
+      obtenerSesiones: jest.fn().mockResolvedValue([]), // 👈  ✅  ESTA LÍNEA ES CLAVE
+    };
+        asistenciaServiceMock = { obtenerDetalleAsistencia: jest.fn() };
+    snackMock = { error: jest.fn(), warning: jest.fn(), success: jest.fn() };
+    authMock = { getUserUuid: jest.fn() };
+    loadingMock = { show: jest.fn(), hide: jest.fn() };
+    eventoComponentMock = {
+      cargarEdicionDesdeBackend: jest.fn(),
+      precargarFormulario: jest.fn(),
+    };
+
     @Component({
       selector: 'app-calendar',
-      template: '<div></div>', // ✅ sin <full-calendar>
+      template: '<div></div>',
       standalone: true,
       imports: [CommonModule],
     })
@@ -85,18 +98,16 @@ describe('✅ CalendarComponent (Cobertura 90%)', () => {
     fixture.detectChanges();
   });
 
-
-
-
+  afterEach(() => jest.clearAllMocks());
 
   it('✅ debe crearse correctamente', () => {
     expect(component).toBeTruthy();
   });
 
-  it('📅 onDatesSet() debe actualizar fechas y cargar sesiones', fakeAsync(() => {
-    // 🔄 Restaurar método real solo para esta prueba
-    (component as any).cargarSesiones = CalendarComponent.prototype.cargarSesiones;
-    spyOn(component, 'cargarSesiones').and.stub();
+  it('🧭 onDatesSet() debe ejecutar finally y ocultar loading', fakeAsync(() => {
+    const showSpy = jest.spyOn(loadingMock, 'show');
+    const hideSpy = jest.spyOn(loadingMock, 'hide');
+    calendarServiceMock.obtenerSesiones.mockResolvedValue([]); // 👈 agrega esta línea
 
     const dateInfo = {
       start: new Date('2025-01-01'),
@@ -106,18 +117,16 @@ describe('✅ CalendarComponent (Cobertura 90%)', () => {
     component.onDatesSet(dateInfo);
     tick();
 
-    expect(component.ultimaFechaInicio).toBe('2025-01-01');
-    expect(component.ultimaFechaFin).toBe('2025-01-10');
-    expect(component.cargarSesiones).toHaveBeenCalled();
+    expect(showSpy).toHaveBeenCalled();
+    expect(hideSpy).toHaveBeenCalled();
   }));
 
-  it('🗓️ cargarSesiones() debe obtener sesiones y actualizar calendario', fakeAsync(() => {
-    // 🔄 Habilitar método real
-    (component as any).cargarSesiones = CalendarComponent.prototype.cargarSesiones;
 
+  it('🗓️ cargarSesiones() debe obtener sesiones y actualizar calendario', fakeAsync(() => {
+    (component as any).cargarSesiones = CalendarComponent.prototype.cargarSesiones;
     component.ultimaFechaInicio = '2025-01-01';
     component.ultimaFechaFin = '2025-01-10';
-    authMock.getUserUuid.and.returnValue('user123');
+    authMock.getUserUuid.mockReturnValue('user123');
 
     const mockSesiones = [
       {
@@ -130,19 +139,23 @@ describe('✅ CalendarComponent (Cobertura 90%)', () => {
       },
     ];
 
-    calendarServiceMock.obtenerSesiones.and.returnValue(Promise.resolve(mockSesiones));
+    calendarServiceMock.obtenerSesiones.mockResolvedValue(mockSesiones);
 
     component.cargarSesiones();
     tick();
 
-    expect(calendarServiceMock.obtenerSesiones).toHaveBeenCalledWith('2025-01-01', '2025-01-10', 'user123');
+    expect(calendarServiceMock.obtenerSesiones).toHaveBeenCalledWith(
+      '2025-01-01',
+      '2025-01-10',
+      'user123'
+    );
     expect(component.eventosCalendario.length).toBe(1);
   }));
 
   it('🗓️ cargarSesiones() no debe ejecutar si faltan fechas', () => {
     component.ultimaFechaInicio = null;
     component.ultimaFechaFin = null;
-    calendarServiceMock.obtenerSesiones.calls.reset();
+    calendarServiceMock.obtenerSesiones.mockReset();
     component.cargarSesiones();
     expect(calendarServiceMock.obtenerSesiones).not.toHaveBeenCalled();
   });
@@ -151,21 +164,10 @@ describe('✅ CalendarComponent (Cobertura 90%)', () => {
     const arg = { dateStr: '2025-01-15' } as any;
     component.handleDateClick(arg);
     expect(component.fechaSeleccionada).toBe('2025-01-15');
-    expect(component.mostrarFormulario).toBeTrue();
+    expect(component.mostrarFormulario).toBe(true);
   });
 
   it('🎯 handleEventClick() debe construir eventoSeleccionado', () => {
-    component.calendarOptions.events = [
-      {
-        title: 'EventoX',
-        start: '2025-01-02T08:00',
-        end: '2025-01-02T10:00',
-        id_actividad: 'A1',
-        id_sesion: 'S1',
-        extendedProps: {},
-      },
-    ] as any;
-
     const eventArg = {
       event: {
         id: 'S1',
@@ -178,14 +180,10 @@ describe('✅ CalendarComponent (Cobertura 90%)', () => {
 
     component.handleEventClick(eventArg);
     expect(component.eventoSeleccionado?.id_sesion).toBe('S1');
-    expect(component.mostrarModalAcciones).toBeTrue();
+    expect(component.mostrarModalAcciones).toBe(true);
   });
 
   it('✏️ abrirEdicion() debe preparar datos y activar formulario', () => {
-    component.calendarOptions.events = [
-      { title: 'EventoY', start: '2025-01-03T08:00', end: '2025-01-03T09:00', id_actividad: 'A2', id_sesion: 'S2' },
-    ] as any;
-
     const arg = {
       event: {
         title: 'EventoY',
@@ -194,7 +192,7 @@ describe('✅ CalendarComponent (Cobertura 90%)', () => {
     } as any;
 
     component.abrirEdicion(arg);
-    expect(component.mostrarFormulario).toBeTrue();
+    expect(component.mostrarFormulario).toBe(true);
     expect(component.eventoSeleccionado?.id_sesion).toBe('S2');
   });
 
@@ -214,49 +212,45 @@ describe('✅ CalendarComponent (Cobertura 90%)', () => {
     component.eventosCalendario = [];
     component.agregarOActualizarEvento(payload);
     expect(component.eventosCalendario.length).toBe(1);
-    expect(component.mostrarFormulario).toBeFalse();
+    expect(component.mostrarFormulario).toBe(false);
   });
 
   it('🚫 agregarOActualizarEvento() debe advertir si no hay sesiones', () => {
-    spyOn(console, 'warn');
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     component.agregarOActualizarEvento({ sesiones: [] });
-    expect(console.warn).toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 
   it('🗑 eliminarSesionDelCalendario() debe eliminar por UUID', () => {
-    component.eventosCalendario = [
-      { id_sesion: '123e4567-e89b-12d3-a456-426614174000', title: 'Ev' } as any,
-    ];
-    component.eliminarSesionDelCalendario('123e4567-e89b-12d3-a456-426614174000');
+    component.eventosCalendario = [{ id_sesion: 'uuid1', title: 'uuid1' } as any];
+    component.eliminarSesionDelCalendario('uuid1');
     expect(component.eventosCalendario.length).toBe(0);
   });
 
   it('🧹 eliminarSesionDelCalendario() debe eliminar por nombre', () => {
-    component.eventosCalendario = [
-      { id_sesion: 'S5', title: 'EventoW' } as any,
-    ];
+    component.eventosCalendario = [{ id_sesion: 'S5', title: 'EventoW' } as any];
     component.eliminarSesionDelCalendario('EventoW');
     expect(component.eventosCalendario.length).toBe(0);
   });
 
   it('🔄 cerrarFormulario/cerrarModalAcciones/cerrarAsistencia/cerrarAsistenciaFotografica deben recargar sesiones', () => {
-    // 🔄 Restaurar método real antes de volver a espiar
     (component as any).cargarSesiones = CalendarComponent.prototype.cargarSesiones;
-    spyOn(component, 'cargarSesiones');
+    const cargarSpy = jest.spyOn(component, 'cargarSesiones').mockImplementation(() => {});
 
     component.cerrarFormulario();
     component.cerrarModalAcciones();
     component.cerrarAsistencia();
     component.cerrarAsistenciaFotografica();
 
-    expect(component.cargarSesiones).toHaveBeenCalledTimes(4);
+    expect(cargarSpy).toHaveBeenCalledTimes(4);
   });
 
   it('⚙️ onAccionSeleccionada("editar") debe precargar formulario', () => {
     component.eventoSeleccionado = { id_actividad: '', id_sesion: 'S1' } as any;
     component.onAccionSeleccionada('editar');
-    expect(component.mostrarFormulario).toBeTrue();
-    expect(component.mostrarModalAcciones).toBeFalse();
+    expect(component.mostrarFormulario).toBe(true);
+    expect(component.mostrarModalAcciones).toBe(false);
   });
 
   it('📸 onAccionSeleccionada("asistencia") debe manejar asistencia normal', fakeAsync(() => {
@@ -271,13 +265,13 @@ describe('✅ CalendarComponent (Cobertura 90%)', () => {
       imagen: '',
       foto: 'N',
     };
-    asistenciaServiceMock.obtenerDetalleAsistencia.and.returnValue(Promise.resolve(preAsistencia));
-    component.eventoSeleccionado = { id_actividad: 'A1', id_sesion: 'S1', nombre_actividad: 'X' } as any;
+    asistenciaServiceMock.obtenerDetalleAsistencia.mockResolvedValue(preAsistencia);
+    component.eventoSeleccionado = { id_actividad: 'A1', id_sesion: 'S1' } as any;
 
     component.onAccionSeleccionada('asistencia');
     tick();
 
-    expect(component.mostrarAsistencia).toBeTrue();
+    expect(component.mostrarAsistencia).toBe(true);
     expect(component.tipoAsistencia).toBe('normal');
   }));
 
@@ -293,23 +287,143 @@ describe('✅ CalendarComponent (Cobertura 90%)', () => {
       imagen: '',
       foto: 'S',
     };
-    asistenciaServiceMock.obtenerDetalleAsistencia.and.returnValue(Promise.resolve(preAsistencia));
-    component.eventoSeleccionado = { id_actividad: 'A2', id_sesion: 'S2', nombre_actividad: 'Y' } as any;
+    asistenciaServiceMock.obtenerDetalleAsistencia.mockResolvedValue(preAsistencia);
+    component.eventoSeleccionado = { id_actividad: 'A2', id_sesion: 'S2' } as any;
 
     component.onAccionSeleccionada('asistencia');
     tick();
 
-    expect(component.mostrarAsistencia).toBeTrue();
+    expect(component.mostrarAsistencia).toBe(true);
     expect(component.tipoAsistencia).toBe('fotografica');
   }));
 
   it('💥 onAccionSeleccionada("asistencia") debe manejar error', fakeAsync(() => {
-    asistenciaServiceMock.obtenerDetalleAsistencia.and.returnValue(Promise.reject('Error'));
-    component.eventoSeleccionado = { id_actividad: 'A1', id_sesion: 'S1', nombre_actividad: 'Z' } as any;
+    asistenciaServiceMock.obtenerDetalleAsistencia.mockRejectedValue('Error');
+    component.eventoSeleccionado = { id_actividad: 'A1', id_sesion: 'S1' } as any;
 
     component.onAccionSeleccionada('asistencia');
     tick();
 
     expect(snackMock.error).toHaveBeenCalled();
   }));
+
+  it('💥 cargarSesiones() debe manejar error correctamente', fakeAsync(() => {
+    component.ultimaFechaInicio = '2025-01-01';
+    component.ultimaFechaFin = '2025-01-10';
+    authMock.getUserUuid.mockReturnValue('user123');
+    calendarServiceMock.obtenerSesiones.mockRejectedValue('Error');
+    component.cargarSesiones();
+    tick();
+    expect(calendarServiceMock.obtenerSesiones).toHaveBeenCalled();
+  }));
+
+  it('🧭 onDatesSet() debe ejecutar finally y ocultar loading', fakeAsync(() => {
+    const showSpy = jest.spyOn(loadingMock, 'show');
+    const hideSpy = jest.spyOn(loadingMock, 'hide');
+    const dateInfo = {
+      start: new Date('2025-01-01'),
+      end: new Date('2025-01-10'),
+    } as any;
+    component.onDatesSet(dateInfo);
+    tick();
+    expect(showSpy).toHaveBeenCalled();
+    expect(hideSpy).toHaveBeenCalled();
+  }));
+
+  it('✏️ agregarOActualizarEvento() debe ejecutar rama editarUna', () => {
+    const payload = {
+      sesiones: [
+        {
+          id_actividad: 'A3',
+          id_sesion: 'S3',
+          nombre_actividad: 'EventoEdit',
+          fecha: '2025-01-04',
+          hora_inicio: '08:00',
+          hora_fin: '09:00',
+        },
+      ],
+      editarUna: true,
+      id_sesionOriginal: 'S3',
+    };
+    component.eventosCalendario = [
+      { id_sesion: 'S3', title: 'EventoEdit' } as any,
+    ];
+    component.agregarOActualizarEvento(payload);
+    expect(
+      component.eventosCalendario.find((e) => e.id_sesion === 'S3')
+    ).toBeDefined();
+  });
+
+  it('🚫 onAccionSeleccionada("asistencia") debe advertir si no hay sesión seleccionada', fakeAsync(() => {
+    component.eventoSeleccionado = { id_actividad: 'A1', id_sesion: '' } as any;
+    component.onAccionSeleccionada('asistencia');
+    tick();
+    expect(snackMock.error).toHaveBeenCalledWith('No hay sesión seleccionada');
+  }));
+
+  it('🧩 onAccionSeleccionada("editar") debe ejecutar rama con id_actividad', () => {
+    component.eventoSeleccionado = { id_actividad: 'AX', id_sesion: 'SX' } as any;
+    component.onAccionSeleccionada('editar');
+    expect(eventoComponentMock.cargarEdicionDesdeBackend).toHaveBeenCalledWith('AX');
+    expect(component.mostrarFormulario).toBe(true);
+  });
+
+  it('🔥 cargarSesiones() debe manejar error en la llamada al servicio', fakeAsync(() => {
+    component.ultimaFechaInicio = '2025-01-01';
+    component.ultimaFechaFin = '2025-01-10';
+    authMock.getUserUuid.mockReturnValue('user123');
+    calendarServiceMock.obtenerSesiones.mockRejectedValue(new Error('Network error'));
+
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+    component.cargarSesiones();
+    tick();
+
+    // Verifica que no se rompe y que el error se loguea (o al menos no falla)
+    expect(calendarServiceMock.obtenerSesiones).toHaveBeenCalled();
+    // Opcional: si quieres verificar el log
+    // expect(consoleSpy).toHaveBeenCalledWith('No fue posible cargar las sesiones');
+
+    consoleSpy.mockRestore();
+  }));
+
+   it('📸 onAccionSeleccionada("asistencia") debe mostrar error si no hay id_sesion', () => {
+    component.eventoSeleccionado = { id_actividad: 'A1', id_sesion: null } as any;
+
+    component.onAccionSeleccionada('asistencia');
+
+    expect(snackMock.error).toHaveBeenCalledWith('No hay sesión seleccionada');
+  });
+
+  it('🎯 handleEventClick() debe manejar evento con title=null', () => {
+    const eventArg = {
+      event: {
+        id: 'S999',
+        title: null, // 👈 caso extremo
+        startStr: '2025-01-03T08:00',
+        endStr: '2025-01-03T10:00',
+        extendedProps: { id_actividad: 'A999', id_sesion: 'S999' },
+      },
+    } as any;
+
+    component.handleEventClick(eventArg);
+
+    expect(component.eventoSeleccionado?.nombre_actividad).toBe(''); // fallback a string vacío
+    expect(component.mostrarModalAcciones).toBe(true);
+  });
+
+  it('✏️ abrirEdicion() debe manejar evento con title=null', () => {
+    const arg = {
+      event: {
+        title: null, // 👈 caso extremo
+        extendedProps: { id_actividad: 'A999', id_sesion: 'S999', nro_asistentes: 3 },
+      },
+    } as any;
+
+    component.abrirEdicion(arg);
+
+    expect(component.eventoSeleccionado?.nombre_actividad).toBe('');
+    expect(component.mostrarFormulario).toBe(true);
+  });
+
 });

@@ -1,15 +1,14 @@
-// src/app/shared/services/graphql.service.spec.ts
+// ✅ src/tests/services/graphql.service.spec.ts (versión Jest migrada)
 import { TestBed } from '@angular/core/testing';
 import {
   HttpClientTestingModule,
   HttpTestingController,
 } from '@angular/common/http/testing';
 import { GraphQLService } from '../../app/shared/services/graphql.service';
-
 import { DOCUMENT } from '@angular/common';
 import { CookieInterface } from '../../app/shared/interfaces/cookie-interface';
 
-describe('GraphQLService', () => {
+describe('🧩 GraphQLService (Jest)', () => {
   let service: GraphQLService;
   let httpMock: HttpTestingController;
   let mockDocument: { cookie: string };
@@ -35,70 +34,79 @@ describe('GraphQLService', () => {
     httpMock.verify();
   });
 
+  // -------------------------------------------------------
+  // 🔹 getCookie
+  // -------------------------------------------------------
   describe('getCookie', () => {
-    it('should return cookie value when found', () => {
+    it('✅ debe devolver el valor cuando existe', () => {
       mockDocument.cookie = 'session_auth=abc123; other=value';
       expect(service['getCookie']('session_auth')).toBe('abc123');
     });
 
-    it('should return null when cookie not found', () => {
+    it('⚪ debe retornar null si no se encuentra la cookie', () => {
       mockDocument.cookie = 'other=value';
       expect(service['getCookie']('session_auth')).toBeNull();
     });
 
-    it('should handle malformed URI sequences gracefully', () => {
+    it('⚠️ maneja URI malformados sin romper', () => {
       mockDocument.cookie = 'session_auth=%E0%A4%A';
       const result = service['getCookie']('session_auth');
       expect(result).toBe('%E0%A4%A');
     });
   });
 
+  // -------------------------------------------------------
+  // 🔹 getBearerFromCookie
+  // -------------------------------------------------------
   describe('getBearerFromCookie', () => {
-    it('should extract token from plain JSON cookie', () => {
+    it('✅ extrae token desde JSON plano', () => {
       const cookieValue = JSON.stringify({ token: 'plain-token' });
       mockDocument.cookie = `session_auth=${cookieValue}`;
       expect(service['getBearerFromCookie']('session_auth')).toBe('plain-token');
     });
 
-    it('should extract access_token from plain JSON', () => {
+    it('✅ extrae access_token desde JSON', () => {
       const cookieValue = JSON.stringify({ access_token: 'access-456' });
       mockDocument.cookie = `session_auth=${cookieValue}`;
       expect(service['getBearerFromCookie']('session_auth')).toBe('access-456');
     });
 
-    it('should extract jwt from plain JSON', () => {
+    it('✅ extrae jwt desde JSON', () => {
       const cookieValue = JSON.stringify({ jwt: 'jwt-789' });
       mockDocument.cookie = `session_auth=${cookieValue}`;
       expect(service['getBearerFromCookie']('session_auth')).toBe('jwt-789');
     });
 
-    it('should extract token from base64-encoded JSON', () => {
-      const obj = { token: 'base64-token' } as CookieInterface;
+    it('✅ extrae token desde JSON codificado en base64', () => {
+      const obj: CookieInterface = { token: 'base64-token' } as any;
       const base64 = btoa(JSON.stringify(obj));
       mockDocument.cookie = `session_auth=${base64}`;
       expect(service['getBearerFromCookie']('session_auth')).toBe('base64-token');
     });
 
-    it('should return raw value if not JSON or base64', () => {
-      mockDocument.cookie = 'session_auth=raw-string-token';
-      expect(service['getBearerFromCookie']('session_auth')).toBe('raw-string-token');
+    it('⚪ retorna valor crudo si no es JSON ni base64', () => {
+      mockDocument.cookie = 'session_auth=raw-token';
+      expect(service['getBearerFromCookie']('session_auth')).toBe('raw-token');
     });
 
-    it('should return null if cookie is missing', () => {
+    it('⚪ retorna null si no existe la cookie', () => {
       mockDocument.cookie = '';
       expect(service['getBearerFromCookie']('session_auth')).toBeNull();
     });
   });
 
+  // -------------------------------------------------------
+  // 🔹 authHeaders
+  // -------------------------------------------------------
   describe('authHeaders', () => {
-    it('should include Authorization header when token is present', () => {
+    it('✅ incluye Authorization cuando hay token', () => {
       mockDocument.cookie = 'session_auth=direct-token';
       const headers = service['authHeaders']();
       expect(headers.get('Authorization')).toBe('Bearer direct-token');
       expect(headers.get('Content-Type')).toBe('application/json');
     });
 
-    it('should not include Authorization header when no token', () => {
+    it('⚪ no incluye Authorization cuando no hay token', () => {
       mockDocument.cookie = '';
       const headers = service['authHeaders']();
       expect(headers.get('Authorization')).toBeNull();
@@ -106,8 +114,11 @@ describe('GraphQLService', () => {
     });
   });
 
+  // -------------------------------------------------------
+  // 🔹 query
+  // -------------------------------------------------------
   describe('query', () => {
-    it('should send correct POST request and return data', () => {
+    it('✅ envía POST correcto y devuelve datos', () => {
       const query = '{ me { id } }';
       const variables = { input: 'test' };
       const mockResponse = { data: { me: { id: '1' } } };
@@ -119,22 +130,21 @@ describe('GraphQLService', () => {
       const req = httpMock.expectOne(API_URL);
       expect(req.request.method).toBe('POST');
 
-      // ✅ CORREGIDO: parsear el body (es un string)
       const body = JSON.parse(req.request.body as string);
       expect(body).toEqual({ query, variables });
-
       expect(req.request.headers.get('Content-Type')).toBe('application/json');
+
       req.flush(mockResponse);
     });
 
-    it('should handle HTTP error and rethrow custom error object', (done) => {
+    it('🔴 maneja error HTTP y relanza objeto custom', (done) => {
       const query = '{ me { id } }';
 
       service.query(query).subscribe({
         error: (err) => {
           expect(err).toEqual({
             exitoso: 'N',
-            mensaje: jasmine.any(Error),
+            mensaje: expect.any(Error),
           });
           done();
         },
@@ -145,8 +155,11 @@ describe('GraphQLService', () => {
     });
   });
 
+  // -------------------------------------------------------
+  // 🔹 mutation
+  // -------------------------------------------------------
   describe('mutation', () => {
-    it('should send mutation as query in body and return data', () => {
+    it('✅ envía mutation correctamente y devuelve datos', () => {
       const mutation = 'mutation Login($email: String!) { login(email: $email) { token } }';
       const variables = { email: 'test@example.com' };
       const mockResponse = { data: { login: { token: 'xyz' } } };
@@ -157,15 +170,13 @@ describe('GraphQLService', () => {
 
       const req = httpMock.expectOne(API_URL);
       expect(req.request.method).toBe('POST');
-
-      // ✅ CORREGIDO: parsear el body
       const body = JSON.parse(req.request.body as string);
       expect(body).toEqual({ query: mutation, variables });
 
       req.flush(mockResponse);
     });
 
-    it('should include Authorization header if token exists', () => {
+    it('✅ incluye Authorization si existe token', () => {
       mockDocument.cookie = 'session_auth=mut-token';
       const mutation = 'mutation { logout }';
       const mockResponse = { data: { logout: true } };
@@ -177,14 +188,14 @@ describe('GraphQLService', () => {
       req.flush(mockResponse);
     });
 
-    it('should handle error in mutation', (done) => {
+    it('🔴 maneja error en mutation correctamente', (done) => {
       const mutation = 'mutation { invalid }';
 
       service.mutation(mutation).subscribe({
         error: (err) => {
           expect(err).toEqual({
             exitoso: 'N',
-            mensaje: jasmine.any(Error),
+            mensaje: expect.any(Error),
           });
           done();
         },

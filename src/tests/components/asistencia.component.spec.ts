@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AsistenciaComponent } from '../../app/asistencia/asistencia-lista/pages/asistencia.component';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -7,34 +7,29 @@ import { SnackbarService } from '../../app/shared/services/snackbar.service';
 import { Sesiones } from '../../app/eventos/interfaces/sesiones.interface';
 import { PreAsistencia } from '../../app/asistencia/interfaces/pre-asistencia.interface';
 import { Beneficiarios } from '../../app/eventos/interfaces/lista-beneficiarios.interface';
-import { Asistente } from '../../app/asistencia/interfaces/asistente.interface';
-import { fakeAsync, tick } from '@angular/core/testing';
-import 'jest-preset-angular/setup-jest';
 
+// ---- Mock Services con Jest ----
+const asistenciaServiceMock = {
+  obtenerDetalleAsistencia: jest.fn(),
+  guardarAsistencia: jest.fn(),
+};
 
-describe('✅ AsistenciaComponent (Cobertura 90%)', () => {
+const snackbarMock = {
+  success: jest.fn(),
+  warning: jest.fn(),
+  error: jest.fn(),
+};
+
+describe('✅ AsistenciaComponent (Jest)', () => {
   let component: AsistenciaComponent;
   let fixture: ComponentFixture<AsistenciaComponent>;
-  let asistenciaServiceMock: jasmine.SpyObj<AsistenciaService>;
-  let snackbarMock: jasmine.SpyObj<SnackbarService>;
 
   beforeEach(async () => {
-    asistenciaServiceMock = jasmine.createSpyObj('AsistenciaService', [
-      'obtenerDetalleAsistencia',
-      'guardarAsistencia'
-    ]);
-
-    snackbarMock = jasmine.createSpyObj('SnackbarService', [
-      'success',
-      'warning',
-      'error'
-    ]);
-
     await TestBed.configureTestingModule({
       imports: [CommonModule, ReactiveFormsModule, FormsModule, AsistenciaComponent],
       providers: [
         { provide: AsistenciaService, useValue: asistenciaServiceMock },
-        { provide: SnackbarService, useValue: snackbarMock }
+        { provide: SnackbarService, useValue: snackbarMock },
       ],
     }).compileComponents();
 
@@ -42,19 +37,26 @@ describe('✅ AsistenciaComponent (Cobertura 90%)', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // ---------------------------------------------------------------------
   it('✅ debe crear el componente', () => {
     expect(component).toBeTruthy();
     expect(component.asistenciaForm).toBeDefined();
   });
 
+  // ---------------------------------------------------------------------
   it('⚙️ ngOnInit() no debe llamar servicio si evento es undefined', async () => {
     fixture.componentRef.setInput('evento', undefined);
-    asistenciaServiceMock.obtenerDetalleAsistencia.calls.reset();
+    asistenciaServiceMock.obtenerDetalleAsistencia.mockReset();
 
     await component.ngOnInit();
     expect(asistenciaServiceMock.obtenerDetalleAsistencia).not.toHaveBeenCalled();
   });
 
+  // ---------------------------------------------------------------------
   it('📥 ngOnInit() debe cargar datos de asistencia y precargar formulario', async () => {
     const mockSesion: Sesiones = { id_sesion: '10', id_actividad: '20' } as any;
     const beneficiarios: Beneficiarios[] = [
@@ -80,7 +82,7 @@ describe('✅ AsistenciaComponent (Cobertura 90%)', () => {
     };
 
     fixture.componentRef.setInput('evento', mockSesion);
-    asistenciaServiceMock.obtenerDetalleAsistencia.and.returnValue(Promise.resolve(mockData));
+    asistenciaServiceMock.obtenerDetalleAsistencia.mockResolvedValueOnce(mockData);
 
     await component.ngOnInit();
 
@@ -90,21 +92,22 @@ describe('✅ AsistenciaComponent (Cobertura 90%)', () => {
     expect(component.sedes.length).toBe(1);
     expect(component.asistenciaForm.value.id_sede).toBe('1');
   });
+
+  // ---------------------------------------------------------------------
   it('❌ ngOnInit() debe manejar error en obtenerDetalleAsistencia', fakeAsync(() => {
     const mockSesion: Sesiones = { id_sesion: 'ERR', id_actividad: 'X' } as any;
     fixture.componentRef.setInput('evento', mockSesion);
-    asistenciaServiceMock.obtenerDetalleAsistencia.and.returnValue(Promise.reject('Error simulado'));
-    spyOn(console, 'error');
+    asistenciaServiceMock.obtenerDetalleAsistencia.mockRejectedValueOnce('Error simulado');
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     component.ngOnInit();
-
-    // Avanza el event loop para que el catch() se ejecute
     tick();
 
-    expect(console.error).toHaveBeenCalledWith('❌ Error desde Promise:', 'Error simulado');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Error desde Promise:', 'Error simulado');
+    consoleErrorSpy.mockRestore();
   }));
 
-
+  // ---------------------------------------------------------------------
   it('🔍 resultadosBusqueda() debe filtrar correctamente por texto y sede', () => {
     component.beneficiariosBD = [
       { id_persona: '1', nombre_completo: 'Ana María', id_sede: '1', identificacion: '111' },
@@ -119,11 +122,13 @@ describe('✅ AsistenciaComponent (Cobertura 90%)', () => {
     expect(res[0].nombre_completo).toBe('Ana María');
   });
 
+  // ---------------------------------------------------------------------
   it('🔍 resultadosBusqueda() debe devolver vacío si no hay texto', () => {
     component.filtro.setValue('');
     expect(component.resultadosBusqueda).toEqual([]);
   });
 
+  // ---------------------------------------------------------------------
   it('➕ agregarAsistente() debe agregar uno nuevo', () => {
     component.asistentes = [];
     const ben: Beneficiarios = { id_persona: '123', nombre_completo: 'Juan', id_sede: '1' } as any;
@@ -133,6 +138,7 @@ describe('✅ AsistenciaComponent (Cobertura 90%)', () => {
     expect(component.asistentes[0].nombre_completo).toBe('Juan');
   });
 
+  // ---------------------------------------------------------------------
   it('🚫 agregarAsistente() no debe duplicar asistentes', () => {
     const ben: Beneficiarios = { id_persona: '123', nombre_completo: 'Juan', id_sede: '1' } as any;
     component.asistentes = [ben as any];
@@ -140,26 +146,31 @@ describe('✅ AsistenciaComponent (Cobertura 90%)', () => {
     expect(component.asistentes.length).toBe(1);
   });
 
+  // ---------------------------------------------------------------------
   it('🗑️ eliminarAsistente() debe eliminar si eliminar = S', () => {
     component.asistentes = [{ id_persona: '1', eliminar: 'S' } as any];
     component.eliminarAsistente('1');
     expect(component.asistentes.length).toBe(0);
   });
 
+  // ---------------------------------------------------------------------
   it('🚫 eliminarAsistente() no debe eliminar si eliminar = N', () => {
     component.asistentes = [{ id_persona: '1', eliminar: 'N' } as any];
-    spyOn(console, 'warn');
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     component.eliminarAsistente('1');
     expect(component.asistentes.length).toBe(1);
-    expect(console.warn).toHaveBeenCalled();
+    expect(consoleWarnSpy).toHaveBeenCalled();
+    consoleWarnSpy.mockRestore();
   });
 
+  // ---------------------------------------------------------------------
   it('⚠️ guardarAsistencia() debe advertir si formulario inválido', async () => {
     component.asistenciaForm.setValue({ id_sede: '', descripcion: '' });
     await component.guardarAsistencia();
     expect(snackbarMock.warning).toHaveBeenCalled();
   });
 
+  // ---------------------------------------------------------------------
   it('💾 guardarAsistencia() debe guardar correctamente y emitir cerrar', async () => {
     const mockSesion: Sesiones = { id_sesion: '1', id_actividad: '2' } as any;
     fixture.componentRef.setInput('evento', mockSesion);
@@ -171,40 +182,44 @@ describe('✅ AsistenciaComponent (Cobertura 90%)', () => {
     ] as any;
 
     const resp = { exitoso: 'S', mensaje: 'Guardado' };
-    asistenciaServiceMock.guardarAsistencia.and.returnValue(Promise.resolve(resp));
+    asistenciaServiceMock.guardarAsistencia.mockResolvedValueOnce(resp);
 
-    spyOn(component.cerrar, 'emit');
+    const emitCerrar = jest.spyOn(component.cerrar, 'emit');
 
     await component.guardarAsistencia();
 
     expect(asistenciaServiceMock.guardarAsistencia).toHaveBeenCalled();
     expect(snackbarMock.success).toHaveBeenCalledWith('Guardado');
-    expect(component.cerrar.emit).toHaveBeenCalled();
+    expect(emitCerrar).toHaveBeenCalled();
   });
 
+  // ---------------------------------------------------------------------
   it('💥 guardarAsistencia() debe mostrar warning si resp.exitoso ≠ S', async () => {
     const mockSesion: Sesiones = { id_sesion: '1', id_actividad: '2' } as any;
     fixture.componentRef.setInput('evento', mockSesion);
     component.asistenciaForm.setValue({ id_sede: '1', descripcion: 'ok' });
     const resp = { exitoso: 'N', mensaje: 'Falla' };
-    asistenciaServiceMock.guardarAsistencia.and.returnValue(Promise.resolve(resp));
-    spyOn(console, 'error');
+    asistenciaServiceMock.guardarAsistencia.mockResolvedValueOnce(resp);
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     await component.guardarAsistencia();
 
     expect(snackbarMock.warning).toHaveBeenCalledWith('Falla');
-    expect(console.error).toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
+  // ---------------------------------------------------------------------
   it('🔥 guardarAsistencia() debe manejar error HTTP', async () => {
     const mockSesion: Sesiones = { id_sesion: '1', id_actividad: '2' } as any;
     fixture.componentRef.setInput('evento', mockSesion);
     component.asistenciaForm.setValue({ id_sede: '1', descripcion: 'ok' });
-    asistenciaServiceMock.guardarAsistencia.and.returnValue(Promise.reject(new Error('HTTP')));
-    spyOn(console, 'error');
+    asistenciaServiceMock.guardarAsistencia.mockRejectedValueOnce(new Error('HTTP'));
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     await component.guardarAsistencia();
 
-    expect(console.error).toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 });

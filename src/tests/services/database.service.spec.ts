@@ -1,24 +1,29 @@
 import { DatabaseService } from '../../app/indexdb/services/database.service';
-import Dexie from 'dexie';
 
-describe('🧩 DatabaseService (Cobertura 100%)', () => {
+import Dexie from 'dexie';
+import 'fake-indexeddb/auto';
+
+describe('🧩 DatabaseService (Jest, Cobertura 100%)', () => {
   let service: DatabaseService;
 
   beforeEach(async () => {
-    // Elimina la base anterior para evitar colisiones de versión
+    // 🧹 Elimina la base anterior para evitar colisiones de versión
     await Dexie.delete('CultivarteAppIndexDB');
     service = new DatabaseService();
     await service.open(); // fuerza inicialización
   });
 
   afterEach(async () => {
-    await service.close();
+    if (service?.isOpen()) {
+      await service.close();
+    }
   });
 
   it('✅ debe crear la instancia y registrar stores', () => {
     expect(service).toBeTruthy();
     expect(service.name).toBe('CultivarteAppIndexDB');
-    const schema = service._dbSchema;
+
+    const schema = (service as any)._dbSchema;
     expect(schema).toBeDefined();
     expect(Object.keys(schema)).toContain('actividades');
     expect(Object.keys(schema)).toContain('sesiones');
@@ -30,8 +35,11 @@ describe('🧩 DatabaseService (Cobertura 100%)', () => {
       nombre_actividad: 'Test',
       id_programa: 'P1',
     };
+
     await service.actividades.add(item as any);
     const result = await service.actividades.get('ACT-001');
+
+    expect(result).toBeDefined();
     expect(result?.nombre_actividad).toBe('Test');
   });
 
@@ -39,7 +47,7 @@ describe('🧩 DatabaseService (Cobertura 100%)', () => {
     await service.close();
     const reopened = new DatabaseService();
     await reopened.open();
-    expect(reopened.isOpen()).toBeTrue();
+    expect(reopened.isOpen()).toBe(true);
     await reopened.close();
   });
 
@@ -57,7 +65,10 @@ describe('🧩 DatabaseService (Cobertura 100%)', () => {
       'sedes',
       'sesiones',
     ];
-    expected.forEach((t) => expect((service as any)[t]).toBeDefined());
+
+    expected.forEach((t) => {
+      expect((service as any)[t]).toBeDefined();
+    });
   });
 
   it('🧱 debe simular una versión 2 con nuevo store para cubrir toda la rama', async () => {
@@ -78,8 +89,10 @@ describe('🧩 DatabaseService (Cobertura 100%)', () => {
     const log = { id_log: 'L1', mensaje: 'Versión 2', fecha: new Date().toISOString() };
     await extended.table('logs').add(log);
     const saved = await extended.table('logs').get('L1');
+
+    expect(saved).toBeDefined();
     expect(saved?.mensaje).toBe('Versión 2');
 
-    await extended.close();
+    if (extended.isOpen()) await extended.close();
   });
 });

@@ -4,23 +4,23 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormArray, FormGroup, FormBuilder } from '@angular/forms';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../app/shared/services/snackbar.service';
-import { of } from 'rxjs';
+
 
 // ✅ Mock del SnackbarService
 class SnackbarServiceMock {
-  error = jasmine.createSpy('error');
-  warning = jasmine.createSpy('warning');
-  success = jasmine.createSpy('success');
+  error = jest.fn();
+  warning = jest.fn();
+  success = jest.fn();
 }
 
-describe('✅ Grid_sesionesComponent (Angular 20)', () => {
+describe('✅ Grid_sesionesComponent (Angular 20 - Jest)', () => {
   let component: Grid_sesionesComponent;
   let fixture: ComponentFixture<Grid_sesionesComponent>;
   let fb: FormBuilder;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CommonModule, ReactiveFormsModule, MatSnackBarModule],
+      imports: [CommonModule, ReactiveFormsModule, MatSnackBarModule, Grid_sesionesComponent],
       providers: [{ provide: SnackbarService, useClass: SnackbarServiceMock }],
     }).compileComponents();
 
@@ -37,6 +37,8 @@ describe('✅ Grid_sesionesComponent (Angular 20)', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => jest.clearAllMocks());
+
   it('✔️ debe crearse correctamente', () => {
     expect(component).toBeTruthy();
     expect(component.formArray).toBeDefined();
@@ -45,12 +47,12 @@ describe('✅ Grid_sesionesComponent (Angular 20)', () => {
   it('🧱 debe asegurar metadatos en los FormGroups', () => {
     const fg = fb.group({});
     component.formArray().push(fg);
-    component['asegurarMetadatos']();
+    (component as any).asegurarMetadatos();
 
-    expect(fg.contains('metaEstado')).toBeTrue();
-    expect(fg.contains('nro_asistentes')).toBeTrue();
-    expect(fg.contains('id_sesion')).toBeTrue();
-    expect(fg.contains('id_actividad')).toBeTrue();
+    expect(fg.contains('metaEstado')).toBe(true);
+    expect(fg.contains('nro_asistentes')).toBe(true);
+    expect(fg.contains('id_sesion')).toBe(true);
+    expect(fg.contains('id_actividad')).toBe(true);
   });
 
   it('➕ debe agregar una sesión válida', () => {
@@ -60,8 +62,8 @@ describe('✅ Grid_sesionesComponent (Angular 20)', () => {
       hora_fin: '10:00',
     });
 
-    const emitSpy = spyOn(component.cambios, 'emit');
-    const sesionSpy = spyOn(component.sesionModificada, 'emit');
+    const emitSpy = jest.spyOn(component.cambios, 'emit');
+    const sesionSpy = jest.spyOn(component.sesionModificada, 'emit');
 
     component.agregarSesion();
 
@@ -99,7 +101,7 @@ describe('✅ Grid_sesionesComponent (Angular 20)', () => {
   });
 
   it('🟡 eliminarSesion() debe eliminar sesión si el usuario confirma', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
+    jest.spyOn(window, 'confirm').mockReturnValue(true);
 
     const fg = fb.group({
       id_sesion: 'S2',
@@ -112,7 +114,7 @@ describe('✅ Grid_sesionesComponent (Angular 20)', () => {
     });
     component.formArray().push(fg);
 
-    const emitSpy = spyOn(component.cambios, 'emit');
+    const emitSpy = jest.spyOn(component.cambios, 'emit');
     component.eliminarSesion(0);
 
     expect(component.formArray().length).toBe(0);
@@ -120,7 +122,7 @@ describe('✅ Grid_sesionesComponent (Angular 20)', () => {
   });
 
   it('🟢 eliminarSesion() debe mostrar advertencia si el usuario cancela', () => {
-    spyOn(window, 'confirm').and.returnValue(false);
+    jest.spyOn(window, 'confirm').mockReturnValue(false);
 
     const fg = fb.group({
       id_sesion: 'S3',
@@ -151,7 +153,6 @@ describe('✅ Grid_sesionesComponent (Angular 20)', () => {
     });
     component.formArray().push(fg);
 
-    // ✅ simula cambio y marca como dirty
     fg.get('hora_inicio')?.setValue('09:00');
     fg.markAsDirty({ onlySelf: true });
 
@@ -159,7 +160,6 @@ describe('✅ Grid_sesionesComponent (Angular 20)', () => {
 
     expect(fg.get('metaEstado')?.value).toBe('modificado');
   });
-
 
   it('📤 getCambios() debe devolver snapshot correcto', () => {
     const fgNuevo = fb.group({
@@ -185,12 +185,12 @@ describe('✅ Grid_sesionesComponent (Angular 20)', () => {
       metaEstado: 'modificado',
     });
     component.formArray().push(fg);
-    component['eliminadosBuffer'] = [{ id_sesion: 'DEL1' }];
+    (component as any).eliminadosBuffer = [{ id_sesion: 'DEL1' }];
 
-    const emitSpy = spyOn(component.cambios, 'emit');
+    const emitSpy = jest.spyOn(component.cambios, 'emit');
     component.resetCambios();
 
-    expect(component['eliminadosBuffer'].length).toBe(0);
+    expect((component as any).eliminadosBuffer.length).toBe(0);
     expect(fg.get('metaEstado')?.value).toBe('original');
     expect(emitSpy).toHaveBeenCalled();
   });

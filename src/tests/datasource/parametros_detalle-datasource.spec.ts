@@ -10,7 +10,7 @@ function dexiePromise<T = any>(value?: T): any {
   return p;
 }
 
-describe('Parametros_detalleDataSource', () => {
+describe('Parametros_detalleDataSource (Jest)', () => {
   let service: Parametros_detalleDataSource;
   const mockDetalle: Parametros_detalleDB = {
     id_parametro_detalle: 'D1',
@@ -35,18 +35,19 @@ describe('Parametros_detalleDataSource', () => {
     service = TestBed.inject(Parametros_detalleDataSource);
 
     (indexDB as any).parametros_detalle = {
-      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockDetalle])),
-      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockDetalle)),
-      add: jasmine.createSpy('add').and.returnValue(dexiePromise('D1')),
-      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
-      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
+      toArray: jest.fn().mockReturnValue(dexiePromise([mockDetalle])),
+      get: jest.fn().mockReturnValue(dexiePromise(mockDetalle)),
+      add: jest.fn().mockReturnValue(dexiePromise('D1')),
+      update: jest.fn().mockReturnValue(dexiePromise(1)),
+      delete: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      bulkAdd: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      clear: jest.fn().mockReturnValue(dexiePromise(undefined)),
     };
   });
 
   afterEach(() => {
     TestBed.resetTestingModule();
+    jest.clearAllMocks();
   });
 
   // --- getAll ---
@@ -61,8 +62,7 @@ describe('Parametros_detalleDataSource', () => {
   it('🔹 getById debe retornar un registro por id', async () => {
     const result = await service.getById('D1');
     expect(result?.codigo).toBe('CULT');
-    expect(indexDB.parametros_detalle.get).toHaveBeenCalled();
-    expect((indexDB.parametros_detalle.get as jasmine.Spy).calls.argsFor(0)[0]).toBe('D1');
+    expect(indexDB.parametros_detalle.get).toHaveBeenCalledWith('D1');
   });
 
   // --- create ---
@@ -74,8 +74,8 @@ describe('Parametros_detalleDataSource', () => {
     });
 
     it('debe manejar error en add()', async () => {
-      (indexDB.parametros_detalle.add as jasmine.Spy).and.returnValue(Promise.reject('DB error'));
-      await expectAsync(service.create(mockDetalle)).toBeRejectedWith('DB error');
+      (indexDB.parametros_detalle.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+      await expect(service.create(mockDetalle)).rejects.toBe('DB error');
     });
   });
 
@@ -88,8 +88,8 @@ describe('Parametros_detalleDataSource', () => {
     });
 
     it('debe manejar error en update()', async () => {
-      (indexDB.parametros_detalle.update as jasmine.Spy).and.returnValue(Promise.reject('Error update'));
-      await expectAsync(service.update('D1', {})).toBeRejectedWith('Error update');
+      (indexDB.parametros_detalle.update as jest.Mock).mockReturnValue(Promise.reject('Error update'));
+      await expect(service.update('D1', {})).rejects.toBe('Error update');
     });
   });
 
@@ -101,8 +101,8 @@ describe('Parametros_detalleDataSource', () => {
     });
 
     it('debe manejar error en delete()', async () => {
-      (indexDB.parametros_detalle.delete as jasmine.Spy).and.returnValue(Promise.reject('Error delete'));
-      await expectAsync(service.delete('D1')).toBeRejectedWith('Error delete');
+      (indexDB.parametros_detalle.delete as jest.Mock).mockReturnValue(Promise.reject('Error delete'));
+      await expect(service.delete('D1')).rejects.toBe('Error delete');
     });
   });
 
@@ -110,17 +110,17 @@ describe('Parametros_detalleDataSource', () => {
   describe('🟢 bulkAdd', () => {
     it('debe borrar todo antes de agregar', async () => {
       const data = [{ ...mockDetalle, syncStatus: null as any }];
-      const clearSpy = spyOn(service, 'deleteFull').and.returnValue(dexiePromise());
+      const clearSpy = jest.spyOn(service, 'deleteFull').mockReturnValue(dexiePromise());
       await service.bulkAdd(data);
       expect(clearSpy).toHaveBeenCalled();
       expect(indexDB.parametros_detalle.bulkAdd).toHaveBeenCalled();
-      const added = (indexDB.parametros_detalle.bulkAdd as jasmine.Spy).calls.argsFor(0)[0];
+      const added = (indexDB.parametros_detalle.bulkAdd as jest.Mock).mock.calls[0][0];
       expect(added[0].syncStatus).toBe('synced');
     });
 
     it('debe manejar error en bulkAdd()', async () => {
-      (indexDB.parametros_detalle.bulkAdd as jasmine.Spy).and.returnValue(Promise.reject('error'));
-      await expectAsync(service.bulkAdd([mockDetalle])).toBeRejectedWith('error');
+      (indexDB.parametros_detalle.bulkAdd as jest.Mock).mockReturnValue(Promise.reject('error'));
+      await expect(service.bulkAdd([mockDetalle])).rejects.toBe('error');
     });
   });
 

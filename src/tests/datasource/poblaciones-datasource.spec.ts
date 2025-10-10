@@ -10,7 +10,7 @@ function dexiePromise<T = any>(value?: T): any {
   return p;
 }
 
-describe('PoblacionesDataSource', () => {
+describe('PoblacionesDataSource (Jest)', () => {
   let service: PoblacionesDataSource;
 
   const mockPoblacion: PoblacionesDB = {
@@ -27,18 +27,19 @@ describe('PoblacionesDataSource', () => {
     service = TestBed.inject(PoblacionesDataSource);
 
     (indexDB as any).poblaciones = {
-      toArray: jasmine.createSpy('toArray').and.returnValue(dexiePromise([mockPoblacion])),
-      get: jasmine.createSpy('get').and.returnValue(dexiePromise(mockPoblacion)),
-      add: jasmine.createSpy('add').and.returnValue(dexiePromise('P1')),
-      update: jasmine.createSpy('update').and.returnValue(dexiePromise(1)),
-      delete: jasmine.createSpy('delete').and.returnValue(dexiePromise(undefined)),
-      bulkAdd: jasmine.createSpy('bulkAdd').and.returnValue(dexiePromise(undefined)),
-      clear: jasmine.createSpy('clear').and.returnValue(dexiePromise(undefined)),
+      toArray: jest.fn().mockReturnValue(dexiePromise([mockPoblacion])),
+      get: jest.fn().mockReturnValue(dexiePromise(mockPoblacion)),
+      add: jest.fn().mockReturnValue(dexiePromise('P1')),
+      update: jest.fn().mockReturnValue(dexiePromise(1)),
+      delete: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      bulkAdd: jest.fn().mockReturnValue(dexiePromise(undefined)),
+      clear: jest.fn().mockReturnValue(dexiePromise(undefined)),
     };
   });
 
   afterEach(() => {
     TestBed.resetTestingModule();
+    jest.clearAllMocks();
   });
 
   // --- getAll ---
@@ -53,8 +54,7 @@ describe('PoblacionesDataSource', () => {
   it('🟢 getById debe retornar una población por id', async () => {
     const result = await service.getById('P1');
     expect(result?.id_poblacion).toBe('P1');
-    expect(indexDB.poblaciones.get).toHaveBeenCalled();
-    expect((indexDB.poblaciones.get as jasmine.Spy).calls.argsFor(0)[0]).toBe('P1');
+    expect(indexDB.poblaciones.get).toHaveBeenCalledWith('P1');
   });
 
   // --- create ---
@@ -66,8 +66,8 @@ describe('PoblacionesDataSource', () => {
     });
 
     it('debe manejar error en add()', async () => {
-      (indexDB.poblaciones.add as jasmine.Spy).and.returnValue(Promise.reject('DB error'));
-      await expectAsync(service.create(mockPoblacion)).toBeRejectedWith('DB error');
+      (indexDB.poblaciones.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+      await expect(service.create(mockPoblacion)).rejects.toBe('DB error');
     });
   });
 
@@ -80,8 +80,8 @@ describe('PoblacionesDataSource', () => {
     });
 
     it('debe manejar error en update()', async () => {
-      (indexDB.poblaciones.update as jasmine.Spy).and.returnValue(Promise.reject('update error'));
-      await expectAsync(service.update('P1', {})).toBeRejectedWith('update error');
+      (indexDB.poblaciones.update as jest.Mock).mockReturnValue(Promise.reject('update error'));
+      await expect(service.update('P1', {})).rejects.toBe('update error');
     });
   });
 
@@ -93,27 +93,27 @@ describe('PoblacionesDataSource', () => {
     });
 
     it('debe manejar error en delete()', async () => {
-      (indexDB.poblaciones.delete as jasmine.Spy).and.returnValue(Promise.reject('delete error'));
-      await expectAsync(service.delete('P1')).toBeRejectedWith('delete error');
+      (indexDB.poblaciones.delete as jest.Mock).mockReturnValue(Promise.reject('delete error'));
+      await expect(service.delete('P1')).rejects.toBe('delete error');
     });
   });
 
   // --- bulkAdd ---
   describe('🟢 bulkAdd', () => {
     it('debe limpiar y agregar poblaciones con syncStatus', async () => {
-      const clearSpy = spyOn(service, 'deleteFull').and.returnValue(dexiePromise());
+      const clearSpy = jest.spyOn(service, 'deleteFull').mockReturnValue(dexiePromise());
       const data = [{ ...mockPoblacion, syncStatus: null as any }];
       await service.bulkAdd(data);
 
       expect(clearSpy).toHaveBeenCalled();
       expect(indexDB.poblaciones.bulkAdd).toHaveBeenCalled();
-      const added = (indexDB.poblaciones.bulkAdd as jasmine.Spy).calls.argsFor(0)[0];
+      const added = (indexDB.poblaciones.bulkAdd as jest.Mock).mock.calls[0][0];
       expect(added[0].syncStatus).toBe('synced');
     });
 
     it('debe manejar error en bulkAdd()', async () => {
-      (indexDB.poblaciones.bulkAdd as jasmine.Spy).and.returnValue(Promise.reject('bulk error'));
-      await expectAsync(service.bulkAdd([mockPoblacion])).toBeRejectedWith('bulk error');
+      (indexDB.poblaciones.bulkAdd as jest.Mock).mockReturnValue(Promise.reject('bulk error'));
+      await expect(service.bulkAdd([mockPoblacion])).rejects.toBe('bulk error');
     });
   });
 

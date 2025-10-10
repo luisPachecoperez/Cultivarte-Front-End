@@ -1,10 +1,11 @@
+// ✅ src/tests/services/loading.service.spec.ts (versión Jest)
 import { TestBed } from '@angular/core/testing';
-
-import { LoadingService } from '../../app/shared/services/loading.service';
 import { BehaviorSubject } from 'rxjs';
 import { take } from 'rxjs/operators';
 
-describe('🧩 LoadingService (Angular 20)', () => {
+import { LoadingService } from '../../app/shared/services/loading.service';
+
+describe('🧩 LoadingService (Jest, Angular 20)', () => {
   let service: LoadingService;
 
   beforeEach(() => {
@@ -15,18 +16,18 @@ describe('🧩 LoadingService (Angular 20)', () => {
   });
 
   afterEach(() => {
-    // asegurar estado limpio entre pruebas
-    service.reset();
+    service.reset(); // limpiar estado entre pruebas
   });
 
   it('✅ debe crearse correctamente', () => {
     expect(service).toBeTruthy();
   });
 
+  // 🔹 Flujo básico de loading$
   describe('🔹 Flujo básico de loading$', () => {
     it('debe emitir false inicialmente', (done) => {
       service.loading$.pipe(take(1)).subscribe((val) => {
-        expect(val).toBeFalse();
+        expect(val).toBe(false);
         done();
       });
     });
@@ -79,6 +80,7 @@ describe('🧩 LoadingService (Angular 20)', () => {
     });
   });
 
+  // 🔹 show() y hide()
   describe('🔹 show() y hide()', () => {
     it('debe aumentar y disminuir el contador correctamente', () => {
       expect((service as any)._requests).toBe(0);
@@ -103,6 +105,7 @@ describe('🧩 LoadingService (Angular 20)', () => {
     });
   });
 
+  // 🔹 reset()
   describe('🔹 reset()', () => {
     it('debe reiniciar contador y emitir false', (done) => {
       service.show();
@@ -114,17 +117,18 @@ describe('🧩 LoadingService (Angular 20)', () => {
       service.reset();
 
       setTimeout(() => {
-        expect(lastVal).toBeFalse();
+        expect(lastVal).toBe(false);
         expect((service as any)._requests).toBe(0);
         done();
       }, 10);
     });
   });
 
+  // 🧠 Casos límite y consistencia
   describe('🧠 Casos límite y consistencia', () => {
     it('debe mantener _loading como instancia de BehaviorSubject', () => {
       const internal = (service as any)._loading;
-      expect(internal instanceof BehaviorSubject).toBeTrue();
+      expect(internal).toBeInstanceOf(BehaviorSubject);
     });
 
     it('debe mantener consistencia entre _requests y estado observable', (done) => {
@@ -136,7 +140,7 @@ describe('🧩 LoadingService (Angular 20)', () => {
 
       setTimeout(() => {
         expect((service as any)._requests).toBe(0);
-        expect(emitted.at(-1)).toBeFalse();
+        expect(emitted.at(-1)).toBe(false);
         done();
       }, 10);
     });

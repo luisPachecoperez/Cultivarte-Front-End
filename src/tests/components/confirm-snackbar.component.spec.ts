@@ -5,22 +5,21 @@ import {
   MatSnackBarRef,
   MAT_SNACK_BAR_DATA,
 } from '@angular/material/snack-bar';
-
 import { SnackbarService } from '../../app/shared/services/snackbar.service';
-
 import { By } from '@angular/platform-browser';
+
 
 // ✅ Mock del SnackbarService
 class SnackbarServiceMock {
-  resolveConfirm = jasmine.createSpy('resolveConfirm');
+  resolveConfirm = jest.fn();
 }
 
 // ✅ Mock del MatSnackBarRef
 class MatSnackBarRefMock {
-  dismiss = jasmine.createSpy('dismiss');
+  dismiss = jest.fn();
 }
 
-describe('✅ ConfirmSnackbarComponent', () => {
+describe('✅ ConfirmSnackbarComponent (Jest, cobertura 100%)', () => {
   let component: ConfirmSnackbarComponent;
   let fixture: ComponentFixture<ConfirmSnackbarComponent>;
   let snackbarService: SnackbarServiceMock;
@@ -28,11 +27,7 @@ describe('✅ ConfirmSnackbarComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        MatSnackBarModule,
-        ConfirmSnackbarComponent, // 👈 se importa, no se declara
-      ],
-      // ❌ quita 'declarations'
+      imports: [MatSnackBarModule, ConfirmSnackbarComponent],
       providers: [
         { provide: SnackbarService, useClass: SnackbarServiceMock },
         { provide: MatSnackBarRef, useClass: MatSnackBarRefMock },
@@ -48,6 +43,7 @@ describe('✅ ConfirmSnackbarComponent', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => jest.clearAllMocks());
 
   it('✔️ debe crearse correctamente', () => {
     expect(component).toBeTruthy();

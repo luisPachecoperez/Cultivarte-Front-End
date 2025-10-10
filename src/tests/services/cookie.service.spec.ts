@@ -3,13 +3,12 @@ import * as CryptoJS from 'crypto-js';
 import { CookieService } from '../../app/shared/services/cookie.service';
 import { environment } from '../../environments/environment';
 
-
-describe('🍪 CookieService (Cobertura 100%)', () => {
+describe('🍪 CookieService (Jest, Cobertura 100%)', () => {
   let service: CookieService;
   const secret = environment.COOKIE_SECRET;
 
   beforeEach(() => {
-    // Resetea cookies antes de cada test
+    // ✅ Resetea cookies antes de cada test
     Object.defineProperty(document, 'cookie', {
       writable: true,
       value: '',
@@ -22,9 +21,16 @@ describe('🍪 CookieService (Cobertura 100%)', () => {
     service = TestBed.inject(CookieService);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   // --- setCookie ---
-  it('setCookie crea cookie cifrada AES y con expiración', () => {
-    const spyEncrypt = spyOn(CryptoJS.AES, 'encrypt').and.callThrough();
+  it('✅ setCookie crea cookie cifrada AES y con expiración', () => {
+    const spyEncrypt = jest.spyOn(CryptoJS.AES, 'encrypt').mockImplementation((v: any, k: any) => {
+      return { toString: () => `encrypted(${v},${k})` } as any;
+    });
+
     const value = JSON.stringify({ user: 'orli' });
     service.setCookie('user', value, 1);
 
@@ -35,23 +41,23 @@ describe('🍪 CookieService (Cobertura 100%)', () => {
   });
 
   // --- getCookie ---
-  it('getCookie devuelve valor descifrado almacenado', () => {
-    // simula cookie cifrada
+  it('✅ getCookie devuelve valor descifrado almacenado', () => {
     const value = 'orli-session';
     const encrypted = CryptoJS.AES.encrypt(value, secret).toString();
+
     document.cookie = `session=${encrypted}; path=/;`;
 
     const result = service.getCookie('session');
     expect(result).toBe(encrypted);
   });
 
-  it('getCookie retorna null si no existe cookie', () => {
+  it('✅ getCookie retorna null si no existe cookie', () => {
     document.cookie = 'otra=abc;';
     const result = service.getCookie('noExiste');
     expect(result).toBeNull();
   });
 
-  it('getCookie maneja múltiples cookies correctamente', () => {
+  it('✅ getCookie maneja múltiples cookies correctamente', () => {
     const v1 = CryptoJS.AES.encrypt('v1', secret).toString();
     const v2 = CryptoJS.AES.encrypt('v2', secret).toString();
     document.cookie = `first=${v1}; second=${v2}`;
@@ -60,7 +66,7 @@ describe('🍪 CookieService (Cobertura 100%)', () => {
   });
 
   // --- deleteCookie ---
-  it('deleteCookie elimina la cookie estableciendo Max-Age negativo', () => {
+  it('✅ deleteCookie elimina la cookie estableciendo Max-Age negativo', () => {
     service.deleteCookie('user');
     expect(document.cookie).toContain('user=');
     expect(document.cookie).toContain('Max-Age=-99999999');

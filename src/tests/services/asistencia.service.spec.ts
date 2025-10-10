@@ -1,3 +1,4 @@
+// ✅ src/tests/services/asistencia.service.spec.ts
 import { TestBed } from '@angular/core/testing';
 import { AsistenciaService } from '../../app/asistencia/asistencia-lista/services/asistencia.service';
 
@@ -9,33 +10,33 @@ import { GraphQLService } from '../../app/shared/services/graphql.service';
 import { LoadingService } from '../../app/shared/services/loading.service';
 import { of } from 'rxjs';
 import { PreAsistencia } from '../../app/asistencia/interfaces/pre-asistencia.interface';
-import { AsistenciaPayLoad} from '../../app/asistencia/interfaces/asistencia-payload.interface';
+import { AsistenciaPayLoad } from '../../app/asistencia/interfaces/asistencia-payload.interface';
 import { Sesiones } from '../../app/eventos/interfaces/sesiones.interface';
 
-// 🧩 Mock services
+// 🧩 Mock services (versión Jest)
 class LoadIndexDBServiceMock {
-  ping = jasmine.createSpy('ping');
+  ping = jest.fn();
 }
 class ActividadesDataSourceMock {
-  getPreAsistencia = jasmine.createSpy('getPreAsistencia');
+  getPreAsistencia = jest.fn();
 }
 class AsistenciasDataSourceMock {
-  create = jasmine.createSpy('create');
+  create = jest.fn();
 }
 class SesionesDataSourceMock {
-  getById = jasmine.createSpy('getById');
-  update = jasmine.createSpy('update');
+  getById = jest.fn();
+  update = jest.fn();
 }
 class GraphQLServiceMock {
-  query = jasmine.createSpy('query');
-  mutation = jasmine.createSpy('mutation');
+  query = jest.fn();
+  mutation = jest.fn();
 }
 class LoadingServiceMock {
-  show = jasmine.createSpy('show');
-  hide = jasmine.createSpy('hide');
+  show = jest.fn();
+  hide = jest.fn();
 }
 
-describe('🧠 AsistenciaService', () => {
+describe('🧠 AsistenciaService (Jest)', () => {
   let service: AsistenciaService;
   let loadIndexDBService: LoadIndexDBServiceMock;
   let graphQLService: GraphQLServiceMock;
@@ -66,6 +67,8 @@ describe('🧠 AsistenciaService', () => {
     loadingService = TestBed.inject(LoadingService) as unknown as LoadingServiceMock;
   });
 
+  afterEach(() => jest.clearAllMocks());
+
   // 🔹 obtenerDetalleAsistencia
   it('🔍 debe obtener detalle de asistencia desde backend cuando ping = pong', async () => {
     const mockPre: PreAsistencia = {
@@ -80,8 +83,8 @@ describe('🧠 AsistenciaService', () => {
       asistentes_sesiones: [],
     };
 
-    loadIndexDBService.ping.and.returnValue(of('pong'));
-    graphQLService.query.and.returnValue(of({ getPreAsistencia: mockPre }));
+    loadIndexDBService.ping.mockReturnValue(of('pong'));
+    graphQLService.query.mockReturnValue(of({ getPreAsistencia: mockPre }));
 
     const result = await service.obtenerDetalleAsistencia('S1');
 
@@ -93,8 +96,8 @@ describe('🧠 AsistenciaService', () => {
 
   it('📴 debe obtener detalle de asistencia desde IndexedDB cuando no hay conexión', async () => {
     const mockOffline = { id_sesion: 'OFF1' };
-    loadIndexDBService.ping.and.returnValue(of('offline'));
-    actividadesDS.getPreAsistencia.and.returnValue(Promise.resolve(mockOffline));
+    loadIndexDBService.ping.mockReturnValue(of('offline'));
+    actividadesDS.getPreAsistencia.mockResolvedValue(mockOffline);
 
     const result = await service.obtenerDetalleAsistencia('OFF1');
     expect(actividadesDS.getPreAsistencia).toHaveBeenCalledWith('OFF1');
@@ -108,8 +111,8 @@ describe('🧠 AsistenciaService', () => {
       nuevos: [{ id_persona: 'P1', id_sesion: 'S1', id_asistencia: 'A1' }],
     } as any;
 
-    loadIndexDBService.ping.and.returnValue(of('pong'));
-    graphQLService.mutation.and.returnValue(
+    loadIndexDBService.ping.mockReturnValue(of('pong'));
+    graphQLService.mutation.mockReturnValue(
       of({ updateAsistencias: { exitoso: 'S', mensaje: 'OK' } }),
     );
 
@@ -124,7 +127,7 @@ describe('🧠 AsistenciaService', () => {
       nuevos: [{ id_persona: 'P1', id_sesion: 'S1', id_asistencia: 'A1' }],
     } as any;
 
-    loadIndexDBService.ping.and.returnValue(of('offline'));
+    loadIndexDBService.ping.mockReturnValue(of('offline'));
 
     const result = await service.guardarAsistencia(input);
     expect(asistenciasDS.create).toHaveBeenCalled();
@@ -141,10 +144,12 @@ describe('🧠 AsistenciaService', () => {
       nro_asistentes: 5,
     } as any;
 
-    loadIndexDBService.ping.and.returnValue(of('pong'));
-    graphQLService.mutation.and.returnValue(of({ updateAsistencias: { exitoso: 'S', mensaje: 'OK' } }));
-    sesionesDS.getById.and.returnValue(Promise.resolve({ id_sesion: 'S1' }));
-    sesionesDS.update.and.returnValue(Promise.resolve());
+    loadIndexDBService.ping.mockReturnValue(of('pong'));
+    graphQLService.mutation.mockReturnValue(
+      of({ updateAsistencias: { exitoso: 'S', mensaje: 'OK' } }),
+    );
+    sesionesDS.getById.mockResolvedValue({ id_sesion: 'S1' });
+    sesionesDS.update.mockResolvedValue(undefined);
 
     const result = await service.guardarAsistenciaFotografica(input);
     expect(graphQLService.mutation).toHaveBeenCalled();
@@ -161,9 +166,9 @@ describe('🧠 AsistenciaService', () => {
       nro_asistentes: 3,
     } as any;
 
-    loadIndexDBService.ping.and.returnValue(of('offline'));
-    sesionesDS.getById.and.returnValue(Promise.resolve({ id_sesion: 'S2' }));
-    sesionesDS.update.and.returnValue(Promise.resolve());
+    loadIndexDBService.ping.mockReturnValue(of('offline'));
+    sesionesDS.getById.mockResolvedValue({ id_sesion: 'S2' });
+    sesionesDS.update.mockResolvedValue(undefined);
 
     const result = await service.guardarAsistenciaFotografica(input);
     expect(sesionesDS.update).toHaveBeenCalled();
