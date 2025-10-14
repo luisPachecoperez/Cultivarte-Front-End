@@ -31,7 +31,7 @@ module.exports = {
     "karma.conf.js",
     "jest.config.js",
     "commitlint.config.js",
-    ".angular/cache/20.3.4/davi-fbol-cultivarte-front-mngr/vite",
+    ".angular",
     "coverage/",
     "test.ts",
     "environments",

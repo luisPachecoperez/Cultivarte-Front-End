@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
 import { AsistenciaComponent } from '../../app/asistencia/asistencia-lista/pages/asistencia.component';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -26,7 +31,12 @@ describe('✅ AsistenciaComponent (Jest)', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CommonModule, ReactiveFormsModule, FormsModule, AsistenciaComponent],
+      imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        FormsModule,
+        AsistenciaComponent,
+      ],
       providers: [
         { provide: AsistenciaService, useValue: asistenciaServiceMock },
         { provide: SnackbarService, useValue: snackbarMock },
@@ -53,15 +63,27 @@ describe('✅ AsistenciaComponent (Jest)', () => {
     asistenciaServiceMock.obtenerDetalleAsistencia.mockReset();
 
     await component.ngOnInit();
-    expect(asistenciaServiceMock.obtenerDetalleAsistencia).not.toHaveBeenCalled();
+    expect(
+      asistenciaServiceMock.obtenerDetalleAsistencia,
+    ).not.toHaveBeenCalled();
   });
 
   // ---------------------------------------------------------------------
   it('📥 ngOnInit() debe cargar datos de asistencia y precargar formulario', async () => {
     const mockSesion: Sesiones = { id_sesion: '10', id_actividad: '20' } as any;
     const beneficiarios: Beneficiarios[] = [
-      { id_persona: '1', nombre_completo: 'Ana Pérez', id_sede: '1', identificacion: '123' },
-      { id_persona: '2', nombre_completo: 'Luis Díaz', id_sede: '2', identificacion: '456' },
+      {
+        id_persona: '1',
+        nombre_completo: 'Ana Pérez',
+        id_sede: '1',
+        identificacion: '123',
+      },
+      {
+        id_persona: '2',
+        nombre_completo: 'Luis Díaz',
+        id_sede: '2',
+        identificacion: '456',
+      },
     ];
 
     const asistentes = [
@@ -82,11 +104,15 @@ describe('✅ AsistenciaComponent (Jest)', () => {
     };
 
     fixture.componentRef.setInput('evento', mockSesion);
-    asistenciaServiceMock.obtenerDetalleAsistencia.mockResolvedValueOnce(mockData);
+    asistenciaServiceMock.obtenerDetalleAsistencia.mockResolvedValueOnce(
+      mockData,
+    );
 
     await component.ngOnInit();
 
-    expect(asistenciaServiceMock.obtenerDetalleAsistencia).toHaveBeenCalledWith('10');
+    expect(asistenciaServiceMock.obtenerDetalleAsistencia).toHaveBeenCalledWith(
+      '10',
+    );
     expect(component.beneficiariosBD.length).toBe(2);
     expect(component.asistentes.length).toBe(2);
     expect(component.sedes.length).toBe(1);
@@ -97,21 +123,38 @@ describe('✅ AsistenciaComponent (Jest)', () => {
   it('❌ ngOnInit() debe manejar error en obtenerDetalleAsistencia', fakeAsync(() => {
     const mockSesion: Sesiones = { id_sesion: 'ERR', id_actividad: 'X' } as any;
     fixture.componentRef.setInput('evento', mockSesion);
-    asistenciaServiceMock.obtenerDetalleAsistencia.mockRejectedValueOnce('Error simulado');
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    asistenciaServiceMock.obtenerDetalleAsistencia.mockRejectedValueOnce(
+      'Error simulado',
+    );
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
 
     component.ngOnInit();
     tick();
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Error desde Promise:', 'Error simulado');
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '❌ Error desde Promise:',
+      'Error simulado',
+    );
     consoleErrorSpy.mockRestore();
   }));
 
   // ---------------------------------------------------------------------
   it('🔍 resultadosBusqueda() debe filtrar correctamente por texto y sede', () => {
     component.beneficiariosBD = [
-      { id_persona: '1', nombre_completo: 'Ana María', id_sede: '1', identificacion: '111' },
-      { id_persona: '2', nombre_completo: 'Pedro López', id_sede: '2', identificacion: '222' },
+      {
+        id_persona: '1',
+        nombre_completo: 'Ana María',
+        id_sede: '1',
+        identificacion: '111',
+      },
+      {
+        id_persona: '2',
+        nombre_completo: 'Pedro López',
+        id_sede: '2',
+        identificacion: '222',
+      },
     ] as any;
 
     component.asistenciaForm.patchValue({ id_sede: '1' });
@@ -131,7 +174,11 @@ describe('✅ AsistenciaComponent (Jest)', () => {
   // ---------------------------------------------------------------------
   it('➕ agregarAsistente() debe agregar uno nuevo', () => {
     component.asistentes = [];
-    const ben: Beneficiarios = { id_persona: '123', nombre_completo: 'Juan', id_sede: '1' } as any;
+    const ben: Beneficiarios = {
+      id_persona: '123',
+      nombre_completo: 'Juan',
+      id_sede: '1',
+    } as any;
 
     component.agregarAsistente(ben);
     expect(component.asistentes.length).toBe(1);
@@ -140,7 +187,11 @@ describe('✅ AsistenciaComponent (Jest)', () => {
 
   // ---------------------------------------------------------------------
   it('🚫 agregarAsistente() no debe duplicar asistentes', () => {
-    const ben: Beneficiarios = { id_persona: '123', nombre_completo: 'Juan', id_sede: '1' } as any;
+    const ben: Beneficiarios = {
+      id_persona: '123',
+      nombre_completo: 'Juan',
+      id_sede: '1',
+    } as any;
     component.asistentes = [ben as any];
     component.agregarAsistente(ben);
     expect(component.asistentes.length).toBe(1);
@@ -156,7 +207,9 @@ describe('✅ AsistenciaComponent (Jest)', () => {
   // ---------------------------------------------------------------------
   it('🚫 eliminarAsistente() no debe eliminar si eliminar = N', () => {
     component.asistentes = [{ id_persona: '1', eliminar: 'N' } as any];
-    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
     component.eliminarAsistente('1');
     expect(component.asistentes.length).toBe(1);
     expect(consoleWarnSpy).toHaveBeenCalled();
@@ -200,7 +253,9 @@ describe('✅ AsistenciaComponent (Jest)', () => {
     component.asistenciaForm.setValue({ id_sede: '1', descripcion: 'ok' });
     const resp = { exitoso: 'N', mensaje: 'Falla' };
     asistenciaServiceMock.guardarAsistencia.mockResolvedValueOnce(resp);
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
 
     await component.guardarAsistencia();
 
@@ -214,8 +269,12 @@ describe('✅ AsistenciaComponent (Jest)', () => {
     const mockSesion: Sesiones = { id_sesion: '1', id_actividad: '2' } as any;
     fixture.componentRef.setInput('evento', mockSesion);
     component.asistenciaForm.setValue({ id_sede: '1', descripcion: 'ok' });
-    asistenciaServiceMock.guardarAsistencia.mockRejectedValueOnce(new Error('HTTP'));
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    asistenciaServiceMock.guardarAsistencia.mockRejectedValueOnce(
+      new Error('HTTP'),
+    );
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
 
     await component.guardarAsistencia();
 

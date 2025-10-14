@@ -522,13 +522,11 @@ describe('ActividadesDataSource', () => {
         actividades: {
           where: jest.fn().mockReturnValue({
             anyOf: jest.fn().mockReturnValue({
-              filter: jest
-                .fn()
-                .mockReturnValue({
-                  toArray: jest
-                    .fn<() => Promise<ActividadesDB[]>>()
-                    .mockResolvedValue([mockActividad]),
-                }),
+              filter: jest.fn().mockReturnValue({
+                toArray: jest
+                  .fn<() => Promise<ActividadesDB[]>>()
+                  .mockResolvedValue([mockActividad]),
+              }),
             }),
           }),
         } as any,
@@ -544,7 +542,11 @@ describe('ActividadesDataSource', () => {
 
     (indexDB as any).parametros_generales = {
       toArray: jest
-        .fn<() => Promise<Array<{ id_parametro_general: string; nombre_parametro: string }>>>()
+        .fn<
+          () => Promise<
+            Array<{ id_parametro_general: string; nombre_parametro: string }>
+          >
+        >()
         .mockResolvedValue([
           { id_parametro_general: '1', nombre_parametro: 'Programa' },
         ]),
@@ -581,8 +583,6 @@ describe('ActividadesDataSource', () => {
     expect(Array.isArray(res.sedes)).toBe(true);
     expect(res.sedes.length).toBeGreaterThanOrEqual(1);
   });
-
-
 
   it('📅 consultarFechaCalendario returns mapped sessions', async () => {
     const mockSesion = {
@@ -642,30 +642,60 @@ describe('ActividadesDataSource', () => {
 
     // parametros_generales: Programa + TIPO_ACTIVIDAD_CULTIVARTE
     (indexDB as any).parametros_generales = {
-      toArray: jest.fn<() => Promise<Array<{ id_parametro_general: string; nombre_parametro: string }>>>()
+      toArray: jest
+        .fn<
+          () => Promise<
+            Array<{ id_parametro_general: string; nombre_parametro: string }>
+          >
+        >()
         .mockResolvedValue([
           { id_parametro_general: 'PG_PROG', nombre_parametro: 'Programa' },
-          { id_parametro_general: 'PG_TIPO', nombre_parametro: 'TIPO_ACTIVIDAD_CULTIVARTE' },
+          {
+            id_parametro_general: 'PG_TIPO',
+            nombre_parametro: 'TIPO_ACTIVIDAD_CULTIVARTE',
+          },
         ]),
     };
 
     // parametros_detalle: valores para tipos con 'valores'
     (indexDB as any).parametros_detalle = {
-      toArray: jest.fn<() => Promise<Array<{ id_parametro_general: string; id_parametro_detalle: string; nombre: string; valores?: string }>>>()
+      toArray: jest
+        .fn<
+          () => Promise<
+            Array<{
+              id_parametro_general: string;
+              id_parametro_detalle: string;
+              nombre: string;
+              valores?: string;
+            }>
+          >
+        >()
         .mockResolvedValue([
-          { id_parametro_general: 'PG_PROG', id_parametro_detalle: 'P1', nombre: 'CULTIVARTE' },
-          { id_parametro_general: 'PG_TIPO', id_parametro_detalle: 'TA1', nombre: 'Taller', valores: 'Lectura,Cine' },
+          {
+            id_parametro_general: 'PG_PROG',
+            id_parametro_detalle: 'P1',
+            nombre: 'CULTIVARTE',
+          },
+          {
+            id_parametro_general: 'PG_TIPO',
+            id_parametro_detalle: 'TA1',
+            nombre: 'Taller',
+            valores: 'Lectura,Cine',
+          },
         ]),
     };
 
     // sedes: se usa .toArray() (porque sedesUsuario = [])
     (indexDB as any).sedes = {
-      toArray: jest.fn<() => Promise<Array<{ id_sede: string; nombre: string }>>>()
+      toArray: jest
+        .fn<() => Promise<Array<{ id_sede: string; nombre: string }>>>()
         .mockResolvedValue([{ id_sede: 'S1', nombre: 'Sede 1' }]),
     };
 
     // Aliados & sedesUsuario
-    personasDataSource.getAliados.mockResolvedValue([{ id_aliado: 'A1', nombre: 'Aliado' }]);
+    personasDataSource.getAliados.mockResolvedValue([
+      { id_aliado: 'A1', nombre: 'Aliado' },
+    ]);
     personasSedesDataSource.getSedesByUsuario.mockResolvedValue([]); // ← fuerza rama sedes vacías
 
     const res = await service.getPreCreateActividad('userX');
@@ -673,27 +703,66 @@ describe('ActividadesDataSource', () => {
     expect(res.id_programa).toBe('P1'); // eligió CULTIVARTE
     expect(res.sedes).toEqual([{ id_sede: 'S1', nombre: 'Sede 1' }]);
     // Nombres de actividad construidos desde "valores"
-    expect(res.nombresDeActividad.some(n => n.nombre === 'Lectura')).toBe(true);
-    expect(res.nombresDeActividad.some(n => n.nombre === 'Cine')).toBe(true);
+    expect(res.nombresDeActividad.some((n) => n.nombre === 'Lectura')).toBe(
+      true,
+    );
+    expect(res.nombresDeActividad.some((n) => n.nombre === 'Cine')).toBe(true);
   });
   it('✏️ getPreEditActividad ordena sesiones y formatea fechas (yyyy-MM-dd)', async () => {
     jest.resetAllMocks();
 
     // parámetros generales/detalle mínimos para listas
     (indexDB as any).parametros_generales = {
-      toArray: jest.fn<() => Promise<Array<{ id_parametro_general: string; nombre_parametro: string }>>>()
+      toArray: jest
+        .fn<
+          () => Promise<
+            Array<{ id_parametro_general: string; nombre_parametro: string }>
+          >
+        >()
         .mockResolvedValue([
-          { id_parametro_general: 'PG_RESP', nombre_parametro: 'RESPONSABLE_CULTIVARTE' },
-          { id_parametro_general: 'PG_TIPO', nombre_parametro: 'TIPO_ACTIVIDAD_CULTIVARTE' },
-          { id_parametro_general: 'PG_FREQ', nombre_parametro: 'FRECUENCIA_CULTIVARTE' },
+          {
+            id_parametro_general: 'PG_RESP',
+            nombre_parametro: 'RESPONSABLE_CULTIVARTE',
+          },
+          {
+            id_parametro_general: 'PG_TIPO',
+            nombre_parametro: 'TIPO_ACTIVIDAD_CULTIVARTE',
+          },
+          {
+            id_parametro_general: 'PG_FREQ',
+            nombre_parametro: 'FRECUENCIA_CULTIVARTE',
+          },
         ]),
     };
     (indexDB as any).parametros_detalle = {
-      toArray: jest.fn<() => Promise<Array<{ id_parametro_general: string; id_parametro_detalle: string; nombre: string; valores?: string }>>>()
+      toArray: jest
+        .fn<
+          () => Promise<
+            Array<{
+              id_parametro_general: string;
+              id_parametro_detalle: string;
+              nombre: string;
+              valores?: string;
+            }>
+          >
+        >()
         .mockResolvedValue([
-          { id_parametro_general: 'PG_RESP', id_parametro_detalle: 'R1', nombre: 'Resp' },
-          { id_parametro_general: 'PG_TIPO', id_parametro_detalle: 'T1', nombre: 'Tipo', valores: 'A,B' },
-          { id_parametro_general: 'PG_FREQ', id_parametro_detalle: 'F1', nombre: 'Semanal' },
+          {
+            id_parametro_general: 'PG_RESP',
+            id_parametro_detalle: 'R1',
+            nombre: 'Resp',
+          },
+          {
+            id_parametro_general: 'PG_TIPO',
+            id_parametro_detalle: 'T1',
+            nombre: 'Tipo',
+            valores: 'A,B',
+          },
+          {
+            id_parametro_general: 'PG_FREQ',
+            id_parametro_detalle: 'F1',
+            nombre: 'Semanal',
+          },
         ]),
     };
 
@@ -701,15 +770,19 @@ describe('ActividadesDataSource', () => {
     (indexDB as any).sedes = {
       where: jest.fn().mockReturnValue({
         anyOf: jest.fn().mockReturnValue({
-          toArray: jest.fn<() => Promise<Array<{ id_sede: string; nombre: string }>>>()
+          toArray: jest
+            .fn<() => Promise<Array<{ id_sede: string; nombre: string }>>>()
             .mockResolvedValue([{ id_sede: 'S1', nombre: 'Sede 1' }]),
         }),
       }),
-      toArray: jest.fn<() => Promise<Array<{ id_sede: string; nombre: string }>>>()
+      toArray: jest
+        .fn<() => Promise<Array<{ id_sede: string; nombre: string }>>>()
         .mockResolvedValue([{ id_sede: 'S1', nombre: 'Sede 1' }]),
     };
 
-    personasDataSource.getAliados.mockResolvedValue([{ id_aliado: 'A1', nombre: 'Aliado' }]);
+    personasDataSource.getAliados.mockResolvedValue([
+      { id_aliado: 'A1', nombre: 'Aliado' },
+    ]);
     personasSedesDataSource.getSedesByUsuario.mockResolvedValue(['S1']);
 
     // actividad base
@@ -723,10 +796,21 @@ describe('ActividadesDataSource', () => {
 
     // sesiones desordenadas para probar sort + mapeo fecha
     const now = Date.now();
-    jest.spyOn((service as any).sesionesDataSource, 'sesionesPorActividad')
+    jest
+      .spyOn((service as any).sesionesDataSource, 'sesionesPorActividad')
       .mockResolvedValue([
-        { id_sesion: 'S2', fecha_actividad: String(now + 86_400_000), hora_inicio: '10:00', hora_fin: '11:00' },
-        { id_sesion: 'S1', fecha_actividad: String(now), hora_inicio: '08:00', hora_fin: '09:00' },
+        {
+          id_sesion: 'S2',
+          fecha_actividad: String(now + 86_400_000),
+          hora_inicio: '10:00',
+          hora_fin: '11:00',
+        },
+        {
+          id_sesion: 'S1',
+          fecha_actividad: String(now),
+          hora_inicio: '08:00',
+          hora_fin: '09:00',
+        },
       ] as any);
 
     const res = await service.getPreEditActividad('A1', 'u1');
@@ -740,7 +824,11 @@ describe('ActividadesDataSource', () => {
   it('🗓️ consultarFechaCalendario retorna [] si no hay actividades', async () => {
     jest.spyOn(service as any, 'getBySedes').mockResolvedValue([]); // fuerza early-return
     personasSedesDataSource.getSedesByUsuario.mockResolvedValue(['S1']);
-    const res = await service.consultarFechaCalendario(new Date(), new Date(), 'uX');
+    const res = await service.consultarFechaCalendario(
+      new Date(),
+      new Date(),
+      'uX',
+    );
     expect(res).toEqual([]);
   });
 
@@ -770,12 +858,16 @@ describe('ActividadesDataSource', () => {
     } as any);
 
     (indexDB as any).sedes = {
-      toArray: jest.fn<() => Promise<any[]>>().mockResolvedValue([{ id_sede: 'S1', nombre: 'Sede 1' }]),
+      toArray: jest
+        .fn<() => Promise<any[]>>()
+        .mockResolvedValue([{ id_sede: 'S1', nombre: 'Sede 1' }]),
     };
 
     (indexDB as any).parametros_detalle = {
       filter: jest.fn().mockReturnValue({
-        first: jest.fn<() => Promise<any>>().mockResolvedValue({ nombre: 'ACTIVIDAD INSTITUCIONAL' }),
+        first: jest
+          .fn<() => Promise<any>>()
+          .mockResolvedValue({ nombre: 'ACTIVIDAD INSTITUCIONAL' }),
         filter: jest.fn().mockReturnValue({
           first: jest.fn<() => Promise<any>>().mockResolvedValue({
             id_parametro_detalle: 'DET_BEN',
@@ -787,26 +879,37 @@ describe('ActividadesDataSource', () => {
 
     (indexDB as any).parametros_generales = {
       filter: jest.fn().mockReturnValue({
-        first: jest.fn<() => Promise<any>>().mockResolvedValue({ id_parametro_general: 'PG_GI' }),
+        first: jest
+          .fn<() => Promise<any>>()
+          .mockResolvedValue({ id_parametro_general: 'PG_GI' }),
       }),
     };
 
     (indexDB as any).personas_grupo_interes = {
       filter: jest.fn().mockReturnValue({
-        toArray: jest.fn<() => Promise<any[]>>().mockResolvedValue([{ id_persona: 'P1' }]),
+        toArray: jest
+          .fn<() => Promise<any[]>>()
+          .mockResolvedValue([{ id_persona: 'P1' }]),
       }),
     };
 
     (indexDB as any).personas = {
       bulkGet: jest.fn<() => Promise<any[]>>().mockResolvedValue([
-        { id_persona: 'P1', nombres: 'Ana', apellidos: 'P', identificacion: '123' },
+        {
+          id_persona: 'P1',
+          nombres: 'Ana',
+          apellidos: 'P',
+          identificacion: '123',
+        },
       ]),
     };
 
     (indexDB as any).personas_sedes = {
       where: jest.fn().mockReturnValue({
         anyOf: jest.fn().mockReturnValue({
-          toArray: jest.fn<() => Promise<any[]>>().mockResolvedValue([{ id_persona: 'P1', id_sede: 'S1' }]),
+          toArray: jest
+            .fn<() => Promise<any[]>>()
+            .mockResolvedValue([{ id_persona: 'P1', id_sede: 'S1' }]),
         }),
       }),
     };
@@ -814,7 +917,9 @@ describe('ActividadesDataSource', () => {
     (indexDB as any).asistencias = {
       where: jest.fn().mockReturnValue({
         equals: jest.fn().mockReturnValue({
-          toArray: jest.fn<() => Promise<any[]>>().mockResolvedValue([{ id_persona: 'P1', id_sesion }]),
+          toArray: jest
+            .fn<() => Promise<any[]>>()
+            .mockResolvedValue([{ id_persona: 'P1', id_sesion }]),
           count: jest.fn<() => Promise<number>>().mockResolvedValue(1),
         }),
       }),
@@ -841,9 +946,9 @@ describe('ActividadesDataSource', () => {
       }),
       where: jest.fn().mockReturnValue({
         equals: jest.fn().mockReturnValue({
-          toArray: jest.fn<() => Promise<any[]>>().mockResolvedValue([
-            { id_sesion: 'S1' }, { id_sesion: 'S2' },
-          ]),
+          toArray: jest
+            .fn<() => Promise<any[]>>()
+            .mockResolvedValue([{ id_sesion: 'S1' }, { id_sesion: 'S2' }]),
         }),
       }),
     };
@@ -855,14 +960,16 @@ describe('ActividadesDataSource', () => {
     } as any);
 
     (indexDB as any).sedes = {
-      toArray: jest.fn<() => Promise<any[]>>().mockResolvedValue([
-        { id_sede: 'S1', nombre: 'Sede 1' },
-      ]),
+      toArray: jest
+        .fn<() => Promise<any[]>>()
+        .mockResolvedValue([{ id_sede: 'S1', nombre: 'Sede 1' }]),
     };
 
     (indexDB as any).parametros_detalle = {
       filter: jest.fn().mockReturnValue({
-        first: jest.fn<() => Promise<any>>().mockResolvedValue({ nombre: 'OTRA' }),
+        first: jest
+          .fn<() => Promise<any>>()
+          .mockResolvedValue({ nombre: 'OTRA' }),
         filter: jest.fn().mockReturnValue({
           first: jest.fn<() => Promise<any>>().mockResolvedValue({
             id_parametro_detalle: 'DET_BEN',
@@ -874,28 +981,37 @@ describe('ActividadesDataSource', () => {
 
     (indexDB as any).parametros_generales = {
       filter: jest.fn().mockReturnValue({
-        first: jest.fn<() => Promise<any>>().mockResolvedValue({ id_parametro_general: 'PG' }),
+        first: jest
+          .fn<() => Promise<any>>()
+          .mockResolvedValue({ id_parametro_general: 'PG' }),
       }),
     };
 
     (indexDB as any).personas_grupo_interes = {
       filter: jest.fn().mockReturnValue({
-        toArray: jest.fn<() => Promise<any[]>>().mockResolvedValue([{ id_persona: 'P1' }]),
+        toArray: jest
+          .fn<() => Promise<any[]>>()
+          .mockResolvedValue([{ id_persona: 'P1' }]),
       }),
     };
 
     (indexDB as any).personas = {
       bulkGet: jest.fn<() => Promise<any[]>>().mockResolvedValue([
-        { id_persona: 'P1', nombres: 'Ana', apellidos: 'P', identificacion: '123' },
+        {
+          id_persona: 'P1',
+          nombres: 'Ana',
+          apellidos: 'P',
+          identificacion: '123',
+        },
       ]),
     };
 
     (indexDB as any).personas_sedes = {
       where: jest.fn().mockReturnValue({
         anyOf: jest.fn().mockReturnValue({
-          toArray: jest.fn<() => Promise<any[]>>().mockResolvedValue([
-            { id_persona: 'P1', id_sede: 'S1' },
-          ]),
+          toArray: jest
+            .fn<() => Promise<any[]>>()
+            .mockResolvedValue([{ id_persona: 'P1', id_sede: 'S1' }]),
         }),
       }),
     };
@@ -903,9 +1019,11 @@ describe('ActividadesDataSource', () => {
     (indexDB as any).asistencias = {
       where: jest.fn().mockReturnValue({
         equals: jest.fn().mockImplementation((arg: any) => ({
-          toArray: jest.fn<() => Promise<any[]>>().mockResolvedValue(
-            arg === 'S1' || arg === 'S2' ? [{ id_persona: 'P1' }] : []
-          ),
+          toArray: jest
+            .fn<() => Promise<any[]>>()
+            .mockResolvedValue(
+              arg === 'S1' || arg === 'S2' ? [{ id_persona: 'P1' }] : [],
+            ),
           count: jest.fn<() => Promise<number>>().mockResolvedValue(0),
         })),
       }),
@@ -916,8 +1034,4 @@ describe('ActividadesDataSource', () => {
     expect(res.asistentes_sesiones[0].eliminar).toBe('S');
     expect(res.foto).toBe('N');
   });
-
-
-
-
 });

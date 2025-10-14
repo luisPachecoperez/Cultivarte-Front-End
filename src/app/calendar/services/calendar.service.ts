@@ -61,10 +61,7 @@ export class CalendarService {
               )
               .pipe(
                 tap((response) => {
-                  console.log(
-                    'Obtuvo sesiones del servicio del graphql',
-                    response,
-                  );
+                  //console.log('Obtuvo sesiones del servicio del graphql',response,);
                 }),
                 map((response) =>
                   (response?.consultarFechaCalendario || []).map((s) => ({

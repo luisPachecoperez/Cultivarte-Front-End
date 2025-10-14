@@ -74,7 +74,9 @@ describe('Parametros_detalleDataSource (Jest)', () => {
     });
 
     it('debe manejar error en add()', async () => {
-      (indexDB.parametros_detalle.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+      (indexDB.parametros_detalle.add as jest.Mock).mockReturnValue(
+        Promise.reject('DB error'),
+      );
       await expect(service.create(mockDetalle)).rejects.toBe('DB error');
     });
   });
@@ -83,12 +85,16 @@ describe('Parametros_detalleDataSource (Jest)', () => {
   describe('🟢 update', () => {
     it('debe actualizar correctamente y retornar número', async () => {
       const result = await service.update('D1', { nombre: 'Nuevo' });
-      expect(indexDB.parametros_detalle.update).toHaveBeenCalledWith('D1', { nombre: 'Nuevo' });
+      expect(indexDB.parametros_detalle.update).toHaveBeenCalledWith('D1', {
+        nombre: 'Nuevo',
+      });
       expect(result).toBe(1);
     });
 
     it('debe manejar error en update()', async () => {
-      (indexDB.parametros_detalle.update as jest.Mock).mockReturnValue(Promise.reject('Error update'));
+      (indexDB.parametros_detalle.update as jest.Mock).mockReturnValue(
+        Promise.reject('Error update'),
+      );
       await expect(service.update('D1', {})).rejects.toBe('Error update');
     });
   });
@@ -101,7 +107,9 @@ describe('Parametros_detalleDataSource (Jest)', () => {
     });
 
     it('debe manejar error en delete()', async () => {
-      (indexDB.parametros_detalle.delete as jest.Mock).mockReturnValue(Promise.reject('Error delete'));
+      (indexDB.parametros_detalle.delete as jest.Mock).mockReturnValue(
+        Promise.reject('Error delete'),
+      );
       await expect(service.delete('D1')).rejects.toBe('Error delete');
     });
   });
@@ -110,16 +118,21 @@ describe('Parametros_detalleDataSource (Jest)', () => {
   describe('🟢 bulkAdd', () => {
     it('debe borrar todo antes de agregar', async () => {
       const data = [{ ...mockDetalle, syncStatus: null as any }];
-      const clearSpy = jest.spyOn(service, 'deleteFull').mockReturnValue(dexiePromise());
+      const clearSpy = jest
+        .spyOn(service, 'deleteFull')
+        .mockReturnValue(dexiePromise());
       await service.bulkAdd(data);
       expect(clearSpy).toHaveBeenCalled();
       expect(indexDB.parametros_detalle.bulkAdd).toHaveBeenCalled();
-      const added = (indexDB.parametros_detalle.bulkAdd as jest.Mock).mock.calls[0][0];
+      const added = (indexDB.parametros_detalle.bulkAdd as jest.Mock).mock
+        .calls[0][0];
       expect(added[0].syncStatus).toBe('synced');
     });
 
     it('debe manejar error en bulkAdd()', async () => {
-      (indexDB.parametros_detalle.bulkAdd as jest.Mock).mockReturnValue(Promise.reject('error'));
+      (indexDB.parametros_detalle.bulkAdd as jest.Mock).mockReturnValue(
+        Promise.reject('error'),
+      );
       await expect(service.bulkAdd([mockDetalle])).rejects.toBe('error');
     });
   });

@@ -69,7 +69,9 @@ describe('Personas_sedesDataSource (Jest)', () => {
   });
 
   it('🟠 create debe manejar error', async () => {
-    (indexDB.personas_sedes.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+    (indexDB.personas_sedes.add as jest.Mock).mockReturnValue(
+      Promise.reject('DB error'),
+    );
     await expect(service.create(mockRegistro)).rejects.toBe('DB error');
   });
 
@@ -77,7 +79,9 @@ describe('Personas_sedesDataSource (Jest)', () => {
   it('🟢 update debe actualizar correctamente', async () => {
     const result = await service.update('PS1', { id_sede: 'S2' });
     expect(result).toBe(1);
-    expect(indexDB.personas_sedes.update).toHaveBeenCalledWith('PS1', { id_sede: 'S2' });
+    expect(indexDB.personas_sedes.update).toHaveBeenCalledWith('PS1', {
+      id_sede: 'S2',
+    });
   });
 
   // --- delete ---
@@ -91,7 +95,8 @@ describe('Personas_sedesDataSource (Jest)', () => {
     const data = [{ ...mockRegistro, syncStatus: null as any }];
     await service.bulkAdd(data);
     expect(indexDB.personas_sedes.bulkAdd).toHaveBeenCalled();
-    const added = (indexDB.personas_sedes.bulkAdd as jest.Mock).mock.calls[0][0];
+    const added = (indexDB.personas_sedes.bulkAdd as jest.Mock).mock
+      .calls[0][0];
     expect(added[0].syncStatus).toBe('synced');
   });
 
@@ -110,7 +115,7 @@ describe('Personas_sedesDataSource (Jest)', () => {
             dexiePromise([
               { id_persona: 'U1', id_sede: 'S1' },
               { id_persona: 'U1', id_sede: 'S2' },
-            ])
+            ]),
           ),
         }),
       });

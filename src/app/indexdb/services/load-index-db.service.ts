@@ -276,7 +276,7 @@ export class LoadIndexDBService {
           fecha_creacion
           id_modificado_por
           fecha_modificacion
-      
+
         }
       }
     `;
@@ -304,7 +304,7 @@ export class LoadIndexDBService {
       } else {
         offset += this.limit;
       }
-      console.log(`✅ PersonasSedes cargadas: ${data.length}`);
+      //console.log(`✅ PersonasSedes cargadas: ${data.length}`);
     }
   }
 
@@ -608,13 +608,13 @@ export class LoadIndexDBService {
               await this.loadPersonas();
               await this.loadPersonasSedes();
               await this.loadPersonaProgramas();
-              console.log('personasprogramas');
+              //console.log('personasprogramas');
               await this.loadPersonasGrupoInteres();
-              console.log('gruposinteres');
+              //console.log('gruposinteres');
               await this.loadActividadesSede(id_usuario);
               await this.loadSesionesSede(id_usuario);
               await this.loadAsistenciasSede(id_usuario);
-              console.log('fin carga inicial');
+              //console.log('fin carga inicial');
             })(),
           ),
         ),

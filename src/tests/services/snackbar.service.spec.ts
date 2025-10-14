@@ -37,7 +37,7 @@ describe('🧩 SnackbarService (Jest)', () => {
       expect(matSnackBar.open).toHaveBeenCalledWith(
         'Test message',
         'Cerrar',
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -64,7 +64,7 @@ describe('🧩 SnackbarService (Jest)', () => {
       if ((service as any).loadConfirmComponent) {
         expect(matSnackBar.openFromComponent).toHaveBeenCalledWith(
           ConfirmSnackbarComponent,
-          expect.any(Object)
+          expect.any(Object),
         );
       }
       done();

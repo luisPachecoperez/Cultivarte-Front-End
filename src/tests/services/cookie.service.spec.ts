@@ -27,9 +27,11 @@ describe('🍪 CookieService (Jest, Cobertura 100%)', () => {
 
   // --- setCookie ---
   it('✅ setCookie crea cookie cifrada AES y con expiración', () => {
-    const spyEncrypt = jest.spyOn(CryptoJS.AES, 'encrypt').mockImplementation((v: any, k: any) => {
-      return { toString: () => `encrypted(${v},${k})` } as any;
-    });
+    const spyEncrypt = jest
+      .spyOn(CryptoJS.AES, 'encrypt')
+      .mockImplementation((v: any, k: any) => {
+        return { toString: () => `encrypted(${v},${k})` } as any;
+      });
 
     const value = JSON.stringify({ user: 'orli' });
     service.setCookie('user', value, 1);

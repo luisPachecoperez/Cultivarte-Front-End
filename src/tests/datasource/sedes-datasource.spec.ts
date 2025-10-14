@@ -69,7 +69,9 @@ describe('SedesDataSource (Jest)', () => {
     });
 
     it('debe manejar error en add()', async () => {
-      (indexDB.sedes.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+      (indexDB.sedes.add as jest.Mock).mockReturnValue(
+        Promise.reject('DB error'),
+      );
       await expect(service.create(mockSede)).rejects.toBe('DB error');
     });
   });
@@ -79,11 +81,15 @@ describe('SedesDataSource (Jest)', () => {
     it('debe actualizar correctamente', async () => {
       const result = await service.update('S1', { nombre: 'Nueva Sede' });
       expect(result).toBe(1);
-      expect(indexDB.sedes.update).toHaveBeenCalledWith('S1', { nombre: 'Nueva Sede' });
+      expect(indexDB.sedes.update).toHaveBeenCalledWith('S1', {
+        nombre: 'Nueva Sede',
+      });
     });
 
     it('debe manejar error en update()', async () => {
-      (indexDB.sedes.update as jest.Mock).mockReturnValue(Promise.reject('update error'));
+      (indexDB.sedes.update as jest.Mock).mockReturnValue(
+        Promise.reject('update error'),
+      );
       await expect(service.update('S1', {})).rejects.toBe('update error');
     });
   });
@@ -96,7 +102,9 @@ describe('SedesDataSource (Jest)', () => {
     });
 
     it('debe manejar error en delete()', async () => {
-      (indexDB.sedes.delete as jest.Mock).mockReturnValue(Promise.reject('delete error'));
+      (indexDB.sedes.delete as jest.Mock).mockReturnValue(
+        Promise.reject('delete error'),
+      );
       await expect(service.delete('S1')).rejects.toBe('delete error');
     });
   });
@@ -104,7 +112,9 @@ describe('SedesDataSource (Jest)', () => {
   // --- bulkAdd ---
   describe('🟢 bulkAdd', () => {
     it('debe limpiar antes y agregar sedes con syncStatus', async () => {
-      const clearSpy = jest.spyOn(service, 'deleteFull').mockReturnValue(dexiePromise());
+      const clearSpy = jest
+        .spyOn(service, 'deleteFull')
+        .mockReturnValue(dexiePromise());
       const data = [{ ...mockSede, syncStatus: null as any }];
       await service.bulkAdd(data);
 
@@ -115,7 +125,9 @@ describe('SedesDataSource (Jest)', () => {
     });
 
     it('debe manejar error en bulkAdd()', async () => {
-      (indexDB.sedes.bulkAdd as jest.Mock).mockReturnValue(Promise.reject('bulk error'));
+      (indexDB.sedes.bulkAdd as jest.Mock).mockReturnValue(
+        Promise.reject('bulk error'),
+      );
       await expect(service.bulkAdd([mockSede])).rejects.toBe('bulk error');
     });
   });

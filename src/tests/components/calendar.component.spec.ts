@@ -792,11 +792,11 @@ describe('✅ CalendarComponent (Jest 90%)', () => {
         extendedProps: {
           id_actividad: 'AX',
           id_sesion: 'S1',
-          asistentes_evento:10,
+          asistentes_evento: 10,
           desde: '2025-08-11',
           hasta: '2025-08-11',
-          nombre_actividad: 'xyz'
-        }
+          nombre_actividad: 'xyz',
+        },
       },
       {
         id_actividad: 'AX',
@@ -807,11 +807,11 @@ describe('✅ CalendarComponent (Jest 90%)', () => {
         extendedProps: {
           id_actividad: 'AX',
           id_sesion: 'S2',
-          asistentes_evento:10,
+          asistentes_evento: 10,
           desde: '2025-08-12',
           hasta: '2025-08-12',
-          nombre_actividad: 'xyz'
-        }
+          nombre_actividad: 'xyz',
+        },
       },
     ];
 
@@ -832,7 +832,7 @@ describe('✅ CalendarComponent (Jest 90%)', () => {
     component.agregarOActualizarEvento(payload);
 
     // ✅ Verifica que reemplazó las anteriores
-    const ids = component.eventosCalendario.map(e => e.id_sesion);
+    const ids = component.eventosCalendario.map((e) => e.id_sesion);
     expect(ids).toEqual(['S3']);
     expect((component.calendarOptions.events as any[])?.length).toBe(1);
   });
@@ -871,13 +871,9 @@ describe('✅ CalendarComponent (Jest 90%)', () => {
         fecha_actividad: '2025-08-11',
         hora_inicio: '14:00',
         hora_fin: '15:00',
-      })
+      }),
     );
   });
-
-
-
-
 
   // 🧩 Cubre líneas 339–340: nro_asistentes indefinido → default 0
   it('🧩 abrirEdicion() asigna nro_asistentes=0 si viene undefined', () => {

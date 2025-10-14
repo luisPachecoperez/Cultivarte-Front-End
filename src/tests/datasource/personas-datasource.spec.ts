@@ -89,11 +89,17 @@ describe('PersonasDataSource (Jest)', () => {
     (indexDB as any).personas_sedes = {
       where: jest.fn().mockReturnValue({
         equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockReturnValue(mockDexiePromise(opts.sedesUsuario ?? [])),
+          toArray: jest
+            .fn()
+            .mockReturnValue(mockDexiePromise(opts.sedesUsuario ?? [])),
         }),
         anyOf: jest.fn().mockReturnValue({
           and: jest.fn().mockReturnValue({
-            toArray: jest.fn().mockReturnValue(mockDexiePromise(opts.personasSedesAliados ?? [])),
+            toArray: jest
+              .fn()
+              .mockReturnValue(
+                mockDexiePromise(opts.personasSedesAliados ?? []),
+              ),
           }),
         }),
       }),
@@ -111,7 +117,9 @@ describe('PersonasDataSource (Jest)', () => {
       where: jest.fn().mockReturnValue({
         equals: jest.fn().mockReturnValue({
           filter: jest.fn().mockReturnValue({
-            first: jest.fn().mockReturnValue(mockDexiePromise(opts.paramDetalle)),
+            first: jest
+              .fn()
+              .mockReturnValue(mockDexiePromise(opts.paramDetalle)),
           }),
         }),
       }),
@@ -120,7 +128,9 @@ describe('PersonasDataSource (Jest)', () => {
     (indexDB as any).personas_grupo_interes = {
       where: jest.fn().mockReturnValue({
         equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockReturnValue(mockDexiePromise(opts.personasGrupo ?? [])),
+          toArray: jest
+            .fn()
+            .mockReturnValue(mockDexiePromise(opts.personasGrupo ?? [])),
         }),
       }),
     };
@@ -128,7 +138,9 @@ describe('PersonasDataSource (Jest)', () => {
     (indexDB as any).personas = {
       where: jest.fn().mockReturnValue({
         anyOf: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockReturnValue(mockDexiePromise(opts.aliados ?? [])),
+          toArray: jest
+            .fn()
+            .mockReturnValue(mockDexiePromise(opts.aliados ?? [])),
         }),
       }),
     };
@@ -160,7 +172,10 @@ describe('PersonasDataSource (Jest)', () => {
     setupAliadosMocks({
       sedesUsuario: [],
       paramGeneral: { id_parametro_general: 'PG1' },
-      paramDetalle: { id_parametro_detalle: 'PD1', nombre: 'ALIADO_CULTIVARTE' },
+      paramDetalle: {
+        id_parametro_detalle: 'PD1',
+        nombre: 'ALIADO_CULTIVARTE',
+      },
       personasGrupo: [{ id_persona: 'A1', id_grupo_interes: 'PD1' }],
       aliados: [{ id_persona: 'A1', nombres: 'Mario', apellidos: 'Lopez' }],
     });
@@ -175,7 +190,10 @@ describe('PersonasDataSource (Jest)', () => {
     setupAliadosMocks({
       sedesUsuario: [{ id_persona: 'U1', id_sede: 'S1' }],
       paramGeneral: { id_parametro_general: 'PG1' },
-      paramDetalle: { id_parametro_detalle: 'PD1', nombre: 'ALIADO_CULTIVARTE' },
+      paramDetalle: {
+        id_parametro_detalle: 'PD1',
+        nombre: 'ALIADO_CULTIVARTE',
+      },
       personasGrupo: [{ id_persona: 'A1', id_grupo_interes: 'PD1' }],
       aliados: [{ id_persona: 'A1', nombres: 'Carlos', apellidos: 'Aliado' }],
       personasSedesAliados: [{ id_persona: 'A1', id_sede: 'S1' }],
@@ -192,7 +210,10 @@ describe('PersonasDataSource (Jest)', () => {
     setupAliadosMocks({
       sedesUsuario: [{ id_persona: 'U1', id_sede: 'S1' }],
       paramGeneral: { id_parametro_general: 'PG1' },
-      paramDetalle: { id_parametro_detalle: 'PD1', nombre: 'ALIADO_CULTIVARTE' },
+      paramDetalle: {
+        id_parametro_detalle: 'PD1',
+        nombre: 'ALIADO_CULTIVARTE',
+      },
       personasGrupo: [{ id_persona: 'A1', id_grupo_interes: 'PD1' }],
       aliados: [{ id_persona: 'A1', nombres: 'Pedro' }],
       personasSedesAliados: [{ id_persona: 'A1', id_sede: 'S2' }], // sede distinta
@@ -200,5 +221,102 @@ describe('PersonasDataSource (Jest)', () => {
 
     const result = await service.getAliados('U1');
     expect(result).toEqual([]);
+  });
+
+  // ... tus tests existentes ...
+
+  // 🔹 Caso 6: paramGeneralGrupoInteres es undefined
+  it('getAliados retorna [] si paramGeneralGrupoInteres es undefined', async () => {
+    setupAliadosMocks({
+      sedesUsuario: [],
+      paramGeneral: undefined,
+      paramDetalle: undefined,
+    });
+    const result = await service.getAliados('U1');
+    expect(result).toEqual([]);
+  });
+
+  // 🔹 Caso 7: paramAliadoCultivarte es undefined
+  it('getAliados retorna [] si paramAliadoCultivarte es undefined', async () => {
+    setupAliadosMocks({
+      sedesUsuario: [],
+      paramGeneral: { id_parametro_general: 'PG1' },
+      paramDetalle: undefined,
+    });
+    const result = await service.getAliados('U1');
+    expect(result).toEqual([]);
+  });
+
+  // 🔹 Caso 8: Usa razon_social cuando nombres/apellidos están vacíos
+  it('getAliados usa razon_social cuando nombres/apellidos están vacíos', async () => {
+    setupAliadosMocks({
+      sedesUsuario: [],
+      paramGeneral: { id_parametro_general: 'PG1' },
+      paramDetalle: {
+        id_parametro_detalle: 'PD1',
+        nombre: 'ALIADO_CULTIVARTE',
+      },
+      personasGrupo: [{ id_persona: 'A1', id_grupo_interes: 'PD1' }],
+      aliados: [
+        {
+          id_persona: 'A1',
+          nombres: '',
+          apellidos: '',
+          razon_social: 'Empresa XYZ',
+        },
+      ],
+    });
+
+    const result = await service.getAliados('U1');
+    expect(result[0].nombre).toBe('Empresa XYZ');
+  });
+
+  // 🔹 Caso 9: Concatena nombres y apellidos correctamente
+  it('getAliados concatena nombres y apellidos correctamente', async () => {
+    setupAliadosMocks({
+      sedesUsuario: [],
+      paramGeneral: { id_parametro_general: 'PG1' },
+      paramDetalle: {
+        id_parametro_detalle: 'PD1',
+        nombre: 'ALIADO_CULTIVARTE',
+      },
+      personasGrupo: [{ id_persona: 'A1', id_grupo_interes: 'PD1' }],
+      aliados: [
+        {
+          id_persona: 'A1',
+          nombres: 'Ana',
+          apellidos: 'García',
+          razon_social: '',
+        },
+      ],
+    });
+
+    const result = await service.getAliados('U1');
+    expect(result[0].nombre).toBe('Ana García');
+  });
+
+  // 🔹 Caso 10: Filtra múltiples aliados por sede
+  it('getAliados filtra correctamente con múltiples aliados', async () => {
+    setupAliadosMocks({
+      sedesUsuario: [{ id_persona: 'U1', id_sede: 'S1' }],
+      paramGeneral: { id_parametro_general: 'PG1' },
+      paramDetalle: {
+        id_parametro_detalle: 'PD1',
+        nombre: 'ALIADO_CULTIVARTE',
+      },
+      personasGrupo: [
+        { id_persona: 'A1', id_grupo_interes: 'PD1' },
+        { id_persona: 'A2', id_grupo_interes: 'PD1' },
+      ],
+      aliados: [
+        { id_persona: 'A1', nombres: 'Carlos', apellidos: 'Aliado' },
+        { id_persona: 'A2', nombres: 'Pedro', apellidos: 'Aliado' },
+      ],
+      personasSedesAliados: [{ id_persona: 'A1', id_sede: 'S1' }],
+    });
+
+    const result = await service.getAliados('U1');
+    expect(result.length).toBe(1);
+    expect(result[0].id_aliado).toBe('A1');
   });
 });

@@ -39,7 +39,7 @@ describe('🧩 SnackbarYesNoService (Jest)', () => {
   const testSnackbarMethod = (
     methodName: 'success' | 'warning' | 'error' | 'confirm',
     expectedPanelClass: string[],
-    expectedPosition: 'right' | 'center' = 'right'
+    expectedPosition: 'right' | 'center' = 'right',
   ) => {
     it(`🧪 debe abrir ${methodName} snackbar y retornar observable`, (done) => {
       const message = 'Test message';

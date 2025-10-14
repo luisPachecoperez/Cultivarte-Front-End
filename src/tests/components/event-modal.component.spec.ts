@@ -209,7 +209,9 @@ describe('EventModalComponent', () => {
     }));
 
     it('should handle network error during deletion', async () => {
-      snackbarService.confirm.mockReturnValueOnce(confirmSubject.asObservable());
+      snackbarService.confirm.mockReturnValueOnce(
+        confirmSubject.asObservable(),
+      );
       eventModalService.eliminarEvento.mockRejectedValueOnce(
         new Error('Network error'),
       );
@@ -253,10 +255,12 @@ describe('EventModalComponent', () => {
 
     it('should call seleccionarAccion("editar") on edit button click', () => {
       setInput(component, 'evento', mockActividad); // importante
-      fixture.detectChanges();                      // renderiza el template
+      fixture.detectChanges(); // renderiza el template
 
       const spy = jest.spyOn(component, 'seleccionarAccion');
-      const editBtn = fixture.debugElement.query(By.css('.btn-outline-primary'));
+      const editBtn = fixture.debugElement.query(
+        By.css('.btn-outline-primary'),
+      );
       expect(editBtn).not.toBeNull(); // por si acaso
       editBtn.nativeElement.click();
       expect(spy).toHaveBeenCalledWith('editar');

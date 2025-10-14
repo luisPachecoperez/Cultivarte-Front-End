@@ -2,7 +2,6 @@
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { take } from 'rxjs/operators';
-
 import { LoadingService } from '../../app/shared/services/loading.service';
 
 describe('🧩 LoadingService (Jest, Angular 20)', () => {

@@ -413,7 +413,7 @@ export class GraphQLService {
 <span class="cstat-no" title="statement not covered" >    return this.http.post&lt;{ data: T }&gt;(this.apiUrl, body, { headers }).pipe(</span>
       map(<span class="fstat-no" title="function not covered" >(r</span>esponse) =&gt; <span class="cstat-no" title="statement not covered" >response.data)</span>,
       catchError(<span class="fstat-no" title="function not covered" >(e</span>rror: HttpErrorResponse) =&gt; {
-        //console.error('Error en GraphQL Mutation:', error);
+        console.error('Error en GraphQL Mutation:', error);
 <span class="cstat-no" title="statement not covered" >        return throwError(<span class="fstat-no" title="function not covered" >() =</span>&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
           exitoso: 'N',
           mensaje: new Error(error.message),

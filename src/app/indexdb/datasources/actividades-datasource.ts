@@ -177,7 +177,7 @@ export class ActividadesDataSource {
   }
 
   async getPreCreateActividad(id_usuario: string): Promise<PreCreateActividad> {
-    console.log('Obteniendo datos para PreCreateActividad IndexDB');
+    //console.log('Obteniendo datos para PreCreateActividad IndexDB');
     // 1. Obtener parámetros generales y detalle
     const parametrosGenerales = await indexDB.parametros_generales.toArray();
     const parametrosDetalle = await indexDB.parametros_detalle.toArray();
@@ -279,7 +279,7 @@ export class ActividadesDataSource {
     // 4. Sedes y Aliados filtrados por usuario
     const aliados: { id_aliado: string; nombre: string }[] =
       await this.personasDataSource.getAliados(id_usuario);
-    console.log('PreCreateActividad Aliados:', aliados);
+    //console.log('PreCreateActividad Aliados:', aliados);
     const sedesUsuario =
       await this.personasSedesDataSource.getSedesByUsuario(id_usuario);
     //console.log('PreCreateActividad Sedes del usuario:', sedesUsuario);

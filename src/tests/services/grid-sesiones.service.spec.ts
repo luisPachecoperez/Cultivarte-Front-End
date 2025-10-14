@@ -73,7 +73,9 @@ describe('🧩 Grid_sesionesService (Jest, Cobertura 95%)', () => {
   // ⚠️ Caso 2: backend activo pero GraphQL lanza error → fallback controlado
   it('⚠️ debe capturar errores en la mutación GraphQL sin romper', async () => {
     loadIndexDB.ping.mockReturnValue(of('pong'));
-    graphQL.mutation.mockReturnValue(throwError(() => new Error('GraphQL fail')));
+    graphQL.mutation.mockReturnValue(
+      throwError(() => new Error('GraphQL fail')),
+    );
 
     const result = await service.guardarCambiosSesiones(payload);
 
@@ -89,11 +91,14 @@ describe('🧩 Grid_sesionesService (Jest, Cobertura 95%)', () => {
     const result = await service.guardarCambiosSesiones(payload);
 
     expect(sesionesDS.create).toHaveBeenCalledWith(
-      expect.objectContaining({ id_sesion: 'N1', syncStatus: 'pending-create' })
+      expect.objectContaining({
+        id_sesion: 'N1',
+        syncStatus: 'pending-create',
+      }),
     );
     expect(sesionesDS.update).toHaveBeenCalledWith(
       'M1',
-      expect.objectContaining({ syncStatus: 'pending-update' })
+      expect.objectContaining({ syncStatus: 'pending-update' }),
     );
     expect(sesionesDS.delete).toHaveBeenCalledWith('E1', true);
     expect(result.exitoso).toBe('S');

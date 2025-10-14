@@ -8,7 +8,6 @@ import {
 import { SnackbarService } from '../../app/shared/services/snackbar.service';
 import { By } from '@angular/platform-browser';
 
-
 // ✅ Mock del SnackbarService
 class SnackbarServiceMock {
   resolveConfirm = jest.fn();
@@ -31,14 +30,21 @@ describe('✅ ConfirmSnackbarComponent (Jest, cobertura 100%)', () => {
       providers: [
         { provide: SnackbarService, useClass: SnackbarServiceMock },
         { provide: MatSnackBarRef, useClass: MatSnackBarRefMock },
-        { provide: MAT_SNACK_BAR_DATA, useValue: { message: '¿Estás seguro?' } },
+        {
+          provide: MAT_SNACK_BAR_DATA,
+          useValue: { message: '¿Estás seguro?' },
+        },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ConfirmSnackbarComponent);
     component = fixture.componentInstance;
-    snackbarService = TestBed.inject(SnackbarService) as unknown as SnackbarServiceMock;
-    snackBarRef = TestBed.inject(MatSnackBarRef) as unknown as MatSnackBarRefMock;
+    snackbarService = TestBed.inject(
+      SnackbarService,
+    ) as unknown as SnackbarServiceMock;
+    snackBarRef = TestBed.inject(
+      MatSnackBarRef,
+    ) as unknown as MatSnackBarRefMock;
 
     fixture.detectChanges();
   });
@@ -55,7 +61,8 @@ describe('✅ ConfirmSnackbarComponent (Jest, cobertura 100%)', () => {
   });
 
   it('✅ debe llamar a snackbarService.resolveConfirm(true) y cerrar el snackbar al hacer clic en "Sí"', () => {
-    const yesButton = fixture.debugElement.queryAll(By.css('button'))[0].nativeElement;
+    const yesButton = fixture.debugElement.queryAll(By.css('button'))[0]
+      .nativeElement;
     yesButton.click();
 
     expect(snackbarService.resolveConfirm).toHaveBeenCalledWith(true);
@@ -63,7 +70,8 @@ describe('✅ ConfirmSnackbarComponent (Jest, cobertura 100%)', () => {
   });
 
   it('❌ debe llamar a snackbarService.resolveConfirm(false) y cerrar el snackbar al hacer clic en "No"', () => {
-    const noButton = fixture.debugElement.queryAll(By.css('button'))[1].nativeElement;
+    const noButton = fixture.debugElement.queryAll(By.css('button'))[1]
+      .nativeElement;
     noButton.click();
 
     expect(snackbarService.resolveConfirm).toHaveBeenCalledWith(false);

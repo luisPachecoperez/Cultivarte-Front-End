@@ -40,7 +40,9 @@ describe('AuthService (Jest)', () => {
 
     service = TestBed.inject(AuthService);
     cookieService = TestBed.inject(CookieService) as jest.Mocked<CookieService>;
-    graphQLService = TestBed.inject(GraphQLService) as jest.Mocked<GraphQLService>;
+    graphQLService = TestBed.inject(
+      GraphQLService,
+    ) as jest.Mocked<GraphQLService>;
     router = TestBed.inject(Router) as jest.Mocked<Router>;
   });
 
@@ -107,7 +109,9 @@ describe('AuthService (Jest)', () => {
   // -------------------------------------------------------------------------
   describe('getUserUuid', () => {
     it('🧩 debe retornar el UUID fijo', () => {
-      expect(service.getUserUuid()).toBe('07fc57f3-6955-4657-82f2-cf91ec9c83dd');
+      expect(service.getUserUuid()).toBe(
+        '07fc57f3-6955-4657-82f2-cf91ec9c83dd',
+      );
     });
   });
 
@@ -123,7 +127,9 @@ describe('AuthService (Jest)', () => {
       };
 
       graphQLService.mutation.mockReturnValue(
-        of({ googleLogin: { success: true, message: '', user: mockUser } }) as any
+        of({
+          googleLogin: { success: true, message: '', user: mockUser },
+        }) as any,
       );
 
       service.googleLogin('fake-token').subscribe();
@@ -146,7 +152,9 @@ describe('AuthService (Jest)', () => {
       };
 
       graphQLService.mutation.mockReturnValue(
-        of({ googleLogin: { success: true, message: '', user: mockUser } }) as any
+        of({
+          googleLogin: { success: true, message: '', user: mockUser },
+        }) as any,
       );
 
       service.googleLogin('fake-token').subscribe();
@@ -155,7 +163,7 @@ describe('AuthService (Jest)', () => {
 
     it('🔴 debe limpiar usuario en login fallido', () => {
       graphQLService.mutation.mockReturnValue(
-        of({ googleLogin: { success: false, message: 'Error' } }) as any
+        of({ googleLogin: { success: false, message: 'Error' } }) as any,
       );
 
       service.googleLogin('fake-token').subscribe();
@@ -164,7 +172,7 @@ describe('AuthService (Jest)', () => {
 
     it('🔴 debe manejar error de red y limpiar usuario', () => {
       graphQLService.mutation.mockReturnValue(
-        throwError(() => new Error('Network error'))
+        throwError(() => new Error('Network error')),
       );
 
       service.googleLogin('fake-token').subscribe({

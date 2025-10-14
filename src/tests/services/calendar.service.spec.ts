@@ -60,9 +60,15 @@ describe('🗓️ CalendarService (Jest)', () => {
     ];
 
     loadIndexDBService.ping.mockReturnValue(of('pong'));
-    graphqlService.query.mockReturnValue(of({ consultarFechaCalendario: mockSesiones }) as any);
+    graphqlService.query.mockReturnValue(
+      of({ consultarFechaCalendario: mockSesiones }) as any,
+    );
 
-    const result = await service.obtenerSesiones(fechaInicio, fechaFin, idUsuario);
+    const result = await service.obtenerSesiones(
+      fechaInicio,
+      fechaFin,
+      idUsuario,
+    );
 
     expect(graphqlService.query).toHaveBeenCalled();
     expect(result.length).toBe(1);
@@ -73,9 +79,15 @@ describe('🗓️ CalendarService (Jest)', () => {
   // ⚙️ Caso 1b: backend activo pero sin resultados
   it('⚙️ debe devolver arreglo vacío si GraphQL responde vacío', async () => {
     loadIndexDBService.ping.mockReturnValue(of('pong'));
-    graphqlService.query.mockReturnValue(of({ consultarFechaCalendario: [] }) as any);
+    graphqlService.query.mockReturnValue(
+      of({ consultarFechaCalendario: [] }) as any,
+    );
 
-    const result = await service.obtenerSesiones('2025-01-01', '2025-01-02', 'USER2');
+    const result = await service.obtenerSesiones(
+      '2025-01-01',
+      '2025-01-02',
+      'USER2',
+    );
     expect(result).toEqual([]);
   });
 
@@ -84,21 +96,36 @@ describe('🗓️ CalendarService (Jest)', () => {
     loadIndexDBService.ping.mockReturnValue(of('pong'));
     graphqlService.query.mockReturnValue(of(undefined as any));
 
-    const result = await service.obtenerSesiones('2025-02-01', '2025-02-02', 'USER3');
+    const result = await service.obtenerSesiones(
+      '2025-02-01',
+      '2025-02-02',
+      'USER3',
+    );
     expect(result).toEqual([]);
   });
 
   // ⚠️ Caso 2: GraphQL lanza error → fallback a IndexedDB
   it('⚠️ debe usar IndexedDB cuando GraphQL arroja error', async () => {
     const fallbackSesiones = [
-      { id_sesion: 'F1', nombre_actividad: 'Evento Offline', desde: '2025-10-03', hasta: '2025-10-03' },
+      {
+        id_sesion: 'F1',
+        nombre_actividad: 'Evento Offline',
+        desde: '2025-10-03',
+        hasta: '2025-10-03',
+      },
     ];
 
     loadIndexDBService.ping.mockReturnValue(of('pong'));
-    graphqlService.query.mockReturnValue(throwError(() => new Error('GraphQL error')));
+    graphqlService.query.mockReturnValue(
+      throwError(() => new Error('GraphQL error')),
+    );
     actividadesDS.consultarFechaCalendario.mockResolvedValue(fallbackSesiones);
 
-    const result = await service.obtenerSesiones('2025-10-01', '2025-10-05', 'USER4');
+    const result = await service.obtenerSesiones(
+      '2025-10-01',
+      '2025-10-05',
+      'USER4',
+    );
 
     expect(graphqlService.query).toHaveBeenCalled();
     expect(actividadesDS.consultarFechaCalendario).toHaveBeenCalled();
@@ -127,7 +154,11 @@ describe('🗓️ CalendarService (Jest)', () => {
     loadIndexDBService.ping.mockReturnValue(of('offline'));
     actividadesDS.consultarFechaCalendario.mockResolvedValue(offlineSesiones);
 
-    const result = await service.obtenerSesiones('2025-10-10', '2025-10-12', 'USER5');
+    const result = await service.obtenerSesiones(
+      '2025-10-10',
+      '2025-10-12',
+      'USER5',
+    );
 
     expect(actividadesDS.consultarFechaCalendario).toHaveBeenCalled();
     expect(result[0].extendedProps.id_sesion).toBe('O1');
@@ -137,10 +168,13 @@ describe('🗓️ CalendarService (Jest)', () => {
   // ⚠️ Caso 4: Fallback offline con error inesperado
   it('🚨 debe lanzar error si el fallback IndexedDB también falla', async () => {
     loadIndexDBService.ping.mockReturnValue(of('pong'));
-    graphqlService.query.mockReturnValue(throwError(() => new Error('Network fail')));
+    graphqlService.query.mockReturnValue(
+      throwError(() => new Error('Network fail')),
+    );
     actividadesDS.consultarFechaCalendario.mockRejectedValue('IndexedDB error');
 
-    await expect(service.obtenerSesiones('2025-10-10', '2025-10-11', 'USER6'))
-      .rejects.toBe('IndexedDB error');
+    await expect(
+      service.obtenerSesiones('2025-10-10', '2025-10-11', 'USER6'),
+    ).rejects.toBe('IndexedDB error');
   });
 });

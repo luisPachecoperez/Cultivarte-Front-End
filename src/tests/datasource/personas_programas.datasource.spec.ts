@@ -70,7 +70,9 @@ describe('Personas_programasDataSource (Jest)', () => {
     });
 
     it('debe manejar error en add()', async () => {
-      (indexDB.personas_programas.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+      (indexDB.personas_programas.add as jest.Mock).mockReturnValue(
+        Promise.reject('DB error'),
+      );
       await expect(service.create(mockRegistro)).rejects.toBe('DB error');
     });
   });
@@ -80,11 +82,15 @@ describe('Personas_programasDataSource (Jest)', () => {
     it('debe actualizar correctamente', async () => {
       const result = await service.update('PP1', { id_programa: 'PR2' });
       expect(result).toBe(1);
-      expect(indexDB.personas_programas.update).toHaveBeenCalledWith('PP1', { id_programa: 'PR2' });
+      expect(indexDB.personas_programas.update).toHaveBeenCalledWith('PP1', {
+        id_programa: 'PR2',
+      });
     });
 
     it('debe manejar error en update()', async () => {
-      (indexDB.personas_programas.update as jest.Mock).mockReturnValue(Promise.reject('update error'));
+      (indexDB.personas_programas.update as jest.Mock).mockReturnValue(
+        Promise.reject('update error'),
+      );
       await expect(service.update('PP1', {})).rejects.toBe('update error');
     });
   });
@@ -97,7 +103,9 @@ describe('Personas_programasDataSource (Jest)', () => {
     });
 
     it('debe manejar error en delete()', async () => {
-      (indexDB.personas_programas.delete as jest.Mock).mockReturnValue(Promise.reject('delete error'));
+      (indexDB.personas_programas.delete as jest.Mock).mockReturnValue(
+        Promise.reject('delete error'),
+      );
       await expect(service.delete('PP1')).rejects.toBe('delete error');
     });
   });
@@ -108,12 +116,15 @@ describe('Personas_programasDataSource (Jest)', () => {
       const data = [{ ...mockRegistro, syncStatus: null as any }];
       await service.bulkAdd(data);
       expect(indexDB.personas_programas.bulkAdd).toHaveBeenCalled();
-      const added = (indexDB.personas_programas.bulkAdd as jest.Mock).mock.calls[0][0];
+      const added = (indexDB.personas_programas.bulkAdd as jest.Mock).mock
+        .calls[0][0];
       expect(added[0].syncStatus).toBe('synced');
     });
 
     it('debe manejar error en bulkAdd()', async () => {
-      (indexDB.personas_programas.bulkAdd as jest.Mock).mockReturnValue(Promise.reject('bulk error'));
+      (indexDB.personas_programas.bulkAdd as jest.Mock).mockReturnValue(
+        Promise.reject('bulk error'),
+      );
       await expect(service.bulkAdd([mockRegistro])).rejects.toBe('bulk error');
     });
   });

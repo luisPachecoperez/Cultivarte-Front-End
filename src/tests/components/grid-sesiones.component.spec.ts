@@ -1,10 +1,14 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { Grid_sesionesComponent } from '../../app/eventos/components/grid-sesiones.component/pages/grid-sesiones.component';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormArray, FormGroup, FormBuilder } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormArray,
+  FormGroup,
+  FormBuilder,
+} from '@angular/forms';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../app/shared/services/snackbar.service';
-
 
 // ✅ Mock del SnackbarService
 class SnackbarServiceMock {
@@ -20,7 +24,12 @@ describe('✅ Grid_sesionesComponent (Angular 20 - Jest)', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CommonModule, ReactiveFormsModule, MatSnackBarModule, Grid_sesionesComponent],
+      imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatSnackBarModule,
+        Grid_sesionesComponent,
+      ],
       providers: [{ provide: SnackbarService, useClass: SnackbarServiceMock }],
     }).compileComponents();
 
@@ -93,10 +102,14 @@ describe('✅ Grid_sesionesComponent (Angular 20 - Jest)', () => {
     });
     component.formArray().push(fg);
 
-    const snack = TestBed.inject(SnackbarService) as unknown as SnackbarServiceMock;
+    const snack = TestBed.inject(
+      SnackbarService,
+    ) as unknown as SnackbarServiceMock;
     component.eliminarSesion(0);
 
-    expect(snack.error).toHaveBeenCalledWith('No se puede eliminar: 5 asistentes');
+    expect(snack.error).toHaveBeenCalledWith(
+      'No se puede eliminar: 5 asistentes',
+    );
     expect(component.formArray().length).toBe(1);
   });
 
@@ -135,7 +148,9 @@ describe('✅ Grid_sesionesComponent (Angular 20 - Jest)', () => {
     });
     component.formArray().push(fg);
 
-    const snack = TestBed.inject(SnackbarService) as unknown as SnackbarServiceMock;
+    const snack = TestBed.inject(
+      SnackbarService,
+    ) as unknown as SnackbarServiceMock;
     component.eliminarSesion(0);
 
     expect(snack.warning).toHaveBeenCalledWith('Eliminación cancelada');

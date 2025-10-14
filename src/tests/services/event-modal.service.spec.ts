@@ -45,7 +45,10 @@ describe('🧩 EventModalService (Jest)', () => {
   it('✅ debe eliminar evento en backend e IndexedDB cuando ping = pong y exitoso = S', async () => {
     const id = 'EVT-123';
     loadIndexDB.ping.mockReturnValue(of('pong'));
-    const mockResponse: GraphQLResponse = { exitoso: 'S', mensaje: 'Eliminado' };
+    const mockResponse: GraphQLResponse = {
+      exitoso: 'S',
+      mensaje: 'Eliminado',
+    };
     graphQL.mutation.mockReturnValue(of({ deleteActividad: mockResponse }));
 
     const result = await service.eliminarEvento(id);
@@ -53,7 +56,7 @@ describe('🧩 EventModalService (Jest)', () => {
     expect(loadIndexDB.ping).toHaveBeenCalled();
     expect(graphQL.mutation).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ id_actividad: id })
+      expect.objectContaining({ id_actividad: id }),
     );
     expect(actividadesDS.delete).toHaveBeenCalledWith(id, false);
     expect(result.exitoso).toBe('S');
@@ -64,7 +67,10 @@ describe('🧩 EventModalService (Jest)', () => {
   it('⚠️ no debe eliminar en IndexedDB si GraphQL responde exitoso = N', async () => {
     const id = 'EVT-456';
     loadIndexDB.ping.mockReturnValue(of('pong'));
-    const mockResponse: GraphQLResponse = { exitoso: 'N', mensaje: 'No se pudo eliminar' };
+    const mockResponse: GraphQLResponse = {
+      exitoso: 'N',
+      mensaje: 'No se pudo eliminar',
+    };
     graphQL.mutation.mockReturnValue(of({ deleteActividad: mockResponse }));
 
     const result = await service.eliminarEvento(id);
@@ -90,7 +96,9 @@ describe('🧩 EventModalService (Jest)', () => {
   it('🚨 debe capturar error del GraphQL y no romper ejecución', async () => {
     const id = 'EVT-999';
     loadIndexDB.ping.mockReturnValue(of('pong'));
-    graphQL.mutation.mockReturnValue(throwError(() => new Error('Network error')));
+    graphQL.mutation.mockReturnValue(
+      throwError(() => new Error('Network error')),
+    );
 
     let result: GraphQLResponse | undefined;
     try {

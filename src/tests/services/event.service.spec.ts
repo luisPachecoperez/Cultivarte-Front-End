@@ -129,7 +129,10 @@ describe('🧩 EventService (Jest, Cobertura 97%)', () => {
 
     const result = await service.obtenerEventoPorId(id);
 
-    expect(actividadesDS.getPreEditActividad).toHaveBeenCalledWith(id, 'USER-001');
+    expect(actividadesDS.getPreEditActividad).toHaveBeenCalledWith(
+      id,
+      'USER-001',
+    );
     expect(result.actividad.id_actividad).toBe('ACT-ERR');
     expect(result.actividad.nombre_actividad).toBe('Evento local');
   });
@@ -146,14 +149,20 @@ describe('🧩 EventService (Jest, Cobertura 97%)', () => {
       responsables: [],
       nombresDeActividad: [],
       frecuencias: [],
-      actividad: { id_actividad: id, nombre_actividad: 'Evento local offline' } as any,
+      actividad: {
+        id_actividad: id,
+        nombre_actividad: 'Evento local offline',
+      } as any,
       sesiones: [],
     };
     actividadesDS.getPreEditActividad.mockResolvedValue(mockLocal);
 
     const result = await service.obtenerEventoPorId(id);
 
-    expect(actividadesDS.getPreEditActividad).toHaveBeenCalledWith(id, 'USER-001');
+    expect(actividadesDS.getPreEditActividad).toHaveBeenCalledWith(
+      id,
+      'USER-001',
+    );
     expect(result.actividad.id_actividad).toBe('ACT-2');
     expect(result.id_programa).toBe('LOCAL-P2');
     expect(loading.show).toHaveBeenCalled();
@@ -166,9 +175,13 @@ describe('🧩 EventService (Jest, Cobertura 97%)', () => {
   it('✅ debe obtener configuración del evento desde GraphQL cuando ping = pong', async () => {
     const user = 'USER-001';
     loadIndexDB.ping.mockReturnValue(of('pong'));
-    graphQL.query.mockReturnValue(of({ getPreCreateActividad: { id_programa: 'PRG1' } }));
+    graphQL.query.mockReturnValue(
+      of({ getPreCreateActividad: { id_programa: 'PRG1' } }),
+    );
 
-    const result = await firstValueFrom(service.obtenerConfiguracionEvento(user));
+    const result = await firstValueFrom(
+      service.obtenerConfiguracionEvento(user),
+    );
 
     expect(graphQL.query).toHaveBeenCalled();
     expect(result.id_programa).toBe('PRG1');
@@ -190,9 +203,13 @@ describe('🧩 EventService (Jest, Cobertura 97%)', () => {
     };
     actividadesDS.getPreCreateActividad.mockResolvedValue(mockLocal);
 
-    const result = await firstValueFrom(service.obtenerConfiguracionEvento('USER-ERR'));
+    const result = await firstValueFrom(
+      service.obtenerConfiguracionEvento('USER-ERR'),
+    );
 
-    expect(actividadesDS.getPreCreateActividad).toHaveBeenCalledWith('USER-ERR');
+    expect(actividadesDS.getPreCreateActividad).toHaveBeenCalledWith(
+      'USER-ERR',
+    );
     expect(result.id_programa).toBe('LOCAL-P3');
     expect(result.sedes).toEqual([]);
   });
@@ -211,7 +228,9 @@ describe('🧩 EventService (Jest, Cobertura 97%)', () => {
     loadIndexDB.ping.mockReturnValue(of('offline'));
     actividadesDS.getPreCreateActividad.mockResolvedValue(localRes);
 
-    const result = await firstValueFrom(service.obtenerConfiguracionEvento('USER-X'));
+    const result = await firstValueFrom(
+      service.obtenerConfiguracionEvento('USER-X'),
+    );
 
     expect(graphQL.query).not.toHaveBeenCalled();
     expect(actividadesDS.getPreCreateActividad).toHaveBeenCalledWith('USER-X');
@@ -223,7 +242,10 @@ describe('🧩 EventService (Jest, Cobertura 97%)', () => {
   // -------------------------------------------------------
   it('🚀 debe crear evento correctamente en backend (ping = pong)', async () => {
     loadIndexDB.ping.mockReturnValue(of('pong'));
-    const evento = { id_actividad: 'ACT-123', nombre_actividad: 'Taller' } as Actividades;
+    const evento = {
+      id_actividad: 'ACT-123',
+      nombre_actividad: 'Taller',
+    } as Actividades;
     const sesiones = [{ id_sesion: 'S1' } as Sesiones];
 
     const gqlResponse: GraphQLResponse = { exitoso: 'S', mensaje: 'OK' };
@@ -241,7 +263,9 @@ describe('🧩 EventService (Jest, Cobertura 97%)', () => {
   it('⚠️ debe manejar error GraphQL en crearEvento sin romper', async () => {
     loadIndexDB.ping.mockReturnValue(of('pong'));
     const evento = { id_actividad: 'ACT-ERR' } as Actividades;
-    graphQL.mutation.mockReturnValue(throwError(() => new Error('GraphQL error')));
+    graphQL.mutation.mockReturnValue(
+      throwError(() => new Error('GraphQL error')),
+    );
 
     const result = await service.crearEvento(evento, []);
 

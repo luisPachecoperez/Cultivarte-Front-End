@@ -2,7 +2,6 @@ import { Grid_sesionesComponent } from './../../grid-sesiones.component/pages/gr
 import { PreEditActividad } from '../../../interfaces/pre-edit-actividad.interface';
 import { v4 as uuidv4 } from 'uuid';
 
-
 import {
   Component,
   input,
@@ -15,6 +14,7 @@ import {
   HostListener,
 } from '@angular/core';
 import { Aliados } from '../../../interfaces/lista-aliados.interface';
+
 import { CommonModule } from '@angular/common';
 import { Injectable } from '@angular/core';
 import { Sesiones } from '../../../interfaces/sesiones.interface';
@@ -397,7 +397,7 @@ export class EventComponent implements OnInit, OnChanges {
           this.eventoForm?.get('id_tipo_actividad')?.value as string,
         );
         this.loadingService.hide(); // 🔄 ocultar
-        console.log(
+        /*console.log(
           '📦 configuración cargada:',
           this.sedes,
           this.tiposDeActividad,
@@ -405,7 +405,7 @@ export class EventComponent implements OnInit, OnChanges {
           this.responsables,
           this.nombreDeEventos,
           this.frecuencias,
-        );
+        );*/
       });
   }
 

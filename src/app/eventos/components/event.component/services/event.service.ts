@@ -179,7 +179,7 @@ query GetPreEditActividad($id_actividad: ID!, $id_usuario: ID!) {
               })
               .pipe(
                 tap((res) => {
-                  console.log('📡 Respuesta cruda de GraphQL:', res);
+                  //console.log('📡 Respuesta cruda de GraphQL:', res);
                   this.loadingService.hide();
                 }),
                 map((res) => res.getPreEditActividad as PreEditActividad),

@@ -65,7 +65,9 @@ describe('Parametros_generalesDataSource (Jest)', () => {
   });
 
   it('⚠️ create maneja error de inserción', async () => {
-    (indexDB.parametros_generales.add as jest.Mock).mockReturnValue(Promise.reject('DB Error'));
+    (indexDB.parametros_generales.add as jest.Mock).mockReturnValue(
+      Promise.reject('DB Error'),
+    );
     await expect(service.create(mockData)).rejects.toBe('DB Error');
   });
 
@@ -79,7 +81,9 @@ describe('Parametros_generalesDataSource (Jest)', () => {
   });
 
   it('⚠️ update maneja error al actualizar', async () => {
-    (indexDB.parametros_generales.update as jest.Mock).mockReturnValue(Promise.reject('Error update'));
+    (indexDB.parametros_generales.update as jest.Mock).mockReturnValue(
+      Promise.reject('Error update'),
+    );
     await expect(service.update('P1', {})).rejects.toBe('Error update');
   });
 
@@ -90,21 +94,28 @@ describe('Parametros_generalesDataSource (Jest)', () => {
   });
 
   it('⚠️ delete maneja error al eliminar', async () => {
-    (indexDB.parametros_generales.delete as jest.Mock).mockReturnValue(Promise.reject('Error delete'));
+    (indexDB.parametros_generales.delete as jest.Mock).mockReturnValue(
+      Promise.reject('Error delete'),
+    );
     await expect(service.delete('P1')).rejects.toBe('Error delete');
   });
 
   // --- bulkAdd ---
   it('📦 bulkAdd reemplaza todo y agrega nuevos registros con syncStatus por defecto', async () => {
-    const data = [{ id_programa: 'P2', nombre: 'Otro', descripcion: 'desc' } as any];
+    const data = [
+      { id_programa: 'P2', nombre: 'Otro', descripcion: 'desc' } as any,
+    ];
     await service.bulkAdd(data);
     expect(indexDB.parametros_generales.clear).toHaveBeenCalled();
-    const calledData = (indexDB.parametros_generales.bulkAdd as jest.Mock).mock.calls[0][0];
+    const calledData = (indexDB.parametros_generales.bulkAdd as jest.Mock).mock
+      .calls[0][0];
     expect(calledData[0].syncStatus).toBe('synced');
   });
 
   it('⚠️ bulkAdd maneja error en clear', async () => {
-    (indexDB.parametros_generales.clear as jest.Mock).mockReturnValue(Promise.reject('Error clear'));
+    (indexDB.parametros_generales.clear as jest.Mock).mockReturnValue(
+      Promise.reject('Error clear'),
+    );
     await expect(service.bulkAdd([mockData])).rejects.toBe('Error clear');
   });
 

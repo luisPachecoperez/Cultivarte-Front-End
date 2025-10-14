@@ -55,7 +55,9 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
   });
 
   it('📭 debe retornar arreglo vacío cuando no hay registros', async () => {
-    (indexDB.asistencias.toArray as jest.Mock).mockReturnValue(dexiePromise([]));
+    (indexDB.asistencias.toArray as jest.Mock).mockReturnValue(
+      dexiePromise([]),
+    );
     const result = await service.getAll();
     expect(result).toEqual([]);
   });
@@ -68,7 +70,7 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
     const result = await service.getById('A1');
 
     // ✅ Se ignora el número de parámetros esperados por Dexie
-    expect((indexDB.asistencias.get as jest.Mock)).toHaveBeenCalled();
+    expect(indexDB.asistencias.get as jest.Mock).toHaveBeenCalled();
     const args = (indexDB.asistencias.get as jest.Mock).mock.calls[0];
     expect(args[0]).toBe('A1');
     expect(result?.id_persona).toBe('P1');
@@ -81,13 +83,11 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
 
     const result = await service.getById('NOEXISTE');
 
-    expect((indexDB.asistencias.get as jest.Mock)).toHaveBeenCalled();
+    expect(indexDB.asistencias.get as jest.Mock).toHaveBeenCalled();
     const args = (indexDB.asistencias.get as jest.Mock).mock.calls[0];
     expect(args[0]).toBe('NOEXISTE');
     expect(result).toBeUndefined();
   });
-
-
 
   // ---------------- create ----------------
   describe('create', () => {
@@ -117,7 +117,9 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
     it('🟢 soft delete cuando soft=true (update)', async () => {
       const result = await service.delete('A1', true);
 
-      expect(indexDB.asistencias.update).toHaveBeenCalledWith('A1', { deleted: true });
+      expect(indexDB.asistencias.update).toHaveBeenCalledWith('A1', {
+        deleted: true,
+      });
       expect(indexDB.asistencias.delete).not.toHaveBeenCalled();
 
       // ✅ valida la respuesta GraphQLResponse
@@ -146,10 +148,11 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
         expect(error).toBe('upd-error');
       }
 
-      expect(indexDB.asistencias.update).toHaveBeenCalledWith('A1', { deleted: true });
+      expect(indexDB.asistencias.update).toHaveBeenCalledWith('A1', {
+        deleted: true,
+      });
       expect(indexDB.asistencias.delete).not.toHaveBeenCalled();
     });
-
 
     it('🔴 debe manejar error si delete() rechaza en hard delete', async () => {
       (indexDB.asistencias.delete as jest.Mock).mockRejectedValue('del-error');
@@ -166,13 +169,16 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
     });
   });
 
-
   // ---------------- bulkAdd ----------------
   describe('bulkAdd', () => {
     it('🟢 establece syncStatus="synced" cuando viene null/undefined', async () => {
       const data: AsistenciasDB[] = [
         { ...mockAsistencia, id_asistencia: 'A2', syncStatus: null as any },
-        { ...mockAsistencia, id_asistencia: 'A3', syncStatus: undefined as any },
+        {
+          ...mockAsistencia,
+          id_asistencia: 'A3',
+          syncStatus: undefined as any,
+        },
       ];
 
       await service.bulkAdd(data);
@@ -181,7 +187,8 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
       expect(indexDB.asistencias.bulkAdd).toHaveBeenCalledTimes(1);
 
       // ✅ Obtenemos los registros pasados al método
-      const passed = (indexDB.asistencias.bulkAdd as jest.Mock).mock.calls[0][0] as AsistenciasDB[];
+      const passed = (indexDB.asistencias.bulkAdd as jest.Mock).mock
+        .calls[0][0] as AsistenciasDB[];
 
       // ✅ Los syncStatus deben haber sido normalizados a 'synced'
       expect(passed[0].syncStatus).toBe('synced');
@@ -191,10 +198,13 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
       expect(indexDB.asistencias.add).not.toHaveBeenCalled();
     });
 
-
     it('🟢 conserva syncStatus existente', async () => {
       const data: AsistenciasDB[] = [
-        { ...mockAsistencia, id_asistencia: 'A4', syncStatus: 'pending-create' as any },
+        {
+          ...mockAsistencia,
+          id_asistencia: 'A4',
+          syncStatus: 'pending-create' as any,
+        },
         { ...mockAsistencia, id_asistencia: 'A5', syncStatus: 'synced' as any },
       ];
 
@@ -203,10 +213,11 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
       // Se llamó bulkAdd
       expect(indexDB.asistencias.bulkAdd).toHaveBeenCalled();
 
-      const passed = (indexDB.asistencias.bulkAdd as jest.Mock).mock.calls[0][0] as AsistenciasDB[];
+      const passed = (indexDB.asistencias.bulkAdd as jest.Mock).mock
+        .calls[0][0] as AsistenciasDB[];
 
-      const a4 = passed.find(a => a.id_asistencia === 'A4')!;
-      const a5 = passed.find(a => a.id_asistencia === 'A5')!;
+      const a4 = passed.find((a) => a.id_asistencia === 'A4')!;
+      const a5 = passed.find((a) => a.id_asistencia === 'A5')!;
       expect(a4.syncStatus).toBe('pending-create');
       expect(a5.syncStatus).toBe('synced');
 
@@ -214,9 +225,10 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
       expect(indexDB.asistencias.add).not.toHaveBeenCalled();
     });
 
-
     it('🔴 maneja error si bulkAdd() rechaza', async () => {
-      (indexDB.asistencias.bulkAdd as jest.Mock).mockRejectedValue('bulk-error');
+      (indexDB.asistencias.bulkAdd as jest.Mock).mockRejectedValue(
+        'bulk-error',
+      );
 
       try {
         await service.bulkAdd([mockAsistencia]);
@@ -226,7 +238,9 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
         expect(error).toBe('bulk-error');
       }
 
-      expect(indexDB.asistencias.bulkAdd).toHaveBeenCalledWith([mockAsistencia]);
+      expect(indexDB.asistencias.bulkAdd).toHaveBeenCalledWith([
+        mockAsistencia,
+      ]);
     });
   });
 
@@ -236,5 +250,4 @@ describe('✅ AsistenciasDataSource (Jest)', () => {
     expect(indexDB.asistencias.clear).toHaveBeenCalledTimes(1);
     expect(indexDB.asistencias.add).not.toHaveBeenCalled();
   });
-
 });

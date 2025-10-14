@@ -6,7 +6,6 @@ import { AuthService } from '../../app/shared/services/auth.service';
 import { LoadingService } from '../../app/shared/services/loading.service';
 import { LoadIndexDBService } from '../../app/indexdb/services/load-index-db.service';
 
-
 // ---- Mocks con Jest ----
 class MockDataSyncService {
   startSync = jest.fn().mockResolvedValue(undefined);

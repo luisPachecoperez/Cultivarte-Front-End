@@ -86,7 +86,9 @@ describe('SesionesDataSource (Jest)', () => {
     });
 
     it('debe manejar error en add()', async () => {
-      (indexDB.sesiones.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+      (indexDB.sesiones.add as jest.Mock).mockReturnValue(
+        Promise.reject('DB error'),
+      );
       await expect(service.create(mockSesion)).rejects.toBe('DB error');
     });
   });
@@ -94,22 +96,28 @@ describe('SesionesDataSource (Jest)', () => {
   // --- update ---
   describe('🟢 update', () => {
     it('debe actualizar correctamente cuando el registro existe', async () => {
-      const result = await service.update('S1', { fecha_actividad: '2025-10-07' });
+      const result = await service.update('S1', {
+        fecha_actividad: '2025-10-07',
+      });
       expect(result.exitoso).toBe('S');
       expect(result.mensaje).toContain('actualizado');
       expect(indexDB.sesiones.update).toHaveBeenCalled();
     });
 
     it('debe retornar mensaje si no encuentra la sesión', async () => {
-      (indexDB.sesiones.get as jest.Mock).mockReturnValue(dexiePromise(undefined));
-      const result = await service.update('NO_EXISTE', { hora_inicio: '09:00' });
+      (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+        dexiePromise(undefined),
+      );
+      const result = await service.update('NO_EXISTE', {
+        hora_inicio: '09:00',
+      });
       expect(result.exitoso).toBe('N');
       expect(result.mensaje).toContain('No se encontró sesión');
     });
 
     it('debe mantener syncStatus= pending-create si estaba así', async () => {
       (indexDB.sesiones.get as jest.Mock).mockReturnValue(
-        dexiePromise({ ...mockSesion, syncStatus: 'pending-create' })
+        dexiePromise({ ...mockSesion, syncStatus: 'pending-create' }),
       );
       await service.update('S1', { nombre_actividad: 'Modificada' });
       const args = (indexDB.sesiones.update as jest.Mock).mock.calls[0][1];
@@ -118,7 +126,7 @@ describe('SesionesDataSource (Jest)', () => {
 
     it('debe pasar a pending-update si estaba synced', async () => {
       (indexDB.sesiones.get as jest.Mock).mockReturnValue(
-        dexiePromise({ ...mockSesion, syncStatus: 'synced' })
+        dexiePromise({ ...mockSesion, syncStatus: 'synced' }),
       );
       await service.update('S1', { nombre_actividad: 'Modificada' });
       const args = (indexDB.sesiones.update as jest.Mock).mock.calls[0][1];
@@ -126,7 +134,9 @@ describe('SesionesDataSource (Jest)', () => {
     });
 
     it('debe manejar error en update()', async () => {
-      (indexDB.sesiones.update as jest.Mock).mockReturnValue(Promise.reject('update error'));
+      (indexDB.sesiones.update as jest.Mock).mockReturnValue(
+        Promise.reject('update error'),
+      );
       await expect(service.update('S1', {})).rejects.toBe('update error');
     });
   });
@@ -135,7 +145,9 @@ describe('SesionesDataSource (Jest)', () => {
   describe('🟢 delete', () => {
     it('debe marcar como eliminado si soft=true', async () => {
       await service.delete('S1', true);
-      expect(indexDB.sesiones.update).toHaveBeenCalledWith('S1', { deleted: true });
+      expect(indexDB.sesiones.update).toHaveBeenCalledWith('S1', {
+        deleted: true,
+      });
     });
 
     it('debe eliminar físicamente si soft=false', async () => {
@@ -144,7 +156,9 @@ describe('SesionesDataSource (Jest)', () => {
     });
 
     it('debe manejar error en delete()', async () => {
-      (indexDB.sesiones.delete as jest.Mock).mockReturnValue(Promise.reject('delete error'));
+      (indexDB.sesiones.delete as jest.Mock).mockReturnValue(
+        Promise.reject('delete error'),
+      );
       await expect(service.delete('S1', false)).rejects.toBe('delete error');
     });
   });
@@ -160,7 +174,9 @@ describe('SesionesDataSource (Jest)', () => {
     });
 
     it('debe manejar error en bulkAdd()', async () => {
-      (indexDB.sesiones.bulkAdd as jest.Mock).mockReturnValue(Promise.reject('bulk error'));
+      (indexDB.sesiones.bulkAdd as jest.Mock).mockReturnValue(
+        Promise.reject('bulk error'),
+      );
       await expect(service.bulkAdd([mockSesion])).rejects.toBe('bulk error');
     });
   });

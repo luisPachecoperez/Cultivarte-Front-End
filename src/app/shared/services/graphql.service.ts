@@ -108,7 +108,7 @@ export class GraphQLService {
     return this.http.post<{ data: T }>(this.apiUrl, body, { headers }).pipe(
       map((response) => response.data),
       catchError((error: HttpErrorResponse) => {
-        //console.error('Error en GraphQL Mutation:', error);
+        console.error('Error en GraphQL Mutation:', error);
         return throwError(() => ({
           exitoso: 'N',
           mensaje: new Error(error.message),

@@ -70,7 +70,9 @@ describe('Personas_grupo_interesDataSource (Jest)', () => {
     });
 
     it('debe manejar error en add()', async () => {
-      (indexDB.personas_grupo_interes.add as jest.Mock).mockReturnValue(Promise.reject('DB error'));
+      (indexDB.personas_grupo_interes.add as jest.Mock).mockReturnValue(
+        Promise.reject('DB error'),
+      );
       await expect(service.create(mockRegistro)).rejects.toBe('DB error');
     });
   });
@@ -84,7 +86,9 @@ describe('Personas_grupo_interesDataSource (Jest)', () => {
     });
 
     it('debe manejar error en update()', async () => {
-      (indexDB.personas_grupo_interes.update as jest.Mock).mockReturnValue(Promise.reject('update error'));
+      (indexDB.personas_grupo_interes.update as jest.Mock).mockReturnValue(
+        Promise.reject('update error'),
+      );
       await expect(service.update('PGI1', {})).rejects.toBe('update error');
     });
   });
@@ -97,7 +101,9 @@ describe('Personas_grupo_interesDataSource (Jest)', () => {
     });
 
     it('debe manejar error en delete()', async () => {
-      (indexDB.personas_grupo_interes.delete as jest.Mock).mockReturnValue(Promise.reject('delete error'));
+      (indexDB.personas_grupo_interes.delete as jest.Mock).mockReturnValue(
+        Promise.reject('delete error'),
+      );
       await expect(service.delete('PGI1')).rejects.toBe('delete error');
     });
   });
@@ -108,12 +114,15 @@ describe('Personas_grupo_interesDataSource (Jest)', () => {
       const data = [{ ...mockRegistro, syncStatus: null as any }];
       await service.bulkAdd(data);
       expect(indexDB.personas_grupo_interes.bulkAdd).toHaveBeenCalled();
-      const added = (indexDB.personas_grupo_interes.bulkAdd as jest.Mock).mock.calls[0][0];
+      const added = (indexDB.personas_grupo_interes.bulkAdd as jest.Mock).mock
+        .calls[0][0];
       expect(added[0].syncStatus).toBe('synced');
     });
 
     it('debe manejar error en bulkAdd()', async () => {
-      (indexDB.personas_grupo_interes.bulkAdd as jest.Mock).mockReturnValue(Promise.reject('bulk error'));
+      (indexDB.personas_grupo_interes.bulkAdd as jest.Mock).mockReturnValue(
+        Promise.reject('bulk error'),
+      );
       await expect(service.bulkAdd([mockRegistro])).rejects.toBe('bulk error');
     });
   });

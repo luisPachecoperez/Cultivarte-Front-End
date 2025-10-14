@@ -86,7 +86,11 @@ describe('🧩 DatabaseService (Jest, Cobertura 100%)', () => {
     await extended.open();
 
     // Agregamos un registro al nuevo store "logs"
-    const log = { id_log: 'L1', mensaje: 'Versión 2', fecha: new Date().toISOString() };
+    const log = {
+      id_log: 'L1',
+      mensaje: 'Versión 2',
+      fecha: new Date().toISOString(),
+    };
     await extended.table('logs').add(log);
     const saved = await extended.table('logs').get('L1');
 

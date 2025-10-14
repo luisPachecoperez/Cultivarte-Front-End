@@ -1600,7 +1600,7 @@ export class LoadIndexDBService {
           fecha_creacion
           id_modificado_por
           fecha_modificacion
-      
+
         }
       }
     `;
@@ -1628,7 +1628,7 @@ export class LoadIndexDBService {
       } else {
 <span class="cstat-no" title="statement not covered" >        offset += this.limit;</span>
       }
-<span class="cstat-no" title="statement not covered" >      console.log(`✅ PersonasSedes cargadas: ${data.length}`);</span>
+<span class="cstat-no" title="statement not covered" >      //console.log(`✅ PersonasSedes cargadas: ${data.length}`);</span>
     }
   }
 &nbsp;
@@ -1932,13 +1932,13 @@ export class LoadIndexDBService {
 <span class="cstat-no" title="statement not covered" >              await this.loadPersonas();</span>
 <span class="cstat-no" title="statement not covered" >              await this.loadPersonasSedes();</span>
 <span class="cstat-no" title="statement not covered" >              await this.loadPersonaProgramas();</span>
-<span class="cstat-no" title="statement not covered" >              console.log('personasprogramas');</span>
+<span class="cstat-no" title="statement not covered" >              //console.log('personasprogramas');</span>
 <span class="cstat-no" title="statement not covered" >              await this.loadPersonasGrupoInteres();</span>
-<span class="cstat-no" title="statement not covered" >              console.log('gruposinteres');</span>
+<span class="cstat-no" title="statement not covered" >              //console.log('gruposinteres');</span>
 <span class="cstat-no" title="statement not covered" >              await this.loadActividadesSede(id_usuario);</span>
 <span class="cstat-no" title="statement not covered" >              await this.loadSesionesSede(id_usuario);</span>
 <span class="cstat-no" title="statement not covered" >              await this.loadAsistenciasSede(id_usuario);</span>
-<span class="cstat-no" title="statement not covered" >              console.log('fin carga inicial');</span>
+<span class="cstat-no" title="statement not covered" >              //console.log('fin carga inicial');</span>
             })(),
           ),
         ),

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, from } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
 import { DataSyncService } from '../../app/indexdb/services/data-sync.service';
@@ -54,6 +54,11 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
         { provide: LoadIndexDBService, useClass: MockLoadIndexDB },
       ],
     });
+    // Agrega esto en el beforeEach donde están los otros mocks de indexDB
+    (indexDB as any).interval = jest.fn().mockReturnValue(of(1));
+    (indexDB as any).from = jest
+      .fn()
+      .mockImplementation((promise) => from(promise));
 
     service = TestBed.inject(DataSyncService);
     gql = TestBed.inject(GraphQLService) as any;
@@ -102,22 +107,30 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
   // --- crearActividades ---
   describe('crearActividades', () => {
     it('🟢 flujo exitoso', async () => {
-      (indexDB.actividades.get as jest.Mock).mockReturnValue(dexiePromise({ id_actividad: 'A1' }));
-      gql.mutation.mockReturnValue(of({ createActividad: { exitoso: 'S', mensaje: 'ok' } }) as any);
+      (indexDB.actividades.get as jest.Mock).mockReturnValue(
+        dexiePromise({ id_actividad: 'A1' }),
+      );
+      gql.mutation.mockReturnValue(
+        of({ createActividad: { exitoso: 'S', mensaje: 'ok' } }) as any,
+      );
 
       await service.crearActividades('A1');
       expect(actividades.update).toHaveBeenCalled();
     });
 
     it('🔴 maneja error', async () => {
-      (indexDB.actividades.get as jest.Mock).mockReturnValue(dexiePromise({ id_actividad: 'A2' }));
+      (indexDB.actividades.get as jest.Mock).mockReturnValue(
+        dexiePromise({ id_actividad: 'A2' }),
+      );
       gql.mutation.mockReturnValue(throwError(() => new Error('fail')));
       await service.crearActividades('A2');
       expect(gql.mutation).toHaveBeenCalled();
     });
 
     it('⚪ sin actividad', async () => {
-      (indexDB.actividades.get as jest.Mock).mockReturnValue(dexiePromise(undefined));
+      (indexDB.actividades.get as jest.Mock).mockReturnValue(
+        dexiePromise(undefined),
+      );
       const result = await service.crearActividades('NA');
       expect(result).toBeUndefined();
     });
@@ -126,21 +139,29 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
   // --- updateSesiones ---
   describe('updateSesiones', () => {
     it('🟢 éxito', async () => {
-      (indexDB.sesiones.get as jest.Mock).mockReturnValue(dexiePromise({ id_sesion: 'S1' }));
-      gql.mutation.mockReturnValue(of({ updateSesion: { exitoso: 'S', mensaje: 'ok' } }) as any);
+      (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+        dexiePromise({ id_sesion: 'S1' }),
+      );
+      gql.mutation.mockReturnValue(
+        of({ updateSesion: { exitoso: 'S', mensaje: 'ok' } }) as any,
+      );
       await service.updateSesiones('S1');
       expect(sesiones.update).toHaveBeenCalled();
     });
 
     it('🔴 error', async () => {
-      (indexDB.sesiones.get as jest.Mock).mockReturnValue(dexiePromise({ id_sesion: 'S2' }));
+      (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+        dexiePromise({ id_sesion: 'S2' }),
+      );
       gql.mutation.mockReturnValue(throwError(() => new Error('fail')));
       await service.updateSesiones('S2');
       expect(gql.mutation).toHaveBeenCalled();
     });
 
     it('⚪ sin sesión', async () => {
-      (indexDB.sesiones.get as jest.Mock).mockReturnValue(dexiePromise(undefined));
+      (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+        dexiePromise(undefined),
+      );
       await service.updateSesiones('NA');
       expect(sesiones.update).not.toHaveBeenCalled();
     });
@@ -150,7 +171,8 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
   describe('syncActividadesPendientes', () => {
     it('🟢 sincroniza correctamente', async () => {
       (indexDB.actividades.filter as jest.Mock).mockReturnValue({
-        toArray: () => dexiePromise([{ id_actividad: 'A3', syncStatus: 'pending-create' }]),
+        toArray: () =>
+          dexiePromise([{ id_actividad: 'A3', syncStatus: 'pending-create' }]),
       });
       jest.spyOn(service, 'crearActividades').mockResolvedValue(undefined);
       await service.syncActividadesPendientes();
@@ -171,7 +193,9 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
     it('🟢 sincroniza correctamente', async () => {
       (indexDB.sesiones.filter as jest.Mock).mockReturnValue({
         toArray: () =>
-          dexiePromise([{ id_sesion: 'S3', syncStatus: 'pending-update', deleted: false }]),
+          dexiePromise([
+            { id_sesion: 'S3', syncStatus: 'pending-update', deleted: false },
+          ]),
       });
       jest.spyOn(service, 'updateSesiones').mockResolvedValue(undefined);
       await service.syncSesionesPendientes();
@@ -200,12 +224,20 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
     it('🟢 con registros', async () => {
       (indexDB.asistencias.filter as jest.Mock).mockReturnValue({
         toArray: () =>
-          dexiePromise([{ id_asistencia: 'A1', id_sesion: 'S1', syncStatus: 'pending-create' }]),
+          dexiePromise([
+            {
+              id_asistencia: 'A1',
+              id_sesion: 'S1',
+              syncStatus: 'pending-create',
+            },
+          ]),
       });
       (indexDB.sesiones.get as jest.Mock).mockReturnValue(
-        dexiePromise({ id_actividad: 'ACT', id_sesion: 'S1' })
+        dexiePromise({ id_actividad: 'ACT', id_sesion: 'S1' }),
       );
-      gql.mutation.mockReturnValue(of({ updateAsistencias: { exitoso: 'S', mensaje: 'ok' } }) as any);
+      gql.mutation.mockReturnValue(
+        of({ updateAsistencias: { exitoso: 'S', mensaje: 'ok' } }) as any,
+      );
       await service.syncAsistenciasPendientes();
       expect(asistencias.update).toHaveBeenCalled();
     });
@@ -214,17 +246,29 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
   // --- syncPending ---
   describe('syncPending', () => {
     it('📴 backend inactivo', async () => {
-      jest.spyOn(service as any, 'pingBackend').mockReturnValue(dexiePromise(false));
-      const spyAct = jest.spyOn(service, 'syncActividadesPendientes').mockResolvedValue(undefined);
+      jest
+        .spyOn(service as any, 'pingBackend')
+        .mockReturnValue(dexiePromise(false));
+      const spyAct = jest
+        .spyOn(service, 'syncActividadesPendientes')
+        .mockResolvedValue(undefined);
       await (service as any).syncPending();
       expect(spyAct).not.toHaveBeenCalled();
     });
 
     it('🟢 backend activo', async () => {
-      jest.spyOn(service as any, 'pingBackend').mockReturnValue(dexiePromise(true));
-      jest.spyOn(service, 'syncActividadesPendientes').mockResolvedValue(undefined);
-      jest.spyOn(service, 'syncSesionesPendientes').mockResolvedValue(undefined);
-      jest.spyOn(service, 'syncAsistenciasPendientes').mockResolvedValue(undefined);
+      jest
+        .spyOn(service as any, 'pingBackend')
+        .mockReturnValue(dexiePromise(true));
+      jest
+        .spyOn(service, 'syncActividadesPendientes')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(service, 'syncSesionesPendientes')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(service, 'syncAsistenciasPendientes')
+        .mockResolvedValue(undefined);
       await (service as any).syncPending();
       expect(service.syncActividadesPendientes).toHaveBeenCalled();
       expect(service.syncSesionesPendientes).toHaveBeenCalled();
@@ -242,7 +286,9 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
         return Promise.resolve();
       };
 
-      const spyPending = jest.spyOn(service as any, 'syncPending').mockResolvedValue(undefined);
+      const spyPending = jest
+        .spyOn(service as any, 'syncPending')
+        .mockResolvedValue(undefined);
       await (service as any).startSync();
 
       expect(spyPending).toHaveBeenCalled();
@@ -250,14 +296,13 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
     });
   });
 
-
   describe('crearSesiones', () => {
     it('🟢 flujo exitoso', async () => {
       (indexDB.sesiones.get as jest.Mock).mockReturnValue(
-        dexiePromise({ id_sesion: 'S1' })
+        dexiePromise({ id_sesion: 'S1' }),
       );
       gql.mutation.mockReturnValue(
-        of({ createSesion: { exitoso: 'S', mensaje: 'ok' } }) as any
+        of({ createSesion: { exitoso: 'S', mensaje: 'ok' } }) as any,
       );
 
       await (service as any).crearSesiones('S1');
@@ -265,14 +310,16 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
     });
 
     it('⚪ sesión no encontrada', async () => {
-      (indexDB.sesiones.get as jest.Mock).mockReturnValue(dexiePromise(undefined));
+      (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+        dexiePromise(undefined),
+      );
       await (service as any).crearSesiones('NA');
       expect(sesiones.update).not.toHaveBeenCalled();
     });
 
     it('🔴 error al crear sesión', async () => {
       (indexDB.sesiones.get as jest.Mock).mockReturnValue(
-        dexiePromise({ id_sesion: 'S2' })
+        dexiePromise({ id_sesion: 'S2' }),
       );
       gql.mutation.mockReturnValue(throwError(() => new Error('fail')));
       await (service as any).crearSesiones('S2');
@@ -282,7 +329,7 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
   describe('deleteSesion', () => {
     it('🟢 elimina sesión exitosamente', async () => {
       gql.mutation.mockReturnValue(
-        of({ deleteSesion: { exitoso: 'S', mensaje: 'ok' } }) as any
+        of({ deleteSesion: { exitoso: 'S', mensaje: 'ok' } }) as any,
       );
       await service.deleteSesion('DEL1');
       expect(indexDB.sesiones.delete).toHaveBeenCalledWith('DEL1');
@@ -290,7 +337,7 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
 
     it('⚪ sesión no eliminada (fallo)', async () => {
       gql.mutation.mockReturnValue(
-        of({ deleteSesion: { exitoso: 'N', mensaje: 'falló' } }) as any
+        of({ deleteSesion: { exitoso: 'N', mensaje: 'falló' } }) as any,
       );
       await service.deleteSesion('DEL2');
       expect(indexDB.sesiones.delete).not.toHaveBeenCalled();
@@ -318,16 +365,21 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
 
     expect(service.crearSesiones).toHaveBeenCalledWith('C1');
     expect(service.deleteSesion).toHaveBeenCalledWith('D1');
-
   });
 
   it('🔴 maneja error en updateAsistencias', async () => {
     (indexDB.asistencias.filter as jest.Mock).mockReturnValue({
       toArray: () =>
-        dexiePromise([{ id_asistencia: 'A2', id_sesion: 'S1', syncStatus: 'pending-update' }]),
+        dexiePromise([
+          {
+            id_asistencia: 'A2',
+            id_sesion: 'S1',
+            syncStatus: 'pending-update',
+          },
+        ]),
     });
     (indexDB.sesiones.get as jest.Mock).mockReturnValue(
-      dexiePromise({ id_actividad: 'ACT', id_sesion: 'S1' })
+      dexiePromise({ id_actividad: 'ACT', id_sesion: 'S1' }),
     );
     gql.mutation.mockReturnValue(throwError(() => new Error('fail')));
     await service.syncAsistenciasPendientes();
@@ -337,9 +389,15 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
     (indexDB.sesiones.filter as jest.Mock).mockReturnValue({
       toArray: () => dexiePromise([{ id_sesion: 'X1', syncStatus: 'otro' }]),
     });
-    const crearSpy = jest.spyOn(service as any, 'crearSesiones').mockResolvedValue(undefined);
-    const updateSpy = jest.spyOn(service as any, 'updateSesiones').mockResolvedValue(undefined);
-    const deleteSpy = jest.spyOn(service as any, 'deleteSesion').mockResolvedValue(undefined);
+    const crearSpy = jest
+      .spyOn(service as any, 'crearSesiones')
+      .mockResolvedValue(undefined);
+    const updateSpy = jest
+      .spyOn(service as any, 'updateSesiones')
+      .mockResolvedValue(undefined);
+    const deleteSpy = jest
+      .spyOn(service as any, 'deleteSesion')
+      .mockResolvedValue(undefined);
 
     await service.syncSesionesPendientes();
 
@@ -350,17 +408,21 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
   });
 
   it('⚠️ crearSesiones maneja respuesta no exitosa', async () => {
-    (indexDB.sesiones.get as jest.Mock).mockReturnValue(dexiePromise({ id_sesion: 'S3' }));
+    (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+      dexiePromise({ id_sesion: 'S3' }),
+    );
     gql.mutation.mockReturnValue(
-      of({ createSesion: { exitoso: 'N', mensaje: 'falló' } }) as any
+      of({ createSesion: { exitoso: 'N', mensaje: 'falló' } }) as any,
     );
     await (service as any).crearSesiones('S3');
     expect(sesiones.update).not.toHaveBeenCalled();
   });
   it('⚠️ crearSesiones maneja respuesta no exitosa', async () => {
-    (indexDB.sesiones.get as jest.Mock).mockReturnValue(dexiePromise({ id_sesion: 'S3' }));
+    (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+      dexiePromise({ id_sesion: 'S3' }),
+    );
     gql.mutation.mockReturnValue(
-      of({ createSesion: { exitoso: 'N', mensaje: 'falló' } }) as any
+      of({ createSesion: { exitoso: 'N', mensaje: 'falló' } }) as any,
     );
     await (service as any).crearSesiones('S3');
     expect(sesiones.update).not.toHaveBeenCalled();
@@ -368,22 +430,488 @@ describe('🧩 DataSyncService (Jest, Angular 20 compatible)', () => {
   it('⚠️ deleteSesion muestra advertencia si no exitoso', async () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     gql.mutation.mockReturnValue(
-      of({ deleteSesion: { exitoso: 'N', mensaje: 'No borrado' } }) as any
+      of({ deleteSesion: { exitoso: 'N', mensaje: 'No borrado' } }) as any,
     );
     await service.deleteSesion('DEL_WARN');
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('no eliminada:'), 'No borrado');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('no eliminada:'),
+      'No borrado',
+    );
     warnSpy.mockRestore();
   });
 
   it('❌ crearSesiones registra error en catch', async () => {
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    (indexDB.sesiones.get as jest.Mock).mockReturnValue(dexiePromise({ id_sesion: 'ERR' }));
+    (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+      dexiePromise({ id_sesion: 'ERR' }),
+    );
     gql.mutation.mockReturnValue(throwError(() => new Error('boom')));
     await (service as any).crearSesiones('ERR');
-    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Error creando sesión ERR:'), expect.any(Error));
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Error creando sesión ERR:'),
+      expect.any(Error),
+    );
     errorSpy.mockRestore();
   });
 
+  it('⚠️ crearActividades muestra advertencia si no exitoso', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (indexDB.actividades.get as jest.Mock).mockReturnValue(
+      dexiePromise({ id_actividad: 'A4' }),
+    );
+    gql.mutation.mockReturnValue(
+      of({ createActividad: { exitoso: 'N', mensaje: 'No sync' } }) as any,
+    );
+    await (service as any).crearActividades('A4');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('no sincronizada:'),
+      'No sync',
+    );
+    warnSpy.mockRestore();
+  });
 
+  it('❌ crearActividades registra error en catch', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    (indexDB.actividades.get as jest.Mock).mockReturnValue(
+      dexiePromise({ id_actividad: 'A_ERR' }),
+    );
+    gql.mutation.mockReturnValue(throwError(() => new Error('boom')));
+    await (service as any).crearActividades('A_ERR');
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Error creando actividad A_ERR:'),
+      expect.any(Error),
+    );
+    errorSpy.mockRestore();
+  });
 
+  it('⚠️ updateSesiones muestra advertencia si no exitoso', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+      dexiePromise({ id_sesion: 'S_WARN' }),
+    );
+    gql.mutation.mockReturnValue(
+      of({ updateSesion: { exitoso: 'N', mensaje: 'no sync' } }) as any,
+    );
+    await service.updateSesiones('S_WARN');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('no sincronizada:'),
+      'no sync',
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('❌ updateSesiones maneja error en catch', async () => {
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+      dexiePromise({ id_sesion: 'S_ERR' }),
+    );
+    gql.mutation.mockReturnValue(throwError(() => new Error('boom')));
+    await service.updateSesiones('S_ERR');
+    expect(errSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Error actualizando sesión S_ERR:'),
+      expect.any(Error),
+    );
+    errSpy.mockRestore();
+  });
+
+  it('⚠️ syncAsistenciasPendientes muestra advertencia si no exitoso', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (indexDB.asistencias.filter as jest.Mock).mockReturnValue({
+      toArray: () =>
+        dexiePromise([
+          {
+            id_asistencia: 'AX',
+            id_sesion: 'SX',
+            syncStatus: 'pending-update',
+          },
+        ]),
+    });
+    (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+      dexiePromise({ id_actividad: 'ACTX', id_sesion: 'SX' }),
+    );
+    gql.mutation.mockReturnValue(
+      of({ updateAsistencias: { exitoso: 'N', mensaje: 'falló sync' } }) as any,
+    );
+    await service.syncAsistenciasPendientes();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('no sincronizadas'),
+      'falló sync',
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('❌ deleteSesion registra error en catch', async () => {
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    gql.mutation.mockReturnValue(throwError(() => new Error('boom')));
+    await service.deleteSesion('DEL_ERR');
+    expect(errSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Error eliminando sesión DEL_ERR:'),
+      expect.any(Error),
+    );
+    errSpy.mockRestore();
+  });
+
+  it('🧪 toDateOnly maneja timestamp 0', () => {
+    const res = (service as any).toDateOnly('0');
+    expect(res).toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+
+  it('🛰️ pingBackend devuelve false cuando no es pong', async () => {
+    load.ping.mockReturnValue(of('no-pong'));
+    await expect((service as any).pingBackend()).resolves.toBe(false);
+  });
+
+  it('🧩 toDateOnly maneja null, undefined y cadena vacía', () => {
+    expect((service as any).toDateOnly(null)).toBeNull();
+    expect((service as any).toDateOnly(undefined)).toBeNull();
+    expect((service as any).toDateOnly('')).toBeNull();
+  });
+
+  it('🧩 toDateOnly devuelve null si valor no numérico', () => {
+    expect((service as any).toDateOnly('abc')).toBeNull();
+  });
+
+  it('⚠️ crearActividades muestra advertencia si no se encuentra la actividad', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (indexDB.actividades.get as jest.Mock).mockReturnValue(
+      dexiePromise(undefined),
+    );
+    await (service as any).crearActividades('NOT_FOUND');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('no encontrada'),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('⚠️ updateSesiones muestra advertencia si no se encuentra la sesión', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+      dexiePromise(undefined),
+    );
+    await service.updateSesiones('NOT_FOUND');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('no encontrada'),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('✅ syncAsistenciasPendientes retorna sin registros', async () => {
+    const spyWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (indexDB.asistencias.filter as jest.Mock).mockReturnValue({
+      toArray: () => dexiePromise([]),
+    });
+    await service.syncAsistenciasPendientes();
+    expect(spyWarn).not.toHaveBeenCalled(); // no debe entrar a warnings
+    spyWarn.mockRestore();
+  });
+
+  it('❌ deleteSesion captura error en catch', async () => {
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    gql.mutation.mockReturnValue(throwError(() => new Error('GraphQL fail')));
+    await service.deleteSesion('ERR_DEL');
+    expect(errSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Error eliminando sesión ERR_DEL:'),
+      expect.any(Error),
+    );
+    errSpy.mockRestore();
+  });
+  it('🧩 toDateOnly cubre null, undefined, vacío y no numérico', () => {
+    expect((service as any).toDateOnly(null)).toBeNull();
+    expect((service as any).toDateOnly(undefined)).toBeNull();
+    expect((service as any).toDateOnly('')).toBeNull();
+    expect((service as any).toDateOnly('abc')).toBeNull();
+  });
+
+  it('⚠️ crearActividades maneja caso sin actividad', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (indexDB.actividades.get as jest.Mock).mockReturnValue(
+      Promise.resolve(undefined),
+    ); // 👈 real Promise
+    await (service as any).crearActividades('MISSING_ACT');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('no encontrada'),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('⚠️ updateSesiones maneja caso sin sesión', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+      Promise.resolve(undefined),
+    ); // 👈 real Promise
+    await service.updateSesiones('MISSING_SES');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('no encontrada'),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('✅ syncAsistenciasPendientes sale con array vacío', async () => {
+    (indexDB.asistencias.filter as jest.Mock).mockReturnValue({
+      toArray: () => Promise.resolve([]), // 👈 sin dexiePromise
+    });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    await service.syncAsistenciasPendientes();
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it('❌ deleteSesion captura error correctamente', async () => {
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    (gql.mutation as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('boom');
+    }); // 👈 lanza error real
+    await service.deleteSesion('ERR_DEL');
+    expect(errSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Error eliminando sesión ERR_DEL:'),
+      expect.any(Error),
+    );
+    errSpy.mockRestore();
+  });
+
+  //adicionales deepseek
+  // Agrega después de las pruebas existentes en el describe principal
+
+  describe('Líneas no cubiertas', () => {
+    it('📴 syncPending muestra warning cuando backend inactivo', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      jest.spyOn(service as any, 'pingBackend').mockResolvedValue(false);
+
+      await (service as any).syncPending();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        '⚠️ Backend inactivo, no se sincroniza todavía',
+      );
+      warnSpy.mockRestore();
+    });
+
+    /*it('🔄 startSync ejecuta syncPending inmediatamente y en intervalos', async () => {
+      const syncPendingSpy = jest
+        .spyOn(service as any, 'syncPending')
+        .mockResolvedValue(undefined);
+
+      // Mock de interval que emite 1 valor inmediatamente y otro después
+      let subscriptionCallback: (() => void) | null = null;
+      const mockInterval = {
+        pipe: jest.fn().mockReturnThis(),
+        subscribe: jest.fn((callback: () => void) => {
+          subscriptionCallback = callback;
+          // Ejecutar inmediatamente
+          callback();
+          // Ejecutar una vez más
+          callback();
+        }),
+      };
+
+      // Mock de interval para que retorne nuestro observable controlado
+      jest
+        .spyOn(service as any, 'interval', 'get')
+        .mockReturnValue(mockInterval as any);
+      jest.spyOn(service as any, 'from').mockReturnValue(of(undefined));
+
+      await service.startSync();
+
+      expect(syncPendingSpy).toHaveBeenCalled();
+      syncPendingSpy.mockRestore();
+    });*/
+
+    it('🚫 ignora asistencias sin id_sesion', async () => {
+      const asistenciasSinSesion = [
+        { id_asistencia: 'A1', id_sesion: null, syncStatus: 'pending-update' },
+        {
+          id_asistencia: 'A2',
+          id_sesion: undefined,
+          syncStatus: 'pending-create',
+        },
+        { id_asistencia: 'A3', id_sesion: 'S1', syncStatus: 'pending-update' }, // esta sí tiene
+      ];
+
+      (indexDB.asistencias.filter as jest.Mock).mockReturnValue({
+        toArray: () => dexiePromise(asistenciasSinSesion),
+      });
+
+      (indexDB.sesiones.get as jest.Mock).mockImplementation((id_sesion) => {
+        if (id_sesion === 'S1') {
+          return dexiePromise({ id_actividad: 'ACT1', id_sesion: 'S1' });
+        }
+        return dexiePromise(undefined);
+      });
+
+      gql.mutation.mockReturnValue(
+        of({ updateAsistencias: { exitoso: 'S', mensaje: 'ok' } }) as any,
+      );
+
+      await service.syncAsistenciasPendientes();
+
+      // Solo debe procesar la asistencia con id_sesion 'S1'
+      expect(gql.mutation).toHaveBeenCalledTimes(1);
+      expect(gql.mutation).toHaveBeenCalledWith(expect.any(String), {
+        input: expect.objectContaining({
+          id_sesion: 'S1',
+          nuevos: expect.arrayContaining([
+            expect.objectContaining({ id_asistencia: 'A3', id_sesion: 'S1' }),
+          ]),
+        }),
+      });
+    });
+
+    it('⚪ syncSesionesPendientes maneja caso default en switch', async () => {
+      const sesionConStatusDesconocido = {
+        id_sesion: 'UNKNOWN',
+        syncStatus: 'unknown-status',
+        deleted: false,
+      };
+
+      (indexDB.sesiones.filter as jest.Mock).mockReturnValue({
+        toArray: () => dexiePromise([sesionConStatusDesconocido]),
+      });
+
+      const crearSpy = jest
+        .spyOn(service as any, 'crearSesiones')
+        .mockResolvedValue(undefined);
+      const updateSpy = jest
+        .spyOn(service, 'updateSesiones')
+        .mockResolvedValue(undefined);
+      const deleteSpy = jest
+        .spyOn(service, 'deleteSesion')
+        .mockResolvedValue(undefined);
+
+      await service.syncSesionesPendientes();
+
+      expect(crearSpy).not.toHaveBeenCalled();
+      expect(updateSpy).not.toHaveBeenCalled();
+      expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('🚫 syncAsistenciasPendientes ignora asistencias sin id_sesion', async () => {
+      const asistenciasSinSesion = [
+        {
+          id_asistencia: 'ASIN1',
+          id_sesion: null, // ← Sin sesión
+          syncStatus: 'pending-update',
+        },
+        {
+          id_asistencia: 'ASIN2',
+          id_sesion: undefined, // ← Sin sesión
+          syncStatus: 'pending-create',
+        },
+      ];
+
+      (indexDB.asistencias.filter as jest.Mock).mockReturnValue({
+        toArray: () => dexiePromise(asistenciasSinSesion),
+      });
+
+      const gqlSpy = jest.spyOn(gql, 'mutation');
+
+      await service.syncAsistenciasPendientes();
+
+      // No debe llamar a GraphQL porque no hay sesiones válidas
+      expect(gqlSpy).not.toHaveBeenCalled();
+    });
+
+    it('⚠️ syncAsistenciasPendientes muestra warning cuando mutation no es exitosa', async () => {
+      const asistenciasValidas = [
+        {
+          id_asistencia: 'AWARN1',
+          id_sesion: 'SWARN1',
+          syncStatus: 'pending-update',
+        },
+      ];
+
+      (indexDB.asistencias.filter as jest.Mock).mockReturnValue({
+        toArray: () => dexiePromise(asistenciasValidas),
+      });
+
+      (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+        dexiePromise({ id_actividad: 'ACTWARN', id_sesion: 'SWARN1' }),
+      );
+
+      // Respuesta no exitosa
+      gql.mutation.mockReturnValue(
+        of({
+          updateAsistencias: { exitoso: 'N', mensaje: 'Error en servidor' },
+        }) as any,
+      );
+
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await service.syncAsistenciasPendientes();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          '❌ Asistencias no sincronizadas (sesión SWARN1):',
+        ),
+        'Error en servidor',
+      );
+      warnSpy.mockRestore();
+    });
+
+    it('❌ syncAsistenciasPendientes maneja error en mutation', async () => {
+      const asistenciasValidas = [
+        {
+          id_asistencia: 'AERR1',
+          id_sesion: 'SERR1',
+          syncStatus: 'pending-update',
+        },
+      ];
+
+      (indexDB.asistencias.filter as jest.Mock).mockReturnValue({
+        toArray: () => dexiePromise(asistenciasValidas),
+      });
+
+      (indexDB.sesiones.get as jest.Mock).mockReturnValue(
+        dexiePromise({ id_actividad: 'ACTERR', id_sesion: 'SERR1' }),
+      );
+
+      // Error en mutation
+      gql.mutation.mockReturnValue(
+        throwError(() => new Error('Network error')),
+      );
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await service.syncAsistenciasPendientes();
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          '❌ Error sincronizando asistencias (sesión SERR1):',
+        ),
+        expect.any(Error),
+      );
+      errorSpy.mockRestore();
+    });
+
+    it('🔄 syncSesionesPendientes marca sesiones eliminadas como pending-delete', async () => {
+      const sesionesEliminadas = [
+        {
+          id_sesion: 'SDEL1',
+          syncStatus: 'synced', // Estado inicial
+          deleted: true, // ← Marcada para eliminar
+        },
+      ];
+
+      (indexDB.sesiones.filter as jest.Mock).mockReturnValue({
+        toArray: () => dexiePromise(sesionesEliminadas),
+      });
+
+      // No es necesario espiar el update del dataSource porque ya tenemos un mock
+      // Simplemente verificamos que el mock del dataSource fue llamado con los argumentos correctos
+      const deleteSpy = jest
+        .spyOn(service, 'deleteSesion')
+        .mockResolvedValue(undefined);
+
+      await service.syncSesionesPendientes();
+
+      // Verificamos que el update del mock de sesiones fue llamado con los argumentos correctos
+      expect(sesiones.update).toHaveBeenCalledWith('SDEL1', {
+        ...sesionesEliminadas[0],
+        syncStatus: 'pending-delete',
+      });
+
+      // Y luego llamar a deleteSesion
+      expect(deleteSpy).toHaveBeenCalledWith('SDEL1');
+    });
+  });
 });
