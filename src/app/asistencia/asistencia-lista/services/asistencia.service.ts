@@ -8,6 +8,7 @@ import {
   switchMap,
   of,
   catchError,
+  Observable,
   tap,
 } from 'rxjs';
 import { LoadIndexDBService } from '../../../indexdb/services/load-index-db.service';
@@ -129,137 +130,172 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
     this.LoadingService.show();
 
     return await firstValueFrom(
-      this.loadIndexDBService.ping().pipe(
-        switchMap((ping) => {
-          //console.log('ping en update asistencias:', ping);
-
-          if (ping === 'pong') {
-            //console.log('✅ Backend activo: enviando asistencias');
-
-            return this.graphQLService
-              .mutation<{
-                updateAsistencias: { exitoso: string; mensaje: string };
-              }>(this.UPDATE_ASISTENCIAS, { input })
-              .pipe(
-                map((res) => {
-                  const result = res.updateAsistencias;
-                  //console.log('✅ updateAsistencias OK:', result);
-
-                  // Nuevas -> synced
-                  input.nuevos.forEach((a: Asistencias) => {
-                    const asistencia: AsistenciasDB = {
-                      ...a,
-                      syncStatus: 'synced',
-                      deleted: false,
-                    };
-                    this.asistenciasDataSource.create(asistencia);
-                  });
-                  this.LoadingService.hide();
-
-                  return result;
-                }),
-                catchError((error) => {
-                  console.error('❌ Error en updateAsistencias:', error);
-
-                  this.LoadingService.hide();
-
-                  return of({
-                    exitoso: 'N',
-                    mensaje: 'Error guardando asistencias:' + error,
-                  });
-                }),
-              );
-          } else {
-            //console.log('⚠️ Backend inactivo: guardando offline');
-
-            // Nuevas -> pending
-            input.nuevos.forEach((a: Asistencias) => {
-              const asistencia: AsistenciasDB = {
-                ...a,
-                syncStatus: 'pending-create',
-                deleted: false,
-              };
-
-              this.asistenciasDataSource.create(asistencia);
-            });
-            this.LoadingService.hide();
-
-            return of({
-              exitoso: 'S',
-              mensaje: 'Asistencias guardadas satisfactoriamente (offline)',
-            });
-          }
-        }),
-      ),
+      this.loadIndexDBService
+        .ping()
+        .pipe(
+          switchMap((ping) =>
+            ping === 'pong'
+              ? this.guardarAsistenciaOnline(input)
+              : this.guardarAsistenciaOffline(input),
+          ),
+        ),
     );
+  }
+
+  /** 🔹 Guardar online (backend activo) */
+  private guardarAsistenciaOnline(
+    input: AsistenciaPayLoad,
+  ): Observable<GraphQLResponse> {
+    return this.graphQLService
+      .mutation<{
+        updateAsistencias: { exitoso: string; mensaje: string };
+      }>(this.UPDATE_ASISTENCIAS, { input })
+      .pipe(
+        map((res) =>
+          this.procesarAsistenciaOnline(res.updateAsistencias, input),
+        ),
+        catchError((error) => this.manejarErrorAsistencia(error)),
+      );
+  }
+
+  /** 🔹 Guardar offline (sin conexión) */
+  private guardarAsistenciaOffline(
+    input: AsistenciaPayLoad,
+  ): Observable<GraphQLResponse> {
+    input.nuevos.forEach((a: Asistencias) => {
+      const asistencia: AsistenciasDB = {
+        ...a,
+        syncStatus: 'pending-create',
+        deleted: false,
+      };
+      this.asistenciasDataSource.create(asistencia);
+    });
+
+    this.LoadingService.hide();
+
+    return of({
+      exitoso: 'S',
+      mensaje: 'Asistencias guardadas satisfactoriamente (offline)',
+    });
+  }
+
+  /** 🔹 Procesar respuesta del backend */
+  private procesarAsistenciaOnline(
+    result: { exitoso: string; mensaje: string },
+    input: AsistenciaPayLoad,
+  ): GraphQLResponse {
+    input.nuevos.forEach((a: Asistencias) => {
+      const asistencia: AsistenciasDB = {
+        ...a,
+        syncStatus: 'synced',
+        deleted: false,
+      };
+      this.asistenciasDataSource.create(asistencia);
+    });
+
+    this.LoadingService.hide();
+    return result;
+  }
+
+  /** 🔹 Manejar errores de mutación */
+  private manejarErrorAsistencia(error: any): Observable<GraphQLResponse> {
+    console.log('❌ Error en updateAsistencias:', error);
+    this.LoadingService.hide();
+
+    return of({
+      exitoso: 'N',
+      mensaje: 'Error guardando asistencias:' + error,
+    });
   }
 
   async guardarAsistenciaFotografica(
     input: Sesiones,
   ): Promise<GraphQLResponse> {
-    //console.log('Evidencia fotográfica:', input);
+    // Mostrar loading
+    this.LoadingService.show();
+
+    const ping$ = this.loadIndexDBService.ping();
 
     return await firstValueFrom(
-      this.loadIndexDBService.ping().pipe(
+      ping$.pipe(
         switchMap((ping) => {
-          if (ping === 'pong') {
-            // 🔹 Llamada al backend
-            return this.graphQLService
-              .mutation<{
-                updateAsistencias: GraphQLResponse;
-              }>(this.UPDATE_ASISTENCIAS, { input })
-              .pipe(
-                mergeMap((res) =>
-                  from(this.sesionesDataSource.getById(input.id_sesion)).pipe(
-                    mergeMap((sesion) =>
-                      from(
-                        this.sesionesDataSource.update(input.id_sesion, {
-                          ...sesion,
-                          syncStatus: 'synced',
-                          deleted: false,
-                          imagen: input.imagen ?? '',
-                          descripcion: input.descripcion,
-                          nro_asistentes: input.nro_asistentes ?? 0, // 👈 corregido
-                        }),
-                      ).pipe(
-                        map(() => {
-                          //console.log('📥 Sesión actualizada en IndexedDB (synced)');
-                          return res.updateAsistencias;
-                        }),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-          } else {
-            // 🔹 Guardar solo en IndexedDB (offline)
-            return from(
-              this.sesionesDataSource.getById(input.id_sesion ?? ''),
-            ).pipe(
-              mergeMap((sesion) =>
-                from(
-                  this.sesionesDataSource.update(input.id_sesion ?? '', {
-                    ...sesion,
-                    syncStatus: 'pending-update',
-                    deleted: false,
-                    imagen: input.imagen ?? '',
-                    descripcion: input.descripcion,
-                    nro_asistentes: input.nro_asistentes, // 👈 corregido
-                  }),
-                ).pipe(
-                  map(() => {
-                    //console.log('⚠️ Asistencia marcada como pendiente');
-                    return {
-                      exitoso: 'S',
-                      mensaje: 'Asistencia actualizada correctamente (offline)',
-                    } as GraphQLResponse;
-                  }),
-                ),
-              ),
-            );
-          }
+          return ping === 'pong'
+            ? this.guardarAsistenciaFotograficaOnline(input)
+            : this.guardarAsistenciaFotograficaOffline(input);
         }),
       ),
     );
+  }
+
+  private guardarAsistenciaFotograficaOnline(
+    input: Sesiones,
+  ): Observable<GraphQLResponse> {
+    return this.graphQLService
+      .mutation<{
+        updateAsistencias: GraphQLResponse;
+      }>(this.UPDATE_ASISTENCIAS, { input })
+      .pipe(
+        mergeMap((res) =>
+          this.actualizarSesionSynced(input, res.updateAsistencias),
+        ),
+        catchError((error) => {
+          console.log('❌ Error en asistencia fotográfica online:', error);
+          this.LoadingService.hide();
+          return of({
+            exitoso: 'N',
+            mensaje: 'Error al actualizar asistencia fotográfica (online)',
+          });
+        }),
+      );
+  }
+
+  /** 🔹 Caso offline */
+  private guardarAsistenciaFotograficaOffline(
+    input: Sesiones,
+  ): Observable<GraphQLResponse> {
+    return from(this.sesionesDataSource.getById(input.id_sesion ?? '')).pipe(
+      mergeMap((sesion) =>
+        from(
+          this.sesionesDataSource.update(input.id_sesion ?? '', {
+            ...sesion,
+            syncStatus: 'pending-update',
+            deleted: false,
+            imagen: input.imagen ?? '',
+            descripcion: input.descripcion,
+            nro_asistentes: input.nro_asistentes,
+          }),
+        ).pipe(map(() => this.respuestaOffline())),
+      ),
+    );
+  }
+
+  /** 🔹 Sub-función: actualiza sesión (online) */
+  private actualizarSesionSynced(
+    input: Sesiones,
+    respuesta: GraphQLResponse,
+  ): Observable<GraphQLResponse> {
+    return from(this.sesionesDataSource.getById(input.id_sesion)).pipe(
+      mergeMap((sesion) =>
+        from(
+          this.sesionesDataSource.update(input.id_sesion, {
+            ...sesion,
+            syncStatus: 'synced',
+            deleted: false,
+            imagen: input.imagen ?? '',
+            descripcion: input.descripcion,
+            nro_asistentes: input.nro_asistentes ?? 0,
+          }),
+        ).pipe(map(() => respuesta)),
+      ),
+    );
+  }
+
+  /** 🔹 Sub-función: respuesta para modo offline */
+  private respuestaOffline(): GraphQLResponse {
+    this.LoadingService.hide();
+    return {
+      exitoso: 'S',
+      mensaje: 'Asistencia actualizada correctamente (offline)',
+    };
   }
 }
