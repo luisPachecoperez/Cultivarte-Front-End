@@ -1,8 +1,8 @@
 module.exports = {
   preset: "jest-preset-angular",
-  coverageDirectory: './coverage',
-  coverageReporters:['cobertura','text','text-summary','lcov',],
-  collectCoverage:true,
+  coverageDirectory: "./coverage",
+  coverageReporters: ["cobertura", "text", "text-summary", "lcov"],
+  collectCoverage: true,
   rootDir: ".",
   setupFilesAfterEnv: ["<rootDir>/setup-jest.ts"],
 
@@ -39,7 +39,7 @@ module.exports = {
     "test.ts",
     "environments",
     "../../app/app.config.ts",
-    "../../app/app.routes.ts"
+    "../../app/app.routes.ts",
   ],
   coverageThreshold: {
     global: {

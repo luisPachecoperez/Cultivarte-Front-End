@@ -141,6 +141,41 @@ export class CalendarComponent {
     }
   }
 
+  mapEventosRelacionados(nombre_actividad: string): Sesiones[] {
+    return (this.calendarOptions.events as EventoCalendario[])
+      .filter((e) => e.title === nombre_actividad)
+      .map((e) => {
+        const [fecha_actividad, hora_inicio] = (e.start ?? '').split('T');
+        const [, hora_fin] = (e.end ?? '').split('T');
+        return {
+          id_actividad: e.id_actividad,
+          id_sesion: e.id_sesion,
+          fecha_actividad: fecha_actividad ?? '',
+          hora_inicio: (hora_inicio ?? '').substring(0, 5),
+          hora_fin: (hora_fin ?? '').substring(0, 5),
+        };
+      });
+  }
+  private filterEventos(key: 'id_sesion' | 'title', value: string) {
+    this.eventosCalendario = this.eventosCalendario.filter(
+      (ev) => ev[key] !== value,
+    );
+    this.calendarOptions.events = (
+      this.calendarOptions.events as EventoCalendario[]
+    ).filter((ev) => ev[key] !== value);
+  }
+
+  // 🔧 Unifica la lógica de cierre + recarga
+  private resetAndReload(flag: keyof CalendarComponent) {
+    (this as any)[flag] = false;
+
+    // Si el flag es 'mostrarFormulario', también resetea el evento seleccionado
+    if (flag === 'mostrarFormulario') {
+      this.eventoSeleccionado = null;
+    }
+
+    this.cargarSesiones();
+  }
   cargarSesiones() {
     if (!this.ultimaFechaInicio || !this.ultimaFechaFin) return;
 
@@ -176,18 +211,7 @@ export class CalendarComponent {
       this.calendarOptions.events as EventoCalendario[]
     ).filter((e) => e.title === nombre_actividad);
 
-    const sesiones: Sesiones[] = eventosRelacionados.map((e) => {
-      // e.start tiene formato ISO 'YYYY-MM-DDTHH:mm' (tal como lo mapeamos en el service)
-      const [fecha_actividad, hora_inicio] = (e.start ?? '').split('T');
-      const [, hora_fin] = (e.end ?? '').split('T');
-      return {
-        id_actividad: e.id_actividad,
-        id_sesion: e.id_sesion,
-        fecha_actividad: fecha_actividad ?? '',
-        hora_inicio: (hora_inicio ?? '').substring(0, 5),
-        hora_fin: (hora_fin ?? '').substring(0, 5),
-      };
-    });
+    const sesiones = this.mapEventosRelacionados(nombre_actividad);
 
     // si el evento puntual tiene extendedProps.desde/hasta (strings 'YYYY-MM-DD HH:mm:ss'):
     const ext = event.extendedProps as Partial<
@@ -222,17 +246,7 @@ export class CalendarComponent {
     ).filter((e) => e.title === nombre_actividad);
 
     // Construir sesiones (fecha/hora separadas)
-    const sesiones: Sesiones[] = eventosRelacionados.map((e) => {
-      const [fecha_actividad, hora_inicio] = (e.start ?? '').split('T');
-      const [, hora_fin] = (e.end ?? '').split('T');
-      return {
-        id_actividad: e.id_actividad,
-        id_sesion: e.id_sesion,
-        fecha_actividad: fecha_actividad ?? '',
-        hora_inicio: (hora_inicio ?? '').substring(0, 5),
-        hora_fin: (hora_fin ?? '').substring(0, 5),
-      };
-    });
+    const sesiones = this.mapEventosRelacionados(nombre_actividad);
 
     this.eventoSeleccionado = {
       id_actividad: sesionCalendario.event.extendedProps.id_actividad ?? '',
@@ -259,19 +273,9 @@ export class CalendarComponent {
     const nombre_actividad = sesiones[0].nombre_actividad;
 
     if (editarUna && id_sesionOriginal) {
-      this.eventosCalendario = this.eventosCalendario.filter(
-        (ev) => ev.id_sesion !== id_sesionOriginal,
-      );
-      this.calendarOptions.events = (
-        this.calendarOptions.events as EventoCalendario[]
-      ).filter((ev) => ev.id_sesion !== id_sesionOriginal);
+      this.filterEventos('id_sesion', id_sesionOriginal);
     } else if (!editarUna) {
-      this.eventosCalendario = this.eventosCalendario.filter(
-        (ev) => ev.title !== nombre_actividad,
-      );
-      this.calendarOptions.events = (
-        this.calendarOptions.events as EventoCalendario[]
-      ).filter((ev) => ev.title !== nombre_actividad);
+      this.filterEventos('title', nombre_actividad);
     }
 
     // Agregar las nuevas sesiones
@@ -317,26 +321,18 @@ export class CalendarComponent {
   }
 
   // ✅ Recargar sesiones al cerrar formularios o modales
+
   cerrarFormulario() {
-    this.mostrarFormulario = false;
-    this.eventoSeleccionado = null;
-    this.cargarSesiones();
+    this.resetAndReload('mostrarFormulario');
   }
-
   cerrarModalAcciones() {
-    this.mostrarModalAcciones = false;
-    this.cargarSesiones();
+    this.resetAndReload('mostrarModalAcciones');
   }
-
   cerrarAsistencia() {
-    this.mostrarAsistencia = false;
-    this.cargarSesiones();
+    this.resetAndReload('mostrarAsistencia');
   }
-
   cerrarAsistenciaFotografica() {
-    // 👈 nuevo
-    this.mostrarAsistenciaFotografica = false;
-    this.cargarSesiones();
+    this.resetAndReload('mostrarAsistenciaFotografica');
   }
 
   // 🔹 Aquí es donde decidimos si abrir normal o fotográfica
