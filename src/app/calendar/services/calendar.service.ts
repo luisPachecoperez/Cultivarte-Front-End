@@ -1,14 +1,11 @@
-import { Injectable } from '@angular/core';
-import { map } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
 
 import { firstValueFrom, from } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { tap, catchError, switchMap, map } from 'rxjs/operators';
 import { Sesiones } from '../../eventos/interfaces/sesiones.interface';
 import { GraphQLService } from '../../shared/services/graphql.service';
 import { ActividadesDataSource } from '../../indexdb/datasources/actividades-datasource';
 import { LoadIndexDBService } from '../../indexdb/services/load-index-db.service';
-import { switchMap } from 'rxjs/operators';
-import { inject } from '@angular/core';
 import { EventoCalendario } from '../interfaces/evento-calendario.interface';
 @Injectable({
   providedIn: 'root',
@@ -26,9 +23,9 @@ export class CalendarService {
     }
   }
 `;
-  private graphqlService = inject(GraphQLService);
-  private actividadesDataSource = inject(ActividadesDataSource);
-  private loadIndexDBService = inject(LoadIndexDBService);
+  private readonly graphqlService = inject(GraphQLService);
+  private readonly actividadesDataSource = inject(ActividadesDataSource);
+  private readonly loadIndexDBService = inject(LoadIndexDBService);
   constructor() {}
 
   /**
@@ -47,7 +44,6 @@ export class CalendarService {
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
           if (ping === 'pong') {
-            //console.log('✅ Backend activo:',);
             return this.graphqlService
               .query<{ consultarFechaCalendario: Sesiones[] }>(
                 this.CONSULTAR_FECHA_CALENDARIO,
@@ -61,7 +57,10 @@ export class CalendarService {
               )
               .pipe(
                 tap((response) => {
-                  //console.log('Obtuvo sesiones del servicio del graphql',response,);
+                  console.log(
+                    'Obtuvo sesiones del servicio del graphql',
+                    response,
+                  );
                 }),
                 map((response) =>
                   (response?.consultarFechaCalendario || []).map((s) => ({
@@ -87,7 +86,6 @@ export class CalendarService {
                 }),
               );
           } else {
-            //console.log('❌ Backend inactivo → usando IndexedDB');
             return from(
               this.actividadesDataSource.consultarFechaCalendario(
                 new Date(fechaInicio),

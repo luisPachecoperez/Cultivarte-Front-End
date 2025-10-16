@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { Personas_programasDataSource } from '../../app/indexdb/datasources/personas_programas-datasource';
+import { PersonasProgramasDataSource } from '../../app/indexdb/datasources/personas_programas-datasource';
 import { indexDB } from '../../app/indexdb/services/database.service';
-import { Personas_programasDB } from '../../app/indexdb/interfaces/personas_programas.interface';
+import { PersonasProgramasDB } from '../../app/indexdb/interfaces/personas_programas.interface';
 
 // 🔹 Helper tipo Dexie
 function dexiePromise<T = any>(value?: T): any {
@@ -10,10 +10,10 @@ function dexiePromise<T = any>(value?: T): any {
   return p;
 }
 
-describe('Personas_programasDataSource (Jest)', () => {
-  let service: Personas_programasDataSource;
+describe('PersonasProgramasDataSource (Jest)', () => {
+  let service: PersonasProgramasDataSource;
 
-  const mockRegistro: Personas_programasDB = {
+  const mockRegistro: PersonasProgramasDB = {
     id_persona_programa: 'PP1',
     id_persona: 'U1',
     id_programa: 'PR1',
@@ -26,9 +26,9 @@ describe('Personas_programasDataSource (Jest)', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [Personas_programasDataSource],
+      providers: [PersonasProgramasDataSource],
     });
-    service = TestBed.inject(Personas_programasDataSource);
+    service = TestBed.inject(PersonasProgramasDataSource);
 
     (indexDB as any).personas_programas = {
       toArray: jest.fn().mockReturnValue(dexiePromise([mockRegistro])),

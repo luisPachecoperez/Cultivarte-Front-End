@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 
 import {
   firstValueFrom,
@@ -19,7 +19,6 @@ import { Sesiones } from '../../../eventos/interfaces/sesiones.interface';
 import { AsistenciasDataSource } from '../../../indexdb/datasources/asistencias-datasource';
 import { SesionesDataSource } from '../../../indexdb/datasources/sesiones-datasource';
 import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.interface';
-import { inject } from '@angular/core';
 import { GraphQLService } from '../../../shared/services/graphql.service';
 import { LoadingService } from '../../../shared/services/loading.service';
 import { AsistenciaPayLoad } from '../../interfaces/asistencia-payload.interface';
@@ -80,12 +79,12 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
   }
 }
 `;
-  private actividadesDataSource = inject(ActividadesDataSource);
-  private loadIndexDBService = inject(LoadIndexDBService);
-  private asistenciasDataSource = inject(AsistenciasDataSource);
-  private sesionesDataSource = inject(SesionesDataSource);
-  private graphQLService = inject(GraphQLService);
-  private LoadingService = inject(LoadingService);
+  private readonly actividadesDataSource = inject(ActividadesDataSource);
+  private readonly loadIndexDBService = inject(LoadIndexDBService);
+  private readonly asistenciasDataSource = inject(AsistenciasDataSource);
+  private readonly sesionesDataSource = inject(SesionesDataSource);
+  private readonly graphQLService = inject(GraphQLService);
+  private readonly LoadingService = inject(LoadingService);
   constructor() {}
 
   // 🔹 Consultar info de asistencia según id_actividad
@@ -94,29 +93,22 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
     return <PreAsistencia>await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
-          //console.log('ping en update sesiones:', ping);
-
           if (ping === 'pong') {
-            //console.log('Update sesiones backend activo');
-
             return this.graphQLService
               .query<{ getPreAsistencia: any }>(this.GET_PRE_ASISTENCIA, {
                 id_sesion,
               })
               .pipe(
                 map((res) => {
-                  //console.log('👉 preAsistencia desde backend:', res);
                   this.LoadingService.hide();
                   return <PreAsistencia>res.getPreAsistencia;
                 }),
               );
           } else {
-            //console.log("Se fue por el else");
             return from(
               this.actividadesDataSource.getPreAsistencia(id_sesion),
             ).pipe(
               tap(() => {
-                //console.log('👉 preAsistencia calculada (offline):', preAsistencia);
                 this.LoadingService.hide();
               }),
             );
@@ -199,7 +191,6 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
 
   /** 🔹 Manejar errores de mutación */
   private manejarErrorAsistencia(error: any): Observable<GraphQLResponse> {
-    console.log('❌ Error en updateAsistencias:', error);
     this.LoadingService.hide();
 
     return of({
@@ -239,11 +230,11 @@ mutation updateAsistencias($input: UpdateSesionInput!) {
           this.actualizarSesionSynced(input, res.updateAsistencias),
         ),
         catchError((error) => {
-          console.log('❌ Error en asistencia fotográfica online:', error);
           this.LoadingService.hide();
           return of({
             exitoso: 'N',
-            mensaje: 'Error al actualizar asistencia fotográfica (online)',
+            mensaje:
+              'Error al actualizar asistencia fotográfica (online):' + error,
           });
         }),
       );

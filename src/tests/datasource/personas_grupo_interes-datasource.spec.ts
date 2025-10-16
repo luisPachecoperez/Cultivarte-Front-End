@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { Personas_grupo_interesDataSource } from '../../app/indexdb/datasources/personas_grupo_interes-datasource';
+import { PersonasGrupoInteresDataSource } from '../../app/indexdb/datasources/personas_grupo_interes-datasource';
 import { indexDB } from '../../app/indexdb/services/database.service';
-import { Personas_grupo_interesDB } from '../../app/indexdb/interfaces/personas_grupo_interes.interface';
+import { PersonasGrupoInteresDB } from '../../app/indexdb/interfaces/personas_grupo_interes.interface';
 
 // 🔹 Helper compatible con Dexie
 function dexiePromise<T = any>(value?: T): any {
@@ -10,10 +10,10 @@ function dexiePromise<T = any>(value?: T): any {
   return p;
 }
 
-describe('Personas_grupo_interesDataSource (Jest)', () => {
-  let service: Personas_grupo_interesDataSource;
+describe('PersonasGrupoInteresDataSource (Jest)', () => {
+  let service: PersonasGrupoInteresDataSource;
 
-  const mockRegistro: Personas_grupo_interesDB = {
+  const mockRegistro: PersonasGrupoInteresDB = {
     id_personas_grupo_interes: 'PGI1',
     id_persona: 'U1',
     id_grupo_interes: 'GI1',
@@ -26,9 +26,9 @@ describe('Personas_grupo_interesDataSource (Jest)', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [Personas_grupo_interesDataSource],
+      providers: [PersonasGrupoInteresDataSource],
     });
-    service = TestBed.inject(Personas_grupo_interesDataSource);
+    service = TestBed.inject(PersonasGrupoInteresDataSource);
 
     (indexDB as any).personas_grupo_interes = {
       toArray: jest.fn().mockReturnValue(dexiePromise([mockRegistro])),

@@ -1,4 +1,4 @@
-import { Grid_sesionesComponent } from './../../grid-sesiones.component/pages/grid-sesiones.component';
+import { GridSesionesComponent } from './../../grid-sesiones.component/pages/grid-sesiones.component';
 import { PreEditActividad } from '../../../interfaces/pre-edit-actividad.interface';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -14,9 +14,7 @@ import {
   HostListener,
 } from '@angular/core';
 import { Aliados } from '../../../interfaces/lista-aliados.interface';
-
 import { CommonModule } from '@angular/common';
-import { Injectable } from '@angular/core';
 import { Sesiones } from '../../../interfaces/sesiones.interface';
 import {
   FormBuilder,
@@ -26,7 +24,7 @@ import {
   FormArray,
 } from '@angular/forms';
 import { EventService } from '../services/event.service';
-import { Grid_sesionesService } from '../../grid-sesiones.component/services/grid-sesiones.service';
+import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.service';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../../../shared/services/snackbar.service';
@@ -39,16 +37,14 @@ import { NombresDeActividad } from '../../../interfaces/lista-nombres-actividade
 import { TiposDeActividad } from '../../../interfaces/lista-tipos-actividades-interface';
 import { Responsables } from '../../../interfaces/lista-responsables-interface';
 import { PreCreateActividad } from '../../../interfaces/pre-create-actividad.interface';
-@Injectable({
-  providedIn: 'root',
-})
+
 @Component({
   selector: 'app-event',
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    Grid_sesionesComponent,
+    GridSesionesComponent,
     MatSnackBarModule,
   ],
   templateUrl: './events.component.html',
@@ -60,7 +56,7 @@ export class EventComponent implements OnInit, OnChanges {
   fechaPreseleccionada = input<string | null>(null);
   mostrarFormulario = input<boolean>(false);
   id_programa: string | null = null;
-  private _fechaPreseleccionada: string | null = null;
+  private readonly _fechaPreseleccionada: string | null = null;
   actualizarSesionEnCalendario: any;
 
   /** 🔹 Guardamos el snapshot del grid */
@@ -75,12 +71,12 @@ export class EventComponent implements OnInit, OnChanges {
   };
 
   // Inyectamos con funciones
-  private fb = inject(FormBuilder);
-  private eventService = inject(EventService);
-  private grid_sesionesService = inject(Grid_sesionesService);
-  private authService = inject(AuthService);
-  private snack = inject(SnackbarService);
-  private loadingService = inject(LoadingService);
+  private readonly fb = inject(FormBuilder);
+  private readonly eventService = inject(EventService);
+  private readonly grid_sesionesService = inject(GridSesionesService);
+  private readonly authService = inject(AuthService);
+  private readonly snack = inject(SnackbarService);
+  private readonly loadingService = inject(LoadingService);
 
   constructor() {
     // Effect: cambios en fecha preseleccionada
@@ -93,11 +89,9 @@ export class EventComponent implements OnInit, OnChanges {
 
     // Effect: cambios en evento seleccionado
     effect(() => {
-      const evento = <EventoSeleccionado>this.eventoSeleccionado();
-      //console.log('📦 evento seleccionado3:', evento);
-      //console.log('📦 eventoForm efect:', this.eventoForm);
+      const evento = this.eventoSeleccionado();
+
       if (evento && this.eventoForm) {
-        //console.log('entro');
         // 🔴 ANTES: precargábamos directo con lo que venía del calendario (incompleto)
         // ✅ AHORA: si viene id_actividad, consultamos al "backend" mock y luego precargamos
         if (evento.id_actividad) {
@@ -151,7 +145,6 @@ export class EventComponent implements OnInit, OnChanges {
     const texto: string = input.value?.toLowerCase();
     this.aliadoTexto = texto;
     // Filtra por coincidencia en nombre
-    //console.log('aliados sin filtrar:', this.aliados);
     this.aliadosFiltrados = this.aliados.filter((a) =>
       a.nombre.toLowerCase().includes(texto),
     );
@@ -177,6 +170,7 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
+    console.log('Se lanza el oninit');
     /* eslint-disable @typescript-eslint/unbound-method */
     this.eventoForm = this.fb.group({
       id_programa: [
@@ -232,7 +226,6 @@ export class EventComponent implements OnInit, OnChanges {
       ],
       sesiones: this.fb.array([]),
     });
-    //console.log('📦 eventoForm ngOnInit:', this.eventoForm);
 
     // 🔹 Cargar datos desde el backend simulado
     this.cargarConfiguracionFormulario();
@@ -241,13 +234,11 @@ export class EventComponent implements OnInit, OnChanges {
     this.eventoForm
       .get('id_tipo_actividad')
       ?.valueChanges.subscribe((tipoId: string) => {
-        //console.log("Cambia Tipo de Actividad");
         this.filtrarEventosPorTipo(tipoId);
       });
 
     // Pre-cargar si es edición (si llega algo ya en el primer render)
     const evento = this.eventoSeleccionado();
-    //console.log('📦 evento seleccionado:', evento);
     if (evento) {
       this.eventoParaEditar = evento;
       if (evento.id_actividad) {
@@ -283,17 +274,14 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   private filtrarEventosPorTipo(tipoId: string | null | undefined): void {
-    //console.log('📦 tipoId filtrarEventosPorTipo:', tipoId);
     if (!tipoId) {
       this.nombresDeEventosFiltrados = [];
       return;
     }
     // nombreDeEventos viene del mock; filtramos por id_parametro_detalle (padre)
-    //console.log('📦 nombreDeEventos:', this.nombreDeEventos);
     this.nombresDeEventosFiltrados = (this.nombreDeEventos || []).filter(
       (n) => n.id_tipo_actividad === tipoId,
     );
-    //console.log('📦 nombresDeEventosFiltrados:', this.nombresDeEventosFiltrados);
   }
 
   // 🔹 Lógica para saber si nombre_actividad es select o input
@@ -308,7 +296,7 @@ export class EventComponent implements OnInit, OnChanges {
       (t: TiposDeActividad) => t.id_tipo_actividad === tipoId,
     );
 
-    if (!tipoActividad || !tipoActividad.nombre) {
+    if (!tipoActividad?.nombre) {
       return false;
     }
 
@@ -325,7 +313,6 @@ export class EventComponent implements OnInit, OnChanges {
 
     // 👇 Si ya vienen parámetros desde la consulta de edición, úsalos
     if (parametros) {
-      //console.log('📦 viene con parametros:', parametros);
       this.sedes = parametros.sedes || [];
       this.tiposDeActividad = parametros.tiposDeActividad || [];
       this.aliados = parametros.aliados || [];
@@ -343,9 +330,7 @@ export class EventComponent implements OnInit, OnChanges {
     this.eventService
       .obtenerConfiguracionEvento(idUsuario)
       .subscribe((data: PreCreateActividad) => {
-        //console.log('📦 datos de configuración:', data);
         this.id_programa = data.id_programa;
-        //console.log('📦 id_programa:', this.id_programa);
         this.eventoForm.get('id_programa')?.setValue(this.id_programa);
         this.sedes = data.sedes;
         this.sedes.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -366,7 +351,6 @@ export class EventComponent implements OnInit, OnChanges {
           return nombreA.localeCompare(nombreB);
         });
         this.nombreDeEventos = data.nombresDeActividad;
-        //console.log("nombre de eventos:", this.nombreDeEventos);
         this.nombreDeEventos.sort((a, b) => {
           const nombreA = a.nombre;
           const nombreB = b.nombre;
@@ -377,18 +361,17 @@ export class EventComponent implements OnInit, OnChanges {
           const nombreA = a.nombre ?? '';
           const nombreB = b.nombre ?? '';
           return nombreA.localeCompare(nombreB);
-        }); //console.log('📦 frecuencias:', this.frecuencias);
+        });
+
         // actualizar eventos filtrados si ya hay un tipo seleccionado
 
         // ✅ Lógica de sede
-        //console.log("Cantidad de sedes:", this.sedes.length);
         if (!this.estaEditando && this.sedes.length === 1) {
           this.eventoForm.get('id_sede')?.enable({ emitEvent: false });
           this.eventoForm
             .get('id_sede')
             ?.setValue(this.sedes[0].id_sede, { emitEvent: false });
           this.eventoForm.get('id_sede')?.disable({ emitEvent: false });
-          //console.log('✅ Sede única asignada:',this.eventoForm.get('sede')?.value);
         } else {
           this.eventoForm.get('id_sede')?.enable({ emitEvent: false });
         }
@@ -397,7 +380,7 @@ export class EventComponent implements OnInit, OnChanges {
           this.eventoForm?.get('id_tipo_actividad')?.value as string,
         );
         this.loadingService.hide(); // 🔄 ocultar
-        /*console.log(
+        console.log(
           '📦 configuración cargada:',
           this.sedes,
           this.tiposDeActividad,
@@ -405,7 +388,7 @@ export class EventComponent implements OnInit, OnChanges {
           this.responsables,
           this.nombreDeEventos,
           this.frecuencias,
-        );*/
+        );
       });
   }
 
@@ -421,10 +404,8 @@ export class EventComponent implements OnInit, OnChanges {
   }
 
   onAccionSeleccionado(accion: 'editar' | 'asistencia') {
-    //console.log('🎯 Accion seleccionada:', accion);
     if (accion === 'editar') {
       this.eventoParaEditar = this.eventoSeleccionado as EventoSeleccionado;
-      //console.log('Editar evento', this.eventoParaEditar);
       if (this.eventoParaEditar?.id_actividad) {
         this.cargarEdicionDesdeBackend(this.eventoParaEditar.id_actividad);
       } else {
@@ -432,73 +413,60 @@ export class EventComponent implements OnInit, OnChanges {
       }
     }
 
-    if (accion === 'asistencia') {
-      //console.log('Tomar asistencia aún no implementado');
-    }
-
     this.limpiarEventoSeleccionado.emit();
   }
 
-  // ⬇️⬇️⬇️ CAMBIO CLAVE: cuando hay id_actividad, traemos TODO del mock y recién precargamos
   cargarEdicionDesdeBackend(id_actividad: string): void {
-    try {
-      this.eventService
-        .obtenerEventoPorId(id_actividad)
-        .then((resp: PreEditActividad) => {
-          //console.log('📦 respuesta del backend:', resp);
-          this.cargarConfiguracionFormulario(resp);
+    this.eventService
+      .obtenerEventoPorId(id_actividad)
+      .then((resp: PreEditActividad) => {
+        this.cargarConfiguracionFormulario(resp);
 
-          const eventoAdaptado: EventoSeleccionado = {
-            id_actividad: resp.actividad.id_actividad,
-            institucional: resp.actividad.institucional === 'S',
-            id_sede: resp.actividad.id_sede,
-            id_tipo_actividad: resp.actividad.id_tipo_actividad,
-            id_responsable: resp.actividad.id_responsable,
-            id_aliado: resp.actividad.id_aliado,
-            nombre_actividad: resp.actividad.nombre_actividad,
-            descripcion: resp.actividad.descripcion,
-            id_frecuencia: resp.actividad.id_frecuencia,
-            fecha_actividad: resp.actividad.fecha_actividad,
-            hora_inicio: resp.actividad.hora_inicio ?? '',
-            hora_fin: resp.actividad.hora_fin ?? '',
-            sesiones:
-              resp.sesiones.map((s: Sesiones) => ({
-                id_sesion: s.id_sesion ?? '',
-                id_actividad: resp.actividad.id_actividad ?? '',
-                fecha_actividad: s.fecha_actividad ?? '',
-                hora_inicio: s.hora_inicio ?? '',
-                hora_fin: s.hora_fin ?? '',
-                nro_asistentes: s.nro_asistentes,
-              })) ?? [],
-          };
+        const eventoAdaptado: EventoSeleccionado = {
+          id_actividad: resp.actividad.id_actividad,
+          institucional: resp.actividad.institucional === 'S',
+          id_sede: resp.actividad.id_sede,
+          id_tipo_actividad: resp.actividad.id_tipo_actividad,
+          id_responsable: resp.actividad.id_responsable,
+          id_aliado: resp.actividad.id_aliado,
+          nombre_actividad: resp.actividad.nombre_actividad,
+          descripcion: resp.actividad.descripcion,
+          id_frecuencia: resp.actividad.id_frecuencia,
+          fecha_actividad: resp.actividad.fecha_actividad,
+          hora_inicio: resp.actividad.hora_inicio ?? '',
+          hora_fin: resp.actividad.hora_fin ?? '',
+          sesiones:
+            resp.sesiones.map((s: Sesiones) => ({
+              id_sesion: s.id_sesion ?? '',
+              id_actividad: resp.actividad.id_actividad ?? '',
+              fecha_actividad: s.fecha_actividad ?? '',
+              hora_inicio: s.hora_inicio ?? '',
+              hora_fin: s.hora_fin ?? '',
+              nro_asistentes: s.nro_asistentes,
+            })) ?? [],
+        };
 
-          //console.log('✅ Evento adaptado:', eventoAdaptado);
-          this.eventoParaEditar = eventoAdaptado;
+        this.eventoParaEditar = eventoAdaptado;
 
-          // 3) pintar formulario
-          this.precargarFormulario(eventoAdaptado);
+        // 3) pintar formulario
+        this.precargarFormulario(eventoAdaptado);
 
-          // 4) poner el texto visible del autocomplete de aliado (solo para mostrar nombre)
-          const aliado = this.aliados.find(
-            (a) => a.id_aliado === resp.actividad.id_aliado,
-          );
-          this.aliadoTexto = aliado?.nombre || '';
-        })
-        .catch((err) => {
-          console.error('❌ Error al obtener evento:', err);
-          this.snack.error('No fue posible cargar el evento');
-        });
-    } finally {
-      //console.log('Fin obtenerEventoPorId');
-    }
+        // 4) poner el texto visible del autocomplete de aliado (solo para mostrar nombre)
+        const aliado = this.aliados.find(
+          (a) => a.id_aliado === resp.actividad.id_aliado,
+        );
+        this.aliadoTexto = aliado?.nombre || '';
+      })
+      .catch((err) => {
+        console.error('❌ Error al obtener evento:', err);
+        this.snack.error('No fue posible cargar el evento');
+      });
   }
 
   // ✅ Ajustado para aceptar tanto campos "id_*" del backend como los antiguos del mock
   precargarFormulario(evento: EventoSeleccionado | null): void {
     if (evento !== null) {
-      //console.log('📦 evento para precargar:', evento);
       if (!this.eventoForm) return;
-      //console.log('📦 DESPUES DEL IF eventoForm:', this.eventoForm);
       this.eventoForm.patchValue({
         institucional:
           typeof evento.institucional === 'string'
@@ -530,7 +498,6 @@ export class EventComponent implements OnInit, OnChanges {
       }
 
       this.sesiones.clear();
-      //console.log('Justo antes de cargar las sesiones:', evento.sesiones);
       if (evento.sesiones && Array.isArray(evento.sesiones)) {
         evento.sesiones.forEach((s: Sesiones) => {
           this.sesiones.push(
@@ -546,32 +513,16 @@ export class EventComponent implements OnInit, OnChanges {
         });
       }
     }
-    //console.log('Justo despues de cargar las sesiones:');
-    //this.sesiones.controls.forEach((control, index) => {
-    //console.log(`Sesión ${index + 1}:`);
-    //console.log('Fecha de Actividad:', control.get('fecha_actividad')?.value);
-    //console.log('Hora de Inicio:', control.get('hora_inicio')?.value);
-    //console.log('Hora de Fin:', control.get('hora_fin')?.value);
-    //console.log('ID de Sesión:', control.get('id_sesion')?.value);
-    //console.log('ID de Actividad:', control.get('id_actividad')?.value);
-    //console.log('Número de Asistentes:', control.get('nro_asistentes')?.value);
-    // });
   }
 
   guardarEvento() {
-    //console.log("Formulario novalido:", this.eventoForm.invalid);
-    //console.log('📦 eventoFormguardar:', this.eventoForm);
-    //console.log('markAllAsTouched:', this.eventoForm.markAllAsTouched());
     if (this.eventoForm.invalid) {
       this.eventoForm.markAllAsTouched();
       this.snack.error(
         'Formulario no válido. Todos los campos son obligatorios.',
       );
-      //console.log("Debio mostrar error");
       return;
     }
-    //console.log('📦 esta editando:', this.estaEditando);
-    //console.log('📦 evento para editar:', this.eventoParaEditar?.id);
 
     if (this.estaEditando && this.eventoParaEditar?.id_actividad) {
       this.actualizarSesion();
@@ -598,10 +549,8 @@ export class EventComponent implements OnInit, OnChanges {
     const evento: EventoSeleccionado =
       this.eventoForm.getRawValue() as EventoSeleccionado;
     const sesiones: Sesiones[] = [];
-
-    //console.log('📋 Evento base:', evento);
-    //console.log('Fecha base:', evento.fecha_actividad);
     const fechaBase: Date = new Date(evento.fecha_actividad ?? Date.now());
+
     let finMes: Date = new Date();
     if (
       evento.fecha_actividad !== null &&
@@ -618,20 +567,14 @@ export class EventComponent implements OnInit, OnChanges {
     if (evento.fecha_actividad) {
       [year, month, day] = evento.fecha_actividad.split('-').map(Number);
       actual = new Date(year, month - 1, day);
-    } else {
-      // Manejar el caso en que fecha_actividad es undefined
-      console.error('fecha_actividad es undefined');
     }
-
-    //console.log('📋 actual:', actual);
 
     const nombreFrecuencia =
       this.frecuencias.find((f) => f.id_frecuencia === evento.id_frecuencia)
         ?.nombre || '';
 
     // Frecuencias
-    //console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
-    //console.log('📋 Actual:', actual, 'Fin de mes:', finMes);
+
     if (nombreFrecuencia.toLowerCase() === 'a diario') {
       while (actual != null && actual <= finMes) {
         if (actual.getDay() >= 1 && actual.getDay() <= 6) {
@@ -665,9 +608,7 @@ export class EventComponent implements OnInit, OnChanges {
     }
 
     if (nombreFrecuencia.toLowerCase() === 'semanalmente') {
-      //console.log('📋 entro a semanalmente:');
       while (actual != null && actual <= finMes) {
-        //console.log('📋 fecha formateada:', this.formatearFechaLocal(actual));
         sesiones.push(
           this.crearSesion(
             this.formatearFechaLocal(actual),
@@ -678,8 +619,6 @@ export class EventComponent implements OnInit, OnChanges {
         );
 
         actual.setDate(actual.getDate() + 7);
-        //console.log('📋 fecha actual:', actual);
-        //console.log('📋 fecha fin de mes:', finMes);
       }
     }
 
@@ -707,10 +646,7 @@ export class EventComponent implements OnInit, OnChanges {
       }
     }
 
-    //console.log('📦 Sesiones creadas:', sesiones);
-
     // 📤 Construir payload para el back
-    //console.log('📦 Evento basessssss:', evento);
     // traducir nombre_actividad si vino como id desde la lista
     let nombreActividad = evento.nombre_actividad;
 
@@ -733,18 +669,18 @@ export class EventComponent implements OnInit, OnChanges {
 
     const actividad: Actividades = {
       id_actividad: uuidv4(),
-      id_programa: evento.id_programa as string, // esto vendrá del back en producción
+      id_programa: evento.id_programa,
       institucional: evento.institucional ? 'S' : 'N',
-      id_tipo_actividad: evento.id_tipo_actividad as string,
-      id_responsable: evento.id_responsable as string,
-      id_aliado: evento.id_aliado as string,
-      id_sede: evento.id_sede as string,
-      id_frecuencia: evento.id_frecuencia as string,
-      nombre_actividad: nombreActividad as string,
-      descripcion: evento.descripcion as string,
-      fecha_actividad: evento.fecha_actividad as string,
-      hora_inicio: evento.hora_inicio as string,
-      hora_fin: evento.hora_fin as string,
+      id_tipo_actividad: evento.id_tipo_actividad,
+      id_responsable: evento.id_responsable,
+      id_aliado: evento.id_aliado,
+      id_sede: evento.id_sede,
+      id_frecuencia: evento.id_frecuencia,
+      nombre_actividad: nombreActividad,
+      descripcion: evento.descripcion,
+      fecha_actividad: evento.fecha_actividad,
+      hora_inicio: evento.hora_inicio,
+      hora_fin: evento.hora_fin,
       estado: 'A',
       id_creado_por: this.authService.getUserUuid(),
       fecha_creacion: new Date().toISOString().split('T')[0],
@@ -752,14 +688,10 @@ export class EventComponent implements OnInit, OnChanges {
       fecha_modificacion: null,
     };
 
-    //console.log('📤 Enviando payload al back:', payload);
-
     this.eventService
       .crearEvento(actividad, sesiones)
       .then((resp) => {
-        //console.log('📥 Respuesta del back:', resp);
         if (resp.exitoso === 'S') {
-          //console.log('✅ Evento creado correctamente');
           this.snack.success('Evento creado correctamente');
           this.eventoGuardado.emit({
             sesiones,
@@ -806,12 +738,9 @@ export class EventComponent implements OnInit, OnChanges {
       })),
     };
 
-    //console.log('📦 Payload final a enviar al back:', payloadFinal);
-
     try {
       const resp =
         await this.grid_sesionesService.guardarCambiosSesiones(payloadFinal);
-      //console.log('✅ Respuesta del back GRIID:', resp);
       if (resp.exitoso === 'S') {
         this.snack.success(resp.mensaje ?? 'Sesiones actualizadas');
         this.eventoEditado.emit(payloadFinal);
@@ -840,7 +769,6 @@ export class EventComponent implements OnInit, OnChanges {
     this.cerrarFormulario.emit();
     this.limpiarEventoSeleccionado.emit();
 
-    // 👇 Aseguramos que todo quede habilitado para la próxima creación
     this.eventoForm.enable({ emitEvent: false });
   }
 
@@ -860,7 +788,6 @@ export class EventComponent implements OnInit, OnChanges {
       id_creado_por: this.authService.getUserUuid(),
     };
 
-    //console.log(`🆕 Crear sesión `, sesion);
     return sesion;
   }
 
@@ -870,7 +797,6 @@ export class EventComponent implements OnInit, OnChanges {
     modificados: any[];
     eliminados: any[];
   }) {
-    //console.log('🧩 Cambios recibidos del grid (snapshot actualizado):',payload);
     this.cambiosSesionesSnapshot = payload;
   }
 }

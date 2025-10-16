@@ -14,11 +14,11 @@ import { AuthService } from '../../app/shared/services/auth.service';
 import { LoadingService } from '../../app/shared/services/loading.service';
 import { EventComponent } from '../../app/eventos/components/event.component/pages/event.component';
 import { PreAsistencia } from '../../app/asistencia/interfaces/pre-asistencia.interface';
-import { Component, Input, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { signal, Component, Input, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 jest.mock('@fullcalendar/angular', () => ({
   FullCalendarModule: { forRoot: () => ({}) },
-  CalendarOptions: class {},
+  CalendarOptions: class { },
 }));
 jest.mock('@fullcalendar/daygrid', () => ({}));
 jest.mock('@fullcalendar/timegrid', () => ({}));
@@ -66,7 +66,7 @@ describe('✅ CalendarComponent (Jest 90%)', () => {
       standalone: true,
       imports: [CommonModule],
     })
-    class CalendarComponentStub extends CalendarComponent {}
+    class CalendarComponentStub extends CalendarComponent { }
 
     await TestBed.configureTestingModule({
       imports: [CalendarComponentStub, MatSnackBarModule],
@@ -88,9 +88,9 @@ describe('✅ CalendarComponent (Jest 90%)', () => {
       plugins: [],
       initialView: 'dayGridMonth',
       events: [],
-      dateClick: () => {},
-      eventClick: () => {},
-      datesSet: () => {},
+      dateClick: () => { },
+      eventClick: () => { },
+      datesSet: () => { },
     } as any;
 
     (component as any).calendarService = calendarServiceMock;
@@ -225,7 +225,7 @@ describe('✅ CalendarComponent (Jest 90%)', () => {
   });
 
   it('🚫 agregarOActualizarEvento() debe advertir si no hay sesiones', () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
     component.agregarOActualizarEvento({ sesiones: [] });
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
@@ -252,7 +252,7 @@ describe('✅ CalendarComponent (Jest 90%)', () => {
       CalendarComponent.prototype.cargarSesiones;
     const cargarSpy = jest
       .spyOn(component, 'cargarSesiones')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
 
     component.cerrarFormulario();
     component.cerrarModalAcciones();
@@ -390,23 +390,30 @@ describe('✅ CalendarComponent (Jest 90%)', () => {
   });
 
   it('🚫 onAccionSeleccionada("asistencia") debe advertir si no hay sesión seleccionada', fakeAsync(() => {
+    (component as any).eventoComponent= signal({
+      cargarEdicionDesdeBackend: jest.fn(),
+      precargarFormulario: jest.fn(),
+    });
+
     component.eventoSeleccionado = { id_actividad: 'A1', id_sesion: '' } as any;
     component.onAccionSeleccionada('asistencia');
     tick();
+
     expect(snackMock.error).toHaveBeenCalledWith('No hay sesión seleccionada');
   }));
 
-  it('🧩 onAccionSeleccionada("editar") debe ejecutar rama con id_actividad', () => {
-    component.eventoSeleccionado = {
-      id_actividad: 'AX',
-      id_sesion: 'SX',
-    } as any;
-    component.onAccionSeleccionada('editar');
-    expect(eventoComponentMock.cargarEdicionDesdeBackend).toHaveBeenCalledWith(
-      'AX',
-    );
-    expect(component.mostrarFormulario).toBe(true);
-  });
+  it('🚫 onAccionSeleccionada("asistencia") debe advertir si no hay sesión seleccionada', fakeAsync(() => {
+    (component as any).eventoComponent= signal({
+      cargarEdicionDesdeBackend: jest.fn(),
+      precargarFormulario: jest.fn(),
+    });
+
+    component.eventoSeleccionado = { id_actividad: 'A1', id_sesion: '' } as any;
+    component.onAccionSeleccionada('asistencia');
+    tick();
+
+    expect(snackMock.error).toHaveBeenCalledWith('No hay sesión seleccionada');
+  }));
 
   it('🔥 cargarSesiones() debe manejar error en la llamada al servicio', fakeAsync(() => {
     component.ultimaFechaInicio = '2025-01-01';
@@ -621,7 +628,7 @@ describe('✅ CalendarComponent (Jest 90%)', () => {
     component.mostrarAsistenciaFotografica = true;
     const spy = jest
       .spyOn(component, 'cargarSesiones')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     component.cerrarAsistenciaFotografica();
     expect(component.mostrarAsistenciaFotografica).toBe(false);
     expect(spy).toHaveBeenCalled();

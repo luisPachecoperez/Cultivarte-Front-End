@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+
 @Injectable({ providedIn: 'root' })
 export class SnackbarYesNoService {
-  private confirmResult$ = new Subject<boolean>();
+  private readonly confirmResult$ = new Subject<boolean>();
 
-  constructor(private snack: MatSnackBar) {}
+  constructor(private readonly snack: MatSnackBar) {}
 
   success(message: string, duration = 3000) {
     import('../components/confirm-snackbar/confirm-snackbar.component').then(

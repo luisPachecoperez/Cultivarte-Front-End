@@ -12,65 +12,43 @@
   <tbody>
     <!-- Lista de sesiones con scroll -->
     <tr>
-      <td colspan="4" style="padding: 0">
-        <div style="max-height: 250px; overflow-y: auto">
+      <td colspan="4" style="padding: 0;">
+        <div style="max-height: 250px; overflow-y: auto;">
           <table class="table mb-0">
+            <thead>
+              <tr colspan="4">
+                <th></th>
+                
+              </tr>
+            </thead>
             <tbody>
-              @for (
-                control of sesiones;
-                track control.value.id_sesion ?? $index
-              ) {
-                <tr [formGroup]="control">
-                  <td>
-                    <input
-                      type="date"
-                      class="form-control"
-                      formControlName="fecha_actividad"
-                      [readonly]="
-                        soloLectura() || control.value.nro_asistentes > 0
-                      "
-                      (keydown.enter)="$event.stopPropagation()"
-                      (blur)="notificarCambio()"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="time"
-                      class="form-control"
-                      formControlName="hora_inicio"
-                      [readonly]="
-                        soloLectura() || control.value.nro_asistentes > 0
-                      "
-                      (keydown.enter)="$event.stopPropagation()"
-                      (blur)="notificarCambio()"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="time"
-                      class="form-control"
-                      formControlName="hora_fin"
-                      [readonly]="
-                        soloLectura() || control.value.nro_asistentes > 0
-                      "
-                      (keydown.enter)="$event.stopPropagation()"
-                      (blur)="notificarCambio()"
-                    />
-                  </td>
-                  <td class="d-flex gap-1 align-items-center">
-                    @if (control.value.nro_asistentes > 0) {
-                      <span class="badge bg-secondary">Bloqueada</span>
-                    } @else {
-                      <button
-                        class="btn btn-danger btn-sm"
-                        (click)="eliminarSesion($index)"
-                        [disabled]="soloLectura()"
-                      >
-                        Eliminar
-                      </button>
-                    }
-                  </td>
-                </tr>
+              @for (control of sesiones; track control.value.id_sesion ?? $index) {
+              <tr [formGroup]="control">
+                <td>
+                  <input type="date" class="form-control" formControlName="fecha_actividad"
+                    [readonly]="soloLectura() || control.value.nro_asistentes > 0"
+                    (keydown.enter)="$event.stopPropagation()" (blur)="notificarCambio()" />
+                </td>
+                <td>
+                  <input type="time" class="form-control" formControlName="hora_inicio"
+                    [readonly]="soloLectura() || control.value.nro_asistentes > 0"
+                    (keydown.enter)="$event.stopPropagation()" (blur)="notificarCambio()" />
+                </td>
+                <td>
+                  <input type="time" class="form-control" formControlName="hora_fin"
+                    [readonly]="soloLectura() || control.value.nro_asistentes > 0"
+                    (keydown.enter)="$event.stopPropagation()" (blur)="notificarCambio()" />
+                </td>
+                <td class="d-flex gap-1 align-items-center">
+                  @if (control.value.nro_asistentes > 0) {
+                  <span class="badge bg-secondary">Bloqueada</span>
+                  } @else {
+                  <button class="btn btn-danger btn-sm" (click)="eliminarSesion($index)" [disabled]="soloLectura()">
+                    Eliminar
+                  </button>
+                  }
+                </td>
+              </tr>
               }
             </tbody>
           </table>
@@ -80,56 +58,28 @@
 
     <!-- Formulario para nueva sesión -->
     @if (!soloLectura()) {
-      <tr [formGroup]="nuevaSesionForm">
-        <td>
-          <input
-            type="date"
-            formControlName="fecha_actividad"
-            class="form-control"
-            [ngClass]="{
-              'is-invalid':
-                nuevaSesionForm.get('fecha_actividad')?.invalid &&
-                nuevaSesionForm.get('fecha_actividad')?.touched,
-            }"
-            (keydown.enter)="$event.stopPropagation()"
-          />
-        </td>
-        <td>
-          <input
-            type="time"
-            formControlName="hora_inicio"
-            class="form-control"
-            [ngClass]="{
-              'is-invalid':
-                nuevaSesionForm.get('hora_inicio')?.invalid &&
-                nuevaSesionForm.get('hora_inicio')?.touched,
-            }"
-            (keydown.enter)="$event.stopPropagation()"
-          />
-        </td>
-        <td>
-          <input
-            type="time"
-            formControlName="hora_fin"
-            class="form-control"
-            [ngClass]="{
-              'is-invalid':
-                nuevaSesionForm.get('hora_fin')?.invalid &&
-                nuevaSesionForm.get('hora_fin')?.touched,
-            }"
-            (keydown.enter)="$event.stopPropagation()"
-          />
-        </td>
-        <td>
-          <button
-            class="btn btn-primary btn-sm"
-            (click)="agregarSesion()"
-            [disabled]="nuevaSesionForm.invalid"
-          >
-            Agregar
-          </button>
-        </td>
-      </tr>
+    <tr [formGroup]="nuevaSesionForm">
+      <td>
+        <input type="date" formControlName="fecha_actividad" class="form-control"
+          [ngClass]="{ 'is-invalid': nuevaSesionForm.get('fecha_actividad')?.invalid && nuevaSesionForm.get('fecha_actividad')?.touched }"
+          (keydown.enter)="$event.stopPropagation()" />
+      </td>
+      <td>
+        <input type="time" formControlName="hora_inicio" class="form-control"
+          [ngClass]="{ 'is-invalid': nuevaSesionForm.get('hora_inicio')?.invalid && nuevaSesionForm.get('hora_inicio')?.touched }"
+          (keydown.enter)="$event.stopPropagation()" />
+      </td>
+      <td>
+        <input type="time" formControlName="hora_fin" class="form-control"
+          [ngClass]="{ 'is-invalid': nuevaSesionForm.get('hora_fin')?.invalid && nuevaSesionForm.get('hora_fin')?.touched }"
+          (keydown.enter)="$event.stopPropagation()" />
+      </td>
+      <td>
+        <button class="btn btn-primary btn-sm" (click)="agregarSesion()" [disabled]="nuevaSesionForm.invalid">
+          Agregar
+        </button>
+      </td>
+    </tr>
     }
   </tbody>
 </table>

@@ -40,7 +40,6 @@ export class SesionesDataSource {
       );
     }
 
-    //console.log('adicionando sesion al index:', data.id_sesion);
     await indexDB.sesiones.add(data);
     return {
       exitoso: 'S',
@@ -75,20 +74,19 @@ export class SesionesDataSource {
     // 🔹 Si estaba pendiente de creación → mantener create
     if (changes.syncStatus === 'synced') {
       await indexDB.sesiones.update(id, changes);
+    } else if (current.syncStatus === 'pending-create') {
+      await indexDB.sesiones.update(id, {
+        ...changes,
+        syncStatus: 'pending-create', // 👈 no cambiar
+      });
     } else {
-      if (current.syncStatus === 'pending-create') {
-        await indexDB.sesiones.update(id, {
-          ...changes,
-          syncStatus: 'pending-create', // 👈 no cambiar
-        });
-      } else {
-        // 🔹 Si estaba synced → pasa a pendiente de update
-        await indexDB.sesiones.update(id, {
-          ...changes,
-          syncStatus: 'pending-update', // 👈 marcar update
-        });
-      }
+      // 🔹 Si estaba synced → pasa a pendiente de update
+      await indexDB.sesiones.update(id, {
+        ...changes,
+        syncStatus: 'pending-update', // 👈 marcar update
+      });
     }
+
     return {
       exitoso: 'S',
       mensaje: `Registro actualizado`,

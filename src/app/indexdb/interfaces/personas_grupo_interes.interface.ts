@@ -1,4 +1,4 @@
-export interface Personas_grupo_interesDB {
+export interface PersonasGrupoInteresDB {
   id_personas_grupo_interes: string;
   id_persona: string;
   id_grupo_interes: string;

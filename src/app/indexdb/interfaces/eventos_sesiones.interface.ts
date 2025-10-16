@@ -1,6 +1,6 @@
 import { Sesiones } from '../../eventos/interfaces/sesiones.interface';
 
-export interface Evento_Sesiones {
+export interface EventoSesionesDB {
   id_programa: string;
   id_actividad: string;
   institucional: string;

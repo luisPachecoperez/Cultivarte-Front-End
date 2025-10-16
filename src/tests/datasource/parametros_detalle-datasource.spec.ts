@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { Parametros_detalleDataSource } from '../../app/indexdb/datasources/parametros_detalle-datasource';
+import { ParametrosDetalleDataSource } from '../../app/indexdb/datasources/parametros_detalle-datasource';
 import { indexDB } from '../../app/indexdb/services/database.service';
-import { Parametros_detalleDB } from '../../app/indexdb/interfaces/parametros_detalle.interface';
+import { ParametrosDetalleDB } from '../../app/indexdb/interfaces/parametros_detalle.interface';
 
 // 🧩 Helper Dexie Promise compatible
 function dexiePromise<T = any>(value?: T): any {
@@ -10,9 +10,9 @@ function dexiePromise<T = any>(value?: T): any {
   return p;
 }
 
-describe('Parametros_detalleDataSource (Jest)', () => {
-  let service: Parametros_detalleDataSource;
-  const mockDetalle: Parametros_detalleDB = {
+describe('ParametrosDetalleDataSource (Jest)', () => {
+  let service: ParametrosDetalleDataSource;
+  const mockDetalle: ParametrosDetalleDB = {
     id_parametro_detalle: 'D1',
     id_parametro_general: 'G1',
     nombre: 'Cultivarte',
@@ -29,10 +29,10 @@ describe('Parametros_detalleDataSource (Jest)', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [Parametros_detalleDataSource],
+      providers: [ParametrosDetalleDataSource],
     });
 
-    service = TestBed.inject(Parametros_detalleDataSource);
+    service = TestBed.inject(ParametrosDetalleDataSource);
 
     (indexDB as any).parametros_detalle = {
       toArray: jest.fn().mockReturnValue(dexiePromise([mockDetalle])),

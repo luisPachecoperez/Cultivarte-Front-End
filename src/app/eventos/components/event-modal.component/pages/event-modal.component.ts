@@ -23,9 +23,9 @@ export class EventModalComponent implements AfterViewInit {
   mensajeResultado: string | null = null;
   exitoAccion = false;
 
-  private eventModalService = inject(EventModalService);
-  private snack = inject(SnackbarService);
-  private loadingService = inject(LoadingService);
+  private readonly eventModalService = inject(EventModalService);
+  private readonly snack = inject(SnackbarService);
+  private readonly loadingService = inject(LoadingService);
 
   ngAfterViewInit(): void {
     const tooltipTriggerList = Array.from(
@@ -42,18 +42,15 @@ export class EventModalComponent implements AfterViewInit {
   async eliminarEvento() {
     const e = this.evento();
     if (!e) return;
-    //console.log("Evento a eliminar:",this.evento());
     const ok = await firstValueFrom(
       this.snack.confirm(
         `¿Deseas eliminar el Evento "${e?.nombre_actividad ?? 'sin nombre'}"?`,
       ),
     );
-    //console.log("Resultado ok:", ok);
     if (!ok) return;
     this.loadingService.show();
     try {
       const res = await this.eventModalService.eliminarEvento(e.id_actividad);
-      //console.log("REspuesta de elminar evento:", res);
       const success = res.exitoso === 'S';
       if (success) {
         this.snack.success(res.mensaje ?? 'Eliminado correctamente');

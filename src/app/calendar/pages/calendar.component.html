@@ -15,20 +15,21 @@
 @if (mostrarModalAcciones) {
   <app-event-modal
     [evento]="eventoSeleccionado"
-    (accionSeleccionada)="onAccionSeleccionada($event); cerrarModalAcciones()"
-    (cerrar)="cerrarModalAcciones()"
-  >
+    (accionSeleccionada)="
+      onAccionSeleccionada($event);
+      cerrarModalAcciones()"
+    (cerrar)="cerrarModalAcciones()">
   </app-event-modal>
 }
 
-@if (mostrarAsistencia && tipoAsistencia === "normal") {
+@if (mostrarAsistencia && tipoAsistencia === 'normal') {
   <app-asistencia
     [evento]="eventoSeleccionado"
     (cerrar)="cerrarAsistencia()"
   ></app-asistencia>
 }
 
-@if (mostrarAsistencia && tipoAsistencia === "fotografica") {
+@if (mostrarAsistencia && tipoAsistencia === 'fotografica') {
   <app-asistencia-fotografica
     [evento]="eventoSeleccionado"
     (cerrar)="cerrarAsistencia()"

@@ -1,23 +1,21 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { firstValueFrom, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { GraphQLService } from '../../../../shared/services/graphql.service';
 import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.interface';
 import { AuthService } from '../../../../shared/services/auth.service';
-import { switchMap } from 'rxjs/operators';
 import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
 import { Sesiones } from '../../../interfaces/sesiones.interface';
 import { SesionesDB } from '../../../../indexdb/interfaces/sesiones.interface';
 import { SesionesDataSource } from '../../../../indexdb/datasources/sesiones-datasource';
-import { inject } from '@angular/core';
 @Injectable({
   providedIn: 'root',
 })
-export class Grid_sesionesService {
-  private graphQLService = inject(GraphQLService);
-  private authService = inject(AuthService);
-  private loadIndexDBService = inject(LoadIndexDBService);
-  private sesionesDataSource = inject(SesionesDataSource);
+export class GridSesionesService {
+  private readonly graphQLService = inject(GraphQLService);
+  private readonly authService = inject(AuthService);
+  private readonly loadIndexDBService = inject(LoadIndexDBService);
+  private readonly sesionesDataSource = inject(SesionesDataSource);
 
   constructor() {}
 
@@ -62,23 +60,16 @@ export class Grid_sesionesService {
         eliminados: eliminados,
       },
     };
-    //console.log('📤 llamado a update de sesiones al back:', payload);
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {
-          //console.log('ping en update sesiones:', ping);
-
           if (ping === 'pong') {
-            //console.log('Update sesiones backend activo');
-
             return this.graphQLService
               .mutation<{
                 updateSesiones: GraphQLResponse;
               }>(updateSesiones, variables)
               .pipe(
                 map((res) => {
-                  //console.log('✅ updateSesiones OK:', res);
-
                   const nuevosIndexDB: Sesiones[] = nuevos.map(
                     (s: Sesiones) => ({
                       ...s,
@@ -125,8 +116,6 @@ export class Grid_sesionesService {
                 }),
               );
           } else {
-            //console.log('Update sesiones backend inactivo');
-
             // Nuevos -> pending
             nuevos.forEach((s: Sesiones) => {
               const sesion: SesionesDB = {

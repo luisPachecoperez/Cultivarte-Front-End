@@ -8,7 +8,7 @@ import { AuthService } from '../../app/shared/services/auth.service';
 import { ActividadesDataSource } from '../../app/indexdb/datasources/actividades-datasource';
 import { SesionesDataSource } from '../../app/indexdb/datasources/sesiones-datasource';
 import { LoadIndexDBService } from '../../app/indexdb/services/load-index-db.service';
-import { Grid_sesionesService } from '../../app/eventos/components/grid-sesiones.component/services/grid-sesiones.service';
+import { GridSesionesService } from '../../app/eventos/components/grid-sesiones.component/services/grid-sesiones.service';
 import { LoadingService } from '../../app/shared/services/loading.service';
 import { GraphQLResponse } from '../../app/shared/interfaces/graphql-response.interface';
 import { Actividades } from '../../app/eventos/interfaces/actividades.interface';
@@ -62,7 +62,7 @@ describe('🧩 EventService (Jest, Cobertura 97%)', () => {
         { provide: AuthService, useClass: AuthServiceMock },
         { provide: ActividadesDataSource, useClass: ActividadesDataSourceMock },
         { provide: SesionesDataSource, useClass: SesionesDataSourceMock },
-        { provide: Grid_sesionesService, useClass: GridSesionesServiceMock },
+        { provide: GridSesionesService, useClass: GridSesionesServiceMock },
         { provide: LoadIndexDBService, useClass: LoadIndexDBServiceMock },
         { provide: LoadingService, useClass: LoadingServiceMock },
       ],
@@ -73,7 +73,7 @@ describe('🧩 EventService (Jest, Cobertura 97%)', () => {
     auth = TestBed.inject(AuthService) as any;
     actividadesDS = TestBed.inject(ActividadesDataSource) as any;
     sesionesDS = TestBed.inject(SesionesDataSource) as any;
-    gridSesiones = TestBed.inject(Grid_sesionesService) as any;
+    gridSesiones = TestBed.inject(GridSesionesService) as any;
     loadIndexDB = TestBed.inject(LoadIndexDBService) as any;
     loading = TestBed.inject(LoadingService) as any;
   });

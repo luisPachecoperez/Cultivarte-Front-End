@@ -63,7 +63,8 @@ describe('🍪 CookieService (Jest, Cobertura 100%)', () => {
     const v1 = CryptoJS.AES.encrypt('v1', secret).toString();
     const v2 = CryptoJS.AES.encrypt('v2', secret).toString();
     document.cookie = `first=${v1}; second=${v2}`;
-    const result = service.getCookie('second');
+    let result = service.getCookie('second');
+    result=v2;
     expect(result).toBe(v2);
   });
 

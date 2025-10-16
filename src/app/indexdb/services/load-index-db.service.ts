@@ -1,65 +1,72 @@
 import { Injectable } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 
 import { GraphQLService } from '../../shared/services/graphql.service';
-import { DatabaseService } from './database.service';
 
 // Interfaces
 import { ActividadesDB } from '../interfaces/actividades.interface';
 import { AsistenciasDB } from '../interfaces/asistencias.interface';
 import { PersonasDB } from '../interfaces/personas.interface';
-import { Personas_grupo_interesDB } from '../interfaces/personas_grupo_interes.interface';
-import { Personas_programasDB } from '../interfaces/personas_programas.interface';
-import { Personas_sedesDB } from '../interfaces/personas_sedes.interface';
+import { PersonasGrupoInteresDB } from '../interfaces/personas_grupo_interes.interface';
+import { PersonasProgramasDB } from '../interfaces/personas_programas.interface';
+import { PersonasSedesDB } from '../interfaces/personas_sedes.interface';
 import { PoblacionesDB } from '../interfaces/poblaciones.interface';
 import { SedesDB } from '../interfaces/sedes.interface';
 import { SesionesDB } from '../interfaces/sesiones.interface';
-import { Parametros_generalesDB } from '../interfaces/parametros_generales.interface';
-import { Parametros_detalleDB } from '../interfaces/parametros_detalle.interface';
-import { Parametros_generalesDataSource } from '../datasources/parametros_generales-datasource';
-import { Parametros_detalleDataSource } from '../datasources/parametros_detalle-datasource';
+import { ParametrosGeneralesDB } from '../interfaces/parametros_generales.interface';
+import { ParametrosDetalleDB } from '../interfaces/parametros_detalle.interface';
+import { ParametrosGeneralesDataSource } from '../datasources/parametros_generales-datasource';
+import { ParametrosDetalleDataSource } from '../datasources/parametros_detalle-datasource';
 import { PersonasDataSource } from '../datasources/personas-datasource';
 import { PoblacionesDataSource } from '../datasources/poblaciones-datasource';
 import { SedesDataSource } from '../datasources/sedes-datasource';
-import { Personas_sedesDataSource } from '../datasources/personas_sedes-datasource';
-import { Personas_programasDataSource } from '../datasources/personas_programas-datasource';
-import { Personas_grupo_interesDataSource } from '../datasources/personas_grupo_interes-datasource';
+import { PersonasSedesDataSource } from '../datasources/personas_sedes-datasource';
+import { PersonasProgramasDataSource } from '../datasources/personas_programas-datasource';
+import { PersonasGrupoInteresDataSource } from '../datasources/personas_grupo_interes-datasource';
 import { ActividadesDataSource } from '../datasources/actividades-datasource';
 import { AsistenciasDataSource } from '../datasources/asistencias-datasource';
 import { SesionesDataSource } from '../datasources/sesiones-datasource';
-import { map, switchMap, filter, from, of } from 'rxjs';
-import { Observable } from 'rxjs';
-import { catchError } from 'rxjs';
+import {
+  map,
+  switchMap,
+  filter,
+  from,
+  of,
+  firstValueFrom,
+  Observable,
+  catchError,
+} from 'rxjs';
+
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
 export class LoadIndexDBService {
-  private hoy = new Date(new Date().setDate(new Date().getDate() + 180))
+  private readonly hoy = new Date(
+    new Date().setDate(new Date().getDate() + 180),
+  )
     .toISOString()
     .split('T')[0];
 
-  private haceUnAnio = new Date(new Date().setDate(new Date().getDate() - 180))
+  private readonly haceUnAnio = new Date(
+    new Date().setDate(new Date().getDate() - 180),
+  )
     .toISOString()
     .split('T')[0];
-  private limit: number;
+  private readonly limit: number = 2500;
 
   constructor(
-    private graphql: GraphQLService,
-    private db: DatabaseService,
-    private parametros_generalesDataSource: Parametros_generalesDataSource,
-    private parametros_detalleDataSource: Parametros_detalleDataSource,
-    private personasDataSource: PersonasDataSource,
-    private poblacionesDataSource: PoblacionesDataSource,
-    private sedesDataSource: SedesDataSource,
-    private personas_sedesDataSource: Personas_sedesDataSource,
-    private personas_programasDataSource: Personas_programasDataSource,
-    private personas_grupo_interesDataSource: Personas_grupo_interesDataSource,
-    private actividadesDataSource: ActividadesDataSource,
-    private asistenciasDataSource: AsistenciasDataSource,
-    private sesionesDataSource: SesionesDataSource,
-  ) {
-    this.limit = 2500;
-  }
+    private readonly graphql: GraphQLService,
+    private readonly ParametrosGeneralesDataSource: ParametrosGeneralesDataSource,
+    private readonly parametros_detalleDataSource: ParametrosDetalleDataSource,
+    private readonly personasDataSource: PersonasDataSource,
+    private readonly poblacionesDataSource: PoblacionesDataSource,
+    private readonly sedesDataSource: SedesDataSource,
+    private readonly PersonasSedesDataSource: PersonasSedesDataSource,
+    private readonly PersonasProgramasDataSource: PersonasProgramasDataSource,
+    private readonly PersonasGrupoInteresDataSource: PersonasGrupoInteresDataSource,
+    private readonly actividadesDataSource: ActividadesDataSource,
+    private readonly asistenciasDataSource: AsistenciasDataSource,
+    private readonly sesionesDataSource: SesionesDataSource,
+  ) {}
 
   ping(): Observable<string> {
     const query = `
@@ -72,7 +79,6 @@ export class LoadIndexDBService {
 
     return this.graphql.query<{ ping: { ping: string } }>(query).pipe(
       map((res) => {
-        //console.log('PING response:', res.ping.ping);
         // Si llega bien el backend
         return res.ping.ping;
       }),
@@ -86,7 +92,6 @@ export class LoadIndexDBService {
   // PARAMETROS
   // ==========================
   async loadParametrosGenerales(): Promise<void> {
-    //console.log('Cargando Parámetros Generales...');
     const query = `
       query {
         getParametrosGenerales {
@@ -99,7 +104,7 @@ export class LoadIndexDBService {
     `;
 
     const response = await firstValueFrom(
-      this.graphql.query<{ getParametrosGenerales: Parametros_generalesDB[] }>(
+      this.graphql.query<{ getParametrosGenerales: ParametrosGeneralesDB[] }>(
         query,
       ),
     );
@@ -110,13 +115,10 @@ export class LoadIndexDBService {
         syncStatus: 'synced',
       })) ?? [];
 
-    //await this.db.parametros_generales.bulkAdd(parametros);
-    await this.parametros_generalesDataSource.bulkAdd(parametros);
-    //console.log(`✅ Parámetros Generales cargados: ${parametros.length}`);
+    await this.ParametrosGeneralesDataSource.bulkAdd(parametros);
   }
 
   async loadParametrosDetalle(): Promise<void> {
-    //console.log('Cargando Parámetros detalles...');
     const query = `
       query {
         getParametrosDetalle {
@@ -132,7 +134,7 @@ export class LoadIndexDBService {
     `;
 
     const response = await firstValueFrom(
-      this.graphql.query<{ getParametrosDetalle: Parametros_detalleDB[] }>(
+      this.graphql.query<{ getParametrosDetalle: ParametrosDetalleDB[] }>(
         query,
       ),
     );
@@ -143,7 +145,6 @@ export class LoadIndexDBService {
       })) ?? [];
 
     await this.parametros_detalleDataSource.bulkAdd(detalles);
-    //console.log(`✅ Parámetros Detalle cargados: ${detalles.length}`);
   }
 
   // ==========================
@@ -177,7 +178,6 @@ export class LoadIndexDBService {
       const response = await firstValueFrom(
         this.graphql.query<{ getPersonas: PersonasDB[] }>(query, variables),
       );
-      //console.log('Respuesta:', response);
       const data =
         response?.getPersonas?.map((p) => ({
           ...p,
@@ -191,15 +191,12 @@ export class LoadIndexDBService {
         offset += this.limit;
       }
     }
-
-    //console.log(`✅ Personas cargadas`);
   }
 
   // ==========================
   // POBLACIONES
   // ==========================
   async loadPoblaciones(): Promise<void> {
-    //console.log('Cargando poblaciones...');
     const query = `
       query {
         getPoblaciones {
@@ -221,7 +218,6 @@ export class LoadIndexDBService {
       })) ?? [];
 
     await this.poblacionesDataSource.bulkAdd(poblaciones);
-    //console.log(`✅ Poblaciones cargadas: ${poblaciones.length}`);
   }
 
   // ==========================
@@ -258,13 +254,12 @@ export class LoadIndexDBService {
       })) ?? [];
 
     await this.sedesDataSource.bulkAdd(sedes);
-    //console.log(`✅ Sedes cargadas: ${sedes.length}`);
   }
 
   async loadPersonasSedes(): Promise<void> {
     let offset: number = 0;
     let hasMore: boolean = true;
-    await this.personas_sedesDataSource.deleteFull();
+    await this.PersonasSedesDataSource.deleteFull();
     while (hasMore) {
       const query = `
       query GetPersonasSedes($limit: Int!, $offset: Int!) {
@@ -276,7 +271,7 @@ export class LoadIndexDBService {
           fecha_creacion
           id_modificado_por
           fecha_modificacion
-
+      
         }
       }
     `;
@@ -285,12 +280,11 @@ export class LoadIndexDBService {
         offset: offset,
       };
       const response = await firstValueFrom(
-        this.graphql.query<{ getPersonasSedes: Personas_sedesDB[] }>(
+        this.graphql.query<{ getPersonasSedes: PersonasSedesDB[] }>(
           query,
           variables,
         ),
       );
-      //console.log('Response getPersonasSedes:', response);
 
       const data =
         response?.getPersonasSedes?.map((p) => ({
@@ -298,21 +292,20 @@ export class LoadIndexDBService {
           syncStatus: 'synced',
         })) ?? [];
 
-      await this.personas_sedesDataSource.bulkAdd(data);
+      await this.PersonasSedesDataSource.bulkAdd(data);
       if (data.length < this.limit) {
         hasMore = false;
       } else {
         offset += this.limit;
       }
-      //console.log(`✅ PersonasSedes cargadas: ${data.length}`);
+      console.log(`✅ PersonasSedes cargadas: ${data.length}`);
     }
   }
 
   async loadPersonaProgramas(): Promise<void> {
-    //console.log("llamando personas_programas");
     let offset: number = 0;
     let hasMore: boolean = true;
-    await this.personas_programasDataSource.deleteFull();
+    await this.PersonasProgramasDataSource.deleteFull();
     while (hasMore) {
       const query = `
       query GetPersonaProgramas($limit: Int!, $offset: Int) {
@@ -330,20 +323,18 @@ export class LoadIndexDBService {
       const variables = { limit: this.limit, offset: offset };
 
       const response = await firstValueFrom(
-        this.graphql.query<{ getPersonaProgramas: Personas_programasDB[] }>(
+        this.graphql.query<{ getPersonaProgramas: PersonasProgramasDB[] }>(
           query,
           variables,
         ),
       );
-      //console.log("personas_programas response:", response);
       const data =
         response?.getPersonaProgramas?.map((p) => ({
           ...p,
           syncStatus: 'synced',
         })) ?? [];
 
-      await this.personas_programasDataSource.bulkAdd(data);
-      //console.log(`✅ PersonasProgramas cargadas: ${data.length}`);
+      await this.PersonasProgramasDataSource.bulkAdd(data);
       if (data.length < this.limit) {
         hasMore = false;
       } else {
@@ -355,7 +346,7 @@ export class LoadIndexDBService {
   async loadPersonasGrupoInteres(): Promise<void> {
     let offset: number = 0;
     let hasMore: boolean = true;
-    await this.personas_grupo_interesDataSource.deleteFull();
+    await this.PersonasGrupoInteresDataSource.deleteFull();
     while (hasMore) {
       const query = `
      query GetPersonasGrupoInteres($limit: Int!, $offset: Int!) {
@@ -374,7 +365,7 @@ export class LoadIndexDBService {
 
       const response = await firstValueFrom(
         this.graphql.query<{
-          getPersonasGrupoInteres: Personas_grupo_interesDB[];
+          getPersonasGrupoInteres: PersonasGrupoInteresDB[];
         }>(query, variables),
       );
 
@@ -384,8 +375,7 @@ export class LoadIndexDBService {
           syncStatus: 'synced',
         })) ?? [];
 
-      await this.personas_grupo_interesDataSource.bulkAdd(data);
-      //console.log(`✅ PersonasGrupoInteres cargadas: ${data.length}`);
+      await this.PersonasGrupoInteresDataSource.bulkAdd(data);
       if (data.length < this.limit) {
         hasMore = false;
       } else {
@@ -463,7 +453,6 @@ export class LoadIndexDBService {
       } else {
         offset += limit;
       }
-      //console.log("✅ Actividades cargadas:", actividades.length);
     }
   }
 
@@ -517,7 +506,6 @@ export class LoadIndexDBService {
         offset += limit;
       }
       await this.asistenciasDataSource.bulkAdd(data);
-      //console.log(`✅ Asistencias cargadas: ${data.length}`);
     }
   }
 
@@ -525,7 +513,6 @@ export class LoadIndexDBService {
   // SESIONES POR USUARIO
   // ==========================
   async loadSesionesSede(id_usuario: string): Promise<void> {
-    //console.log("Cargando SesionesSedes");
     let offset: number = 0;
     const limit: number = this.limit;
     let hasMore: boolean = true;
@@ -569,7 +556,6 @@ export class LoadIndexDBService {
           variables,
         ),
       );
-      //console.log('Respuesta getSesionesSedes:', response);
 
       const data =
         response?.getSesionesSedes?.map((s) => ({
@@ -577,14 +563,12 @@ export class LoadIndexDBService {
           deleted: false,
           syncStatus: 'synced',
         })) ?? [];
-      //console.log('Sesiones cargadas a indexdb:', data);
       await this.sesionesDataSource.bulkAdd(data);
       if (data.length < limit) {
         hasMore = false;
       } else {
         offset += limit;
       }
-      //console.log(`✅ Sesiones cargadas: ${sesiones.length}`);
     }
   }
 
@@ -592,15 +576,15 @@ export class LoadIndexDBService {
   // ORQUESTADOR DE CARGA
   // ==========================
   cargarDatosIniciales(id_usuario: string): void {
-    //console.log("Inicia carga de datos iniciales");
     from(this.ping())
       .pipe(
         // solo seguimos si devuelve "pong"
-        filter((p) => p.trim() === 'pong'),
+        filter((p) => p === 'pong'),
         switchMap(() =>
           // encadenamos todos los métodos como Promises
           from(
             (async () => {
+              console.log('carga datos iniciales');
               await this.loadParametrosGenerales();
               await this.loadParametrosDetalle();
               await this.loadPoblaciones();
@@ -608,13 +592,13 @@ export class LoadIndexDBService {
               await this.loadPersonas();
               await this.loadPersonasSedes();
               await this.loadPersonaProgramas();
-              //console.log('personasprogramas');
+              console.log('personasprogramas');
               await this.loadPersonasGrupoInteres();
-              //console.log('gruposinteres');
+              console.log('gruposinteres');
               await this.loadActividadesSede(id_usuario);
               await this.loadSesionesSede(id_usuario);
               await this.loadAsistenciasSede(id_usuario);
-              //console.log('fin carga inicial');
+              console.log('fin carga inicial');
             })(),
           ),
         ),

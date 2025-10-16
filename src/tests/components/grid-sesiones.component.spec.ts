@@ -1,5 +1,5 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { Grid_sesionesComponent } from '../../app/eventos/components/grid-sesiones.component/pages/grid-sesiones.component';
+import { GridSesionesComponent } from '../../app/eventos/components/grid-sesiones.component/pages/grid-sesiones.component';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -17,9 +17,9 @@ class SnackbarServiceMock {
   success = jest.fn();
 }
 
-describe('✅ Grid_sesionesComponent (Angular 20 - Jest)', () => {
-  let component: Grid_sesionesComponent;
-  let fixture: ComponentFixture<Grid_sesionesComponent>;
+describe('✅ GridSesionesComponent (Angular 20 - Jest)', () => {
+  let component: GridSesionesComponent;
+  let fixture: ComponentFixture<GridSesionesComponent>;
   let fb: FormBuilder;
 
   beforeEach(async () => {
@@ -28,12 +28,12 @@ describe('✅ Grid_sesionesComponent (Angular 20 - Jest)', () => {
         CommonModule,
         ReactiveFormsModule,
         MatSnackBarModule,
-        Grid_sesionesComponent,
+        GridSesionesComponent,
       ],
       providers: [{ provide: SnackbarService, useClass: SnackbarServiceMock }],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Grid_sesionesComponent);
+    fixture = TestBed.createComponent(GridSesionesComponent);
     component = fixture.componentInstance;
     fb = TestBed.inject(FormBuilder);
 

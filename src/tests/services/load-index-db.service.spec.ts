@@ -1,7 +1,7 @@
 // ✅ src/tests/services/load-index-db.service.spec.ts (versión Jest)
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
-import { firstValueFrom } from 'rxjs';
+import { of, throwError , firstValueFrom} from 'rxjs';
+
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { LoadIndexDBService } from '../../app/indexdb/services/load-index-db.service';
@@ -9,14 +9,14 @@ import { GraphQLService } from '../../app/shared/services/graphql.service';
 import { DatabaseService } from '../../app/indexdb/services/database.service';
 
 // DataSources mocks
-import { Parametros_generalesDataSource } from '../../app/indexdb/datasources/parametros_generales-datasource';
-import { Parametros_detalleDataSource } from '../../app/indexdb/datasources/parametros_detalle-datasource';
+import { ParametrosGeneralesDataSource } from '../../app/indexdb/datasources/parametros_generales-datasource';
+import { ParametrosDetalleDataSource } from '../../app/indexdb/datasources/parametros_detalle-datasource';
 import { PersonasDataSource } from '../../app/indexdb/datasources/personas-datasource';
 import { PoblacionesDataSource } from '../../app/indexdb/datasources/poblaciones-datasource';
 import { SedesDataSource } from '../../app/indexdb/datasources/sedes-datasource';
-import { Personas_sedesDataSource } from '../../app/indexdb/datasources/personas_sedes-datasource';
-import { Personas_programasDataSource } from '../../app/indexdb/datasources/personas_programas-datasource';
-import { Personas_grupo_interesDataSource } from '../../app/indexdb/datasources/personas_grupo_interes-datasource';
+import { PersonasSedesDataSource } from '../../app/indexdb/datasources/personas_sedes-datasource';
+import { PersonasProgramasDataSource } from '../../app/indexdb/datasources/personas_programas-datasource';
+import { PersonasGrupoInteresDataSource } from '../../app/indexdb/datasources/personas_grupo_interes-datasource';
 import { ActividadesDataSource } from '../../app/indexdb/datasources/actividades-datasource';
 import { AsistenciasDataSource } from '../../app/indexdb/datasources/asistencias-datasource';
 import { SesionesDataSource } from '../../app/indexdb/datasources/sesiones-datasource';
@@ -261,14 +261,14 @@ describe('🧩 LoadIndexDBService (Jest)', () => {
 
         { provide: GraphQLService, useClass: MockGraphQL },
         { provide: DatabaseService, useClass: MockDatabaseService },
-        { provide: Parametros_generalesDataSource, useClass: MockDS },
-        { provide: Parametros_detalleDataSource, useClass: MockDS },
+        { provide: ParametrosGeneralesDataSource, useClass: MockDS },
+        { provide: ParametrosDetalleDataSource, useClass: MockDS },
         { provide: PersonasDataSource, useClass: MockDS },
         { provide: PoblacionesDataSource, useClass: MockDS },
         { provide: SedesDataSource, useClass: MockDS },
-        { provide: Personas_sedesDataSource, useClass: MockDS },
-        { provide: Personas_programasDataSource, useClass: MockDS },
-        { provide: Personas_grupo_interesDataSource, useClass: MockDS },
+        { provide: PersonasSedesDataSource, useClass: MockDS },
+        { provide: PersonasProgramasDataSource, useClass: MockDS },
+        { provide: PersonasGrupoInteresDataSource, useClass: MockDS },
         { provide: ActividadesDataSource, useClass: MockDS },
         { provide: AsistenciasDataSource, useClass: MockDS },
         { provide: SesionesDataSource, useClass: MockDS },
@@ -280,15 +280,15 @@ describe('🧩 LoadIndexDBService (Jest)', () => {
     graphqlService = TestBed.inject(
       GraphQLService,
     ) as jest.Mocked<GraphQLService>;
-    pgDS = TestBed.inject(Parametros_generalesDataSource) as any;
-    pdDS = TestBed.inject(Parametros_detalleDataSource) as any;
+    pgDS = TestBed.inject(ParametrosGeneralesDataSource) as any;
+    pdDS = TestBed.inject(ParametrosDetalleDataSource) as any;
     personasDS = TestBed.inject(PersonasDataSource) as any;
     poblacionesDS = TestBed.inject(PoblacionesDataSource) as any;
     sedesDS = TestBed.inject(SedesDataSource) as any;
-    personasSedesDS = TestBed.inject(Personas_sedesDataSource) as any;
-    personasProgramasDS = TestBed.inject(Personas_programasDataSource) as any;
+    personasSedesDS = TestBed.inject(PersonasSedesDataSource) as any;
+    personasProgramasDS = TestBed.inject(PersonasProgramasDataSource) as any;
     personasGrupoInteresDS = TestBed.inject(
-      Personas_grupo_interesDataSource,
+      PersonasGrupoInteresDataSource,
     ) as any;
     actividadesDS = TestBed.inject(ActividadesDataSource) as any;
     asistenciasDS = TestBed.inject(AsistenciasDataSource) as any;
@@ -559,7 +559,7 @@ describe('🧩 LoadIndexDBService (Jest)', () => {
 
   it('🧩 loadPersonasSedes ejecuta rama else cuando data.length >= limit', async () => {
     const mockGraphQL = TestBed.inject(GraphQLService) as any;
-    const personasSedesDS = TestBed.inject(Personas_sedesDataSource) as any;
+    const personasSedesDS = TestBed.inject(PersonasSedesDataSource) as any;
     const data = Array(2500).fill({ id_personas_sede: 'PS1' });
 
     jest
@@ -577,7 +577,7 @@ describe('🧩 LoadIndexDBService (Jest)', () => {
   it('🧩 loadPersonaProgramas ejecuta rama else cuando data.length >= limit', async () => {
     const mockGraphQL = TestBed.inject(GraphQLService) as any;
     const personasProgramasDS = TestBed.inject(
-      Personas_programasDataSource,
+      PersonasProgramasDataSource,
     ) as any;
     const data = Array(2500).fill({ id_persona_programa: 'PP1' });
 
@@ -612,7 +612,7 @@ describe('🧩 LoadIndexDBService (Jest)', () => {
 
   it('🧠 loadPersonasGrupoInteres ejecuta rama else cuando data.length >= limit', async () => {
     const gql = TestBed.inject(GraphQLService) as any;
-    const mockDS = TestBed.inject(Personas_grupo_interesDataSource) as any;
+    const mockDS = TestBed.inject(PersonasGrupoInteresDataSource) as any;
 
     // Datos igual al límite → entra al else → hace segunda vuelta
     const data = Array(25000).fill({ id_personas_grupo_interes: 'GI1' });
@@ -632,7 +632,7 @@ describe('🧩 LoadIndexDBService (Jest)', () => {
   });
   it('⚪ loadPersonasGrupoInteres usa [] cuando response.getPersonasGrupoInteres es undefined', async () => {
     const gql = TestBed.inject(GraphQLService) as any;
-    const ds = TestBed.inject(Personas_grupo_interesDataSource) as any;
+    const ds = TestBed.inject(PersonasGrupoInteresDataSource) as any;
 
     const bulkSpy = jest.spyOn(ds, 'bulkAdd');
 
@@ -710,7 +710,6 @@ describe('🧩 LoadIndexDBService (Jest)', () => {
 
       service = new LoadIndexDBService(
         graphql as any,
-        db,
         parametrosGeneralesDS as any,
         parametrosDetalleDS as any,
         personasDS as any,

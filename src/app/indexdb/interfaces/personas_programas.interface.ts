@@ -1,4 +1,4 @@
-export interface Personas_programasDB {
+export interface PersonasProgramasDB {
   id_persona_programa: string;
   id_persona: string;
   id_programa: string;

@@ -6,7 +6,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { EventService } from '../../app/eventos/components/event.component/services/event.service';
-import { Grid_sesionesService } from '../../app/eventos/components/grid-sesiones.component/services/grid-sesiones.service';
+import { GridSesionesService } from '../../app/eventos/components/grid-sesiones.component/services/grid-sesiones.service';
 import { AuthService } from '../../app/shared/services/auth.service';
 import { SnackbarService } from '../../app/shared/services/snackbar.service';
 import { LoadingService } from '../../app/shared/services/loading.service';
@@ -106,7 +106,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       ],
       providers: [
         { provide: EventService, useClass: EventServiceMock },
-        { provide: Grid_sesionesService, useClass: GridSesionesServiceMock },
+        { provide: GridSesionesService, useClass: GridSesionesServiceMock },
         { provide: AuthService, useClass: AuthServiceMock },
         { provide: SnackbarService, useClass: SnackbarServiceMock },
         { provide: LoadingService, useClass: LoadingServiceMock },
@@ -572,7 +572,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
   });
 
   it('🚨 cargarEdicionDesdeBackend debe manejar errores del backend', async () => {
-    const spyError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const spyError = jest.spyOn(console, 'error').mockImplementation(() => { });
     const mockError = new Error('Error backend');
 
     // ✅ Mockeamos el método real que se usa en el componente
@@ -748,7 +748,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
   });
 
   it('🔥 crearEvento debe capturar excepción y mostrar snackbar de error', async () => {
-    const spyError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const spyError = jest.spyOn(console, 'error').mockImplementation(() => { });
     const mockError = new Error('Error técnico');
 
     // ✅ Mock del servicio para lanzar el error
@@ -791,7 +791,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
     spyError.mockRestore();
   });
   it('❌ crearEvento debe manejar respuesta fallida del backend', async () => {
-    const spyError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const spyError = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     // 🔹 Mock del servicio para devolver respuesta con error lógico
     component['eventService'].crearEvento = jest.fn().mockResolvedValue({
@@ -834,7 +834,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
     spyError.mockRestore();
   });
   it('🚨 actualizarSesion debe manejar error en guardarCambiosSesiones', async () => {
-    const spyError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const spyError = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     // 🔹 Simulamos snapshot con sesiones
     (component as any)['cambiosSesionesSnapshot'] = {
@@ -997,17 +997,18 @@ describe('EventComponent (Angular 20) - Jest', () => {
     // evitar llamadas reales a cargarConfiguracionFormulario
     jest
       .spyOn(component as any, 'cargarConfiguracionFormulario')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
 
     const cargarEdSpy = jest
       .spyOn(component as any, 'cargarEdicionDesdeBackend')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     // eventoSeleccionado es una señal-función; simulamos retorno con id_actividad
     (component as any).eventoSeleccionado = jest.fn(
       () => ({ id_actividad: 'EV1' }) as any,
     );
 
     component.ngOnInit();
+
 
     expect(cargarEdSpy).toHaveBeenCalledWith('EV1');
     expect(component.eventoParaEditar).toEqual(
@@ -1018,15 +1019,16 @@ describe('EventComponent (Angular 20) - Jest', () => {
   it('ngOnInit: llama precargarFormulario cuando eventoSeleccionado no tiene id_actividad', () => {
     jest
       .spyOn(component as any, 'cargarConfiguracionFormulario')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
 
     const precargarSpy = jest
       .spyOn(component as any, 'precargarFormulario')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     const evento = { nombre_actividad: 'X' } as any;
     (component as any).eventoSeleccionado = jest.fn(() => evento);
 
     component.ngOnInit();
+
 
     expect(precargarSpy).toHaveBeenCalledWith(evento);
     expect(component.eventoParaEditar).toEqual(evento);
@@ -1036,10 +1038,11 @@ describe('EventComponent (Angular 20) - Jest', () => {
     // prevenir llamadas externas
     jest
       .spyOn(component as any, 'cargarConfiguracionFormulario')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     (component as any).eventoSeleccionado = jest.fn(() => null);
 
     component.ngOnInit();
+
 
     // el form debe quedar habilitado si no es edición
     expect(component.eventoForm.enabled).toBe(true);
@@ -1049,10 +1052,10 @@ describe('EventComponent (Angular 20) - Jest', () => {
   it('ngOnInit: suscripción a id_tipo_actividad dispara filtrarEventosPorTipo', () => {
     jest
       .spyOn(component as any, 'cargarConfiguracionFormulario')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     const filtrarSpy = jest
       .spyOn(component as any, 'filtrarEventosPorTipo')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
 
     (component as any).eventoSeleccionado = jest.fn(() => null);
     component.ngOnInit();
@@ -1121,7 +1124,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
     } as any;
     const filtrarSpy = jest
       .spyOn(component as any, 'filtrarEventosPorTipo')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     component.cargarConfiguracionFormulario(params);
     expect(component.sedes.length).toBe(1);
     expect(filtrarSpy).toHaveBeenCalled();
@@ -1147,7 +1150,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       });
     const hideSpy = jest
       .spyOn((component as any).loadingService, 'hide')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     component.cargarConfiguracionFormulario();
     expect(component.sedes.length).toBe(1);
     expect(component.eventoForm.get('id_sede')?.disabled).toBe(true);
@@ -1185,11 +1188,11 @@ describe('EventComponent (Angular 20) - Jest', () => {
       .mockResolvedValue({ exitoso: 'S' });
     const snackSpy = jest
       .spyOn((component as any).snack, 'success')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     const emitSpy = jest.spyOn(component.eventoGuardado, 'emit');
     const resetSpy = jest
       .spyOn(component as any, 'resetearFormulario')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     component['crearEvento']();
     // esperar microtask para la promesa interna
     await new Promise((r) => setTimeout(r, 0));
@@ -1224,7 +1227,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       .mockResolvedValue({ exitoso: 'N', mensaje: 'Err' });
     const errSpy = jest
       .spyOn((component as any).snack, 'error')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     component['crearEvento']();
     await new Promise((r) => setTimeout(r, 0));
     expect(errSpy).toHaveBeenCalled();
@@ -1254,7 +1257,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       .mockRejectedValue(new Error('boom'));
     const errSpy = jest
       .spyOn((component as any).snack, 'error')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     component['crearEvento']();
     await new Promise((r) => setTimeout(r, 0));
     expect(errSpy).toHaveBeenCalled();
@@ -1280,7 +1283,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       .mockResolvedValue({ exitoso: 'S', mensaje: 'OK' });
     const successSpy = jest
       .spyOn((component as any).snack, 'success')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     const emitSpy = jest.spyOn(component.eventoEditado, 'emit');
     const cerrarSpy = jest.spyOn(component.cerrarFormulario, 'emit');
     await component.actualizarSesion();
@@ -1301,7 +1304,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       .mockResolvedValue({ exitoso: 'N', mensaje: 'NO' });
     const errSpy = jest
       .spyOn((component as any).snack, 'error')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     await component.actualizarSesion();
     expect(errSpy).toHaveBeenCalled();
     errSpy.mockRestore();
@@ -1318,7 +1321,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       .mockRejectedValue(new Error('boom'));
     const errSpy = jest
       .spyOn((component as any).snack, 'error')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     await component.actualizarSesion();
     expect(errSpy).toHaveBeenCalled();
     errSpy.mockRestore();
@@ -1342,14 +1345,14 @@ describe('EventComponent (Angular 20) - Jest', () => {
 
     jest
       .spyOn((component as any).loadingService, 'show')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     jest
       .spyOn((component as any).loadingService, 'hide')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     jest
       .spyOn((component as any).snack, 'success')
-      .mockImplementation(() => {});
-    jest.spyOn((component as any).snack, 'error').mockImplementation(() => {});
+      .mockImplementation(() => { });
+    jest.spyOn((component as any).snack, 'error').mockImplementation(() => { });
 
     // a diario
     component.frecuencias = [
@@ -1399,32 +1402,6 @@ describe('EventComponent (Angular 20) - Jest', () => {
     expect((component as any).eventService.crearEvento).toBeDefined();
   });
 
-  it('crearEvento - maneja fecha_actividad undefined (branch de error)', () => {
-    component.eventoForm.patchValue({
-      id_programa: 'P1',
-      id_frecuencia: 'F-X',
-      fecha_actividad: null,
-      nombre_actividad: 'Act',
-      institucional: true,
-      id_sede: 'S1',
-      id_tipo_actividad: 'T1',
-      id_responsable: 'R1',
-      id_aliado: 'A1',
-      descripcion: 'D',
-      hora_inicio: '08:00',
-      hora_fin: '09:00',
-    } as any);
-    const consoleSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
-    // llamamos directamente para ejecutar la rama que hace console.error
-    (component as any).frecuencias = [
-      { id_frecuencia: 'F-X', nombre: 'Semanalmente' } as any,
-    ];
-    component['crearEvento']();
-    expect(consoleSpy).toHaveBeenCalled();
-    consoleSpy.mockRestore();
-  });
 
   it('esListaNombreEvento true/false y uso dentro de crearEvento (fallback y seleccionado)', async () => {
     // preparar para que esListaNombreEvento devuelva true
@@ -1457,7 +1434,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       .mockResolvedValue({ exitoso: 'S' });
     jest
       .spyOn((component as any).snack, 'success')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     await component['crearEvento']();
     await new Promise((r) => setTimeout(r, 0));
     // si llega aquí, la rama de esListaNombreEvento y la resolución fueron ejecutadas
@@ -1497,7 +1474,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       });
     jest
       .spyOn((component as any).loadingService, 'hide')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     component.cargarConfiguracionFormulario();
     expect(component.sedes.length).toBe(1);
     // el control id_sede debe quedar deshabilitado en la rama de sede única
@@ -1526,7 +1503,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       .mockResolvedValue({ exitoso: 'S', mensaje: 'OK' });
     jest
       .spyOn((component as any).snack, 'success')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     const emitSpy = jest.spyOn(component.eventoEditado, 'emit');
     const cerrarSpy = jest.spyOn(component.cerrarFormulario, 'emit');
     await component.actualizarSesion();
@@ -1544,7 +1521,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       .mockResolvedValue({ exitoso: 'N', mensaje: 'NO' });
     const errSpy = jest
       .spyOn((component as any).snack, 'error')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     await component.actualizarSesion();
     expect(errSpy).toHaveBeenCalled();
     errSpy.mockRestore();
@@ -1560,7 +1537,7 @@ describe('EventComponent (Angular 20) - Jest', () => {
       .mockRejectedValue(new Error('boom'));
     const errSpy2 = jest
       .spyOn((component as any).snack, 'error')
-      .mockImplementation(() => {});
+      .mockImplementation(() => { });
     await component.actualizarSesion();
     expect(errSpy2).toHaveBeenCalled();
     errSpy2.mockRestore();

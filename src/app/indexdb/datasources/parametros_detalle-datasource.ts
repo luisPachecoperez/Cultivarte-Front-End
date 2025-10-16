@@ -1,26 +1,26 @@
 import { indexDB } from '../services/database.service';
-import { Parametros_detalleDB } from '../interfaces/parametros_detalle.interface';
+import { ParametrosDetalleDB } from '../interfaces/parametros_detalle.interface';
 import { Injectable } from '@angular/core';
 
 @Injectable({
   providedIn: 'root',
 })
-export class Parametros_detalleDataSource {
-  async getAll(): Promise<Parametros_detalleDB[]> {
+export class ParametrosDetalleDataSource {
+  async getAll(): Promise<ParametrosDetalleDB[]> {
     return await indexDB.parametros_detalle.toArray();
   }
 
-  async getById(id: string): Promise<Parametros_detalleDB | undefined> {
+  async getById(id: string): Promise<ParametrosDetalleDB | undefined> {
     return await indexDB.parametros_detalle.get(id);
   }
 
-  async create(data: Parametros_detalleDB): Promise<string> {
+  async create(data: ParametrosDetalleDB): Promise<string> {
     return await indexDB.parametros_detalle.add(data);
   }
 
   async update(
     id: string,
-    changes: Partial<Parametros_detalleDB>,
+    changes: Partial<ParametrosDetalleDB>,
   ): Promise<number> {
     return await indexDB.parametros_detalle.update(id, changes);
   }
@@ -29,13 +29,12 @@ export class Parametros_detalleDataSource {
     await indexDB.parametros_detalle.delete(id);
   }
 
-  async bulkAdd(data: Parametros_detalleDB[]): Promise<void> {
+  async bulkAdd(data: ParametrosDetalleDB[]): Promise<void> {
     await this.deleteFull();
     const withSyncStatus = data.map((item) => ({
       ...item,
       syncStatus: item.syncStatus ?? 'synced',
     }));
-    //console.log('Response Parámetros Detalle:', withSyncStatus);
 
     await indexDB.parametros_detalle.bulkAdd(withSyncStatus);
   }

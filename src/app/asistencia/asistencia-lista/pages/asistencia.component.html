@@ -9,14 +9,9 @@
       Asistencia beneficiarios:
       <strong>{{ evento()?.fecha_actividad }}</strong>
       Hora:
-      <strong>{{
-        evento()?.fecha_actividad + "T" + evento()?.hora_inicio
-          | date: "hh:mm a"
-      }}</strong>
+      <strong>{{ evento()?.fecha_actividad + 'T' + evento()?.hora_inicio | date: 'hh:mm a' }}</strong>
       a
-      <strong>{{
-        evento()?.fecha_actividad + "T" + evento()?.hora_fin | date: "hh:mm a"
-      }}</strong>
+      <strong>{{ evento()?.fecha_actividad + 'T' + evento()?.hora_fin | date: 'hh:mm a' }}</strong>
     </h5>
     <button class="btn-close" (click)="cerrar.emit()"></button>
   </div>
@@ -28,15 +23,11 @@
 
   <!-- Selección de sede -->
   <div class="mb-3">
-    <label class="form-label">Sede</label>
+    <label class="form-label" for ="id_sede">Sede</label>
     <select
       class="form-select"
       formControlName="id_sede"
-      [ngClass]="{
-        'is-invalid':
-          asistenciaForm.get('id_sede')?.touched &&
-          asistenciaForm.get('id_sede')?.invalid,
-      }"
+      [ngClass]="{ 'is-invalid': asistenciaForm.get('id_sede')?.touched && asistenciaForm.get('id_sede')?.invalid }"
     >
       <option value="">Seleccione una sede</option>
       @for (sede of sedes; track sede.id_sede) {
@@ -81,11 +72,10 @@
             <td>{{ a.nombre_completo }}</td>
             <td>{{ a.id_persona }}</td>
             <td>
-              @if (a.eliminar === "S" || a.eliminar === undefined) {
+              @if (a.eliminar === 'S' ||a.eliminar === undefined) {
                 <button
                   class="btn-eliminar"
-                  (click)="eliminarAsistente(a.id_persona)"
-                >
+                  (click)="eliminarAsistente(a.id_persona)">
                   🗑️
                 </button>
               }

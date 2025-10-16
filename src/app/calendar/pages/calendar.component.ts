@@ -1,5 +1,5 @@
 import { PreAsistencia } from '../../asistencia/interfaces/pre-asistencia.interface';
-import { Component } from '@angular/core';
+import { Component, inject, viewChild } from '@angular/core';
 import { CalendarOptions } from '@fullcalendar/core';
 import { EventComponent } from '../../eventos/components/event.component/pages/event.component';
 import { FullCalendarModule } from '@fullcalendar/angular';
@@ -15,13 +15,11 @@ import { AsistenciaFotograficaComponent } from '../../asistencia/asistencia-foto
 import { AsistenciaService } from '../../asistencia/asistencia-lista/services/asistencia.service';
 import { SnackbarService } from '../../shared/services/snackbar.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { inject } from '@angular/core';
 import type { DatesSetArg, EventClickArg } from '@fullcalendar/core';
 import { AuthService } from '../../shared/services/auth.service';
 import { LoadingService } from '../../shared/services/loading.service';
 import { EventoCalendario } from '../interfaces/evento-calendario.interface';
 import { Sesiones } from '../../eventos/interfaces/sesiones.interface';
-
 interface SesionPayload {
   id_actividad: string;
   id_sesion: string;
@@ -78,13 +76,15 @@ type DateClickMinimal = {
   styleUrls: ['./calendar.component.css'],
 })
 export class CalendarComponent {
+  readonly eventoComponent = viewChild(EventComponent);
+
   // inyecciones usando `inject()`
-  private calendarService = inject(CalendarService);
-  private asistenciaService = inject(AsistenciaService);
-  private eventoComponent = inject(EventComponent); // <- atención (ver nota abajo)
-  private snack = inject(SnackbarService);
-  private authService = inject(AuthService);
-  private loadingService = inject(LoadingService); // 👈 usado en el template
+  private readonly calendarService = inject(CalendarService);
+  private readonly asistenciaService = inject(AsistenciaService);
+  //private readonly eventoComponent = inject(EventComponent); // <- atención (ver nota abajo)
+  private readonly snack = inject(SnackbarService);
+  private readonly authService = inject(AuthService);
+  private readonly loadingService = inject(LoadingService); // 👈 usado en el template
 
   eventosCalendario: EventoCalendario[] = [];
   fechaSeleccionada: string | null = null;
@@ -130,13 +130,10 @@ export class CalendarComponent {
   };
 
   onDatesSet(dateInfo: DatesSetArg) {
-    //console.log("ondataset");
     this.loadingService.show(); // 🔄 mostrar
     try {
       this.ultimaFechaInicio = dateInfo.start.toISOString().split('T')[0];
       this.ultimaFechaFin = dateInfo.end.toISOString().split('T')[0];
-
-      //console.log('📅 Vista del calendario:', {fechaInicio: this.ultimaFechaInicio,fechaFin: this.ultimaFechaFin,});
 
       this.cargarSesiones();
     } finally {
@@ -148,11 +145,9 @@ export class CalendarComponent {
     if (!this.ultimaFechaInicio || !this.ultimaFechaFin) return;
 
     const idUsuario = this.authService.getUserUuid();
-    //console.log("cargando sesiones para el calendario");
     this.calendarService
       .obtenerSesiones(this.ultimaFechaInicio, this.ultimaFechaFin, idUsuario)
       .then((sesionesFormateadas) => {
-        //console.log("sesiones formateadas:",sesionesFormateadas);
         this.eventosCalendario = sesionesFormateadas;
         this.calendarOptions = {
           ...this.calendarOptions,
@@ -160,34 +155,26 @@ export class CalendarComponent {
         };
       })
       .catch(() => {
-        //console.log('No fue posible cargar las sesiones');
+        console.log('No fue posible cargar las sesiones');
       });
   }
 
   handleDateClick(arg: DateClickMinimal) {
-    //console.log('📌 Click en fecha:', arg.dateStr);
     this.fechaSeleccionada = arg.dateStr;
     this.eventoSeleccionado = null;
     this.mostrarFormulario = true;
   }
 
   handleEventClick(arg: EventClickArg): void {
-    //console.log('🟢 Click en evento del calendario');
-    //console.log('arg.event html', arg.event);
-
     const event = arg.event;
     // startStr y endStr son strings; preferibles a event.start (Date | null)
     const startStr = event.startStr ?? '';
     const endStr = event.endStr ?? '';
     const nombre_actividad = event.title ?? '';
-    //console.log('nombre_actividad', nombre_actividad);
-    //console.log('calendar options', this.calendarOptions.events);
 
     const eventosRelacionados = (
       this.calendarOptions.events as EventoCalendario[]
     ).filter((e) => e.title === nombre_actividad);
-
-    //console.log('eventosRelacionados', eventosRelacionados);
 
     const sesiones: Sesiones[] = eventosRelacionados.map((e) => {
       // e.start tiene formato ISO 'YYYY-MM-DDTHH:mm' (tal como lo mapeamos en el service)
@@ -202,7 +189,6 @@ export class CalendarComponent {
       };
     });
 
-    //console.log('arg.event', arg.event);
     // si el evento puntual tiene extendedProps.desde/hasta (strings 'YYYY-MM-DD HH:mm:ss'):
     const ext = event.extendedProps as Partial<
       EventoCalendario['extendedProps']
@@ -224,7 +210,6 @@ export class CalendarComponent {
       hora_fin: hora_fin ?? sesiones[0]?.hora_fin ?? '',
     };
 
-    //console.log('🎯 Evento seleccionado para acciones:',this.eventoSeleccionado);
     this.mostrarModalAcciones = true;
   }
 
@@ -249,8 +234,6 @@ export class CalendarComponent {
       };
     });
 
-    //console.log('🎯 Evento seleccionado para edición:', sesionCalendario.event);
-
     this.eventoSeleccionado = {
       id_actividad: sesionCalendario.event.extendedProps.id_actividad ?? '',
       id_sesion: sesionCalendario.event.extendedProps.id_sesion ?? '',
@@ -266,7 +249,6 @@ export class CalendarComponent {
   }
 
   agregarOActualizarEvento(evento: EventoActualizarPayload): void {
-    //console.log('agregar o actualizar:');
     const { sesiones, editarUna, id_sesionOriginal } = evento;
 
     if (!Array.isArray(sesiones) || sesiones.length === 0) {
@@ -275,22 +257,15 @@ export class CalendarComponent {
     }
 
     const nombre_actividad = sesiones[0].nombre_actividad;
-    //console.log('🔁 Procesando sesiones para:', nombre_actividad);
 
     if (editarUna && id_sesionOriginal) {
-      //console.log('🛠 Editando solo una sesión:', id_sesionOriginal);
-
       this.eventosCalendario = this.eventosCalendario.filter(
         (ev) => ev.id_sesion !== id_sesionOriginal,
       );
       this.calendarOptions.events = (
         this.calendarOptions.events as EventoCalendario[]
       ).filter((ev) => ev.id_sesion !== id_sesionOriginal);
-
-      //console.log('🗑️ Eliminada sesión con ID:', id_sesionOriginal);
     } else if (!editarUna) {
-      //console.log('🧹 Reemplazando todas las sesiones de:', nombre_actividad);
-
       this.eventosCalendario = this.eventosCalendario.filter(
         (ev) => ev.title !== nombre_actividad,
       );
@@ -301,7 +276,6 @@ export class CalendarComponent {
 
     // Agregar las nuevas sesiones
     sesiones.forEach((e) => {
-      //console.log('Agregar sesion', e);
       const eventoFormateado: EventoCalendario = {
         id_actividad: e.id_actividad,
         id_sesion: e.id_sesion, // ✅ Usamos el id único recibido
@@ -310,8 +284,6 @@ export class CalendarComponent {
         end: `${e.fecha}T${e.hora_fin}`,
         extendedProps: { ...e },
       };
-
-      //console.log(`➕ Agregando sesión #${i + 1}:`, eventoFormateado);
 
       this.eventosCalendario.push(eventoFormateado);
     });
@@ -325,9 +297,6 @@ export class CalendarComponent {
     this.eventoEditando = null;
     this.fechaSeleccionada = null;
     this.mostrarFormulario = false;
-
-    //console.log('✅ Sesiones actualizadas. Total en calendario:',this.eventosCalendario.length);
-    //console.log('✅ Sesiones actualizadas. Total en calendario:',this.eventosCalendario);
   }
 
   eliminarSesionDelCalendario(id: string) {
@@ -335,19 +304,16 @@ export class CalendarComponent {
     const esUUID = /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(id);
 
     if (esUUID) {
-      //console.log('🗑️ Eliminando sesión individual:', id);
       this.eventosCalendario = this.eventosCalendario.filter(
         (ev) => ev.id_sesion !== id,
       );
     } else {
-      //console.log('🧹 Eliminando todas las sesiones con nombre:', id);
       this.eventosCalendario = this.eventosCalendario.filter(
         (ev) => ev.title !== id,
       );
     }
 
     this.calendarOptions.events = [...this.eventosCalendario];
-    //console.log('📆 Sesión(es) eliminada(s). Calendario actualizado.');
   }
 
   // ✅ Recargar sesiones al cerrar formularios o modales
@@ -375,24 +341,34 @@ export class CalendarComponent {
 
   // 🔹 Aquí es donde decidimos si abrir normal o fotográfica
   onAccionSeleccionada(accion: 'editar' | 'asistencia') {
-    //console.log('🎯 evento seleccionado 1:', this.eventoSeleccionado);
-    //console.log('🎯 Accion seleccionadaaaaaaa:', accion);
     if (accion === 'editar') {
-      if (this.eventoSeleccionado?.id_actividad) {
-        this.eventoComponent.cargarEdicionDesdeBackend(
-          this.eventoSeleccionado.id_actividad,
-        );
-      } else {
-        this.eventoComponent.precargarFormulario(this.eventoSeleccionado);
+      if (!this.eventoSeleccionado) {
+        this.snack.error('No hay evento seleccionado');
+        return;
       }
+
+      // 🔹 Activar primero el formulario para que Angular cree <app-event>
       this.mostrarFormulario = true;
-      // this.abrirEdicion({
-      //   event: {
-      //     extendedProps: this.eventoSeleccionado,
-      //     title: this.eventoSeleccionado?.nombre_actividad
-      //   }
-      // });
       this.mostrarModalAcciones = false;
+
+      // 🔹 Esperar a que Angular actualice el DOM (deja que renderice <app-event>)
+      Promise.resolve().then(() => {
+        // Cuando Angular haya renderizado el hijo, el ViewChild ya no es undefined
+        if (!this.eventoComponent) {
+          console.warn('⚠️ El EventComponent aún no se ha inicializado.');
+          return;
+        }
+
+        // 🔹 Lógica de carga real
+        if (this.eventoSeleccionado?.id_actividad) {
+          this.eventoComponent()?.cargarEdicionDesdeBackend(
+            this.eventoSeleccionado.id_actividad,
+          );
+        } else {
+          this.eventoComponent()?.precargarFormulario(this.eventoSeleccionado);
+        }
+      });
+
       return;
     }
 
@@ -410,7 +386,6 @@ export class CalendarComponent {
           .obtenerDetalleAsistencia(this.eventoSeleccionado?.id_sesion ?? '')
           .then((respuesta: PreAsistencia) => {
             // Guardamos la respuesta en el evento
-            //console.log('calendar.component preasistencia:', respuesta);
             // merge seguro: garantizamos strings y arrays
             const merged: Sesiones = {
               id_actividad: this.eventoSeleccionado?.id_actividad ?? '', // si tu backend no manda id_actividad, mantiene '' por seguridad

@@ -45,8 +45,7 @@
 }
 
 /* Inputs y selects centrados */
-.form-control,
-.form-select {
+.form-control, .form-select {
   border-radius: 8px;
   text-align: center;
   font-size: 0.95rem;

@@ -12,23 +12,21 @@ import { CookieInterface } from '../interfaces/cookie-interface';
   providedIn: 'root',
 })
 export class GraphQLService {
-  private apiUrl = 'http://localhost:5000/graphql';
+  private readonly apiUrl = 'http://localhost:5000/graphql';
   //private apiUrl = 'http://localhost:8083/graphql';
 
   constructor(
-    private http: HttpClient,
-    @Inject(DOCUMENT) private document: Document,
+    private readonly http: HttpClient,
+    @Inject(DOCUMENT) private readonly document: Document,
   ) {}
 
   private getCookie(name: string): string | null {
-    // //console.log("Buscando cookie: " + name);
     const match = this.document.cookie
       ?.split(';')
       .map((c) => c.trim())
       .find((c) => c.startsWith(name + '='));
     if (!match) return null;
     try {
-      // //console.log("Encontrada cookie: " + decodeURIComponent(match.split('=')[1]));
       return decodeURIComponent(match.split('=')[1]);
     } catch {
       return match.split('=')[1] ?? null;
@@ -65,7 +63,6 @@ export class GraphQLService {
   }
   private authHeaders(): HttpHeaders {
     const token = this.getBearerFromCookie('session_auth');
-    //  //console.log("El token: " + token);
     const base = { 'Content-Type': 'application/json' } as Record<
       string,
       string
@@ -85,7 +82,6 @@ export class GraphQLService {
     return this.http.post<{ data: T }>(this.apiUrl, body, { headers }).pipe(
       map((response) => response.data),
       catchError((error: HttpErrorResponse) => {
-        //console.log('Error en GraphQL:', error);
         return throwError(() => ({
           exitoso: 'N',
           mensaje: new Error(error.message),
@@ -108,7 +104,6 @@ export class GraphQLService {
     return this.http.post<{ data: T }>(this.apiUrl, body, { headers }).pipe(
       map((response) => response.data),
       catchError((error: HttpErrorResponse) => {
-        console.error('Error en GraphQL Mutation:', error);
         return throwError(() => ({
           exitoso: 'N',
           mensaje: new Error(error.message),

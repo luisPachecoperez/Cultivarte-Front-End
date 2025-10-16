@@ -1,0 +1,33 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "types": []
+  },
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/jest.config.ts",
+    "src/tests/**"
+  ],
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictSingleEventEmit": true,
+    "strictContextGenerics": true,
+    "strictLiteralTypes": true,
+    "strictSafeNavigationTypes": true,
+    "strictInputTypes": true,
+    "strictOutputEventTypes": true,
+    "strictDomLocalRefTypes": true,
+    "strictDomEventTypes": true,
+    "strictAttributeTypes": true,
+    "strictNullInputTypes": true,
+    "enableTemplateControlFlow": true
+  },
+  "files": ["src/main.ts"],
+  "include": ["src/**/*.dts"]
+}

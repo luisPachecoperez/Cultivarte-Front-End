@@ -20,9 +20,9 @@ import { SnackbarService } from '../../services/snackbar.service';
 })
 export class ConfirmSnackbarComponent {
   constructor(
-    private snackBarRef: MatSnackBarRef<ConfirmSnackbarComponent>,
+    private readonly snackBarRef: MatSnackBarRef<ConfirmSnackbarComponent>,
     @Inject(MAT_SNACK_BAR_DATA) public data: any,
-    private snackbarService: SnackbarService,
+    private readonly snackbarService: SnackbarService,
   ) {}
 
   onClick(result: boolean) {

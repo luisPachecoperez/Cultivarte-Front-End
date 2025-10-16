@@ -1,11 +1,11 @@
-// src/app/services/cookie.service.ts
+// ../../app/services/cookie.service.ts
 import { Injectable } from '@angular/core';
 import * as CryptoJS from 'crypto-js';
 import { environment } from '../../../environments/environment';
-
 @Injectable({ providedIn: 'root' })
 export class CookieService {
-  private secret = environment.COOKIE_SECRET;
+  private readonly secret: string =
+    environment?.COOKIE_SECRET ?? ('' as string);
 
   setCookie(name: string, value: string, hours: number): void {
     // 🔒 Cifrar valor con AES
@@ -20,9 +20,8 @@ export class CookieService {
 
   getCookie(name: string): string | null {
     const cookies = document.cookie.split(';');
-    for (let c of cookies) {
-      c = c.trim();
-      if (c.startsWith(name + '=')) {
+    for (const c of cookies) {
+      if (c.trim().startsWith(name + '=')) {
         const data = decodeURIComponent(c.substring(name.length + 1));
         return data;
       }

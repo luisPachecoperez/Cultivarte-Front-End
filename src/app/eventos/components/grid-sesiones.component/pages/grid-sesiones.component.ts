@@ -24,7 +24,7 @@ export interface Eliminados {
   imports: [CommonModule, ReactiveFormsModule, MatSnackBarModule],
   templateUrl: './grid-sesiones.component.html',
 })
-export class Grid_sesionesComponent {
+export class GridSesionesComponent {
   /** 📥 FormArray del padre */
   formArray = input.required<FormArray>();
 
@@ -49,8 +49,8 @@ export class Grid_sesionesComponent {
   /** buffer de eliminados */
   private eliminadosBuffer: Eliminados[] = [];
 
-  private fb = inject(FormBuilder);
-  private snack = inject(SnackbarService);
+  private readonly fb = inject(FormBuilder);
+  private readonly snack = inject(SnackbarService);
 
   constructor() {
     /* eslint-disable @typescript-eslint/unbound-method */
@@ -92,12 +92,9 @@ export class Grid_sesionesComponent {
     const nueva: FormGroup = this.fb.group({
       id_actividad: [this.idEvento()],
       id_sesion: [uuidv4()],
-      fecha_actividad: [
-        formValue.fecha_actividad as string,
-        Validators.required,
-      ],
-      hora_inicio: [formValue.hora_inicio as string, Validators.required],
-      hora_fin: [formValue.hora_fin as string, Validators.required],
+      fecha_actividad: [formValue.fecha_actividad, Validators.required],
+      hora_inicio: [formValue.hora_inicio, Validators.required],
+      hora_fin: [formValue.hora_fin, Validators.required],
       nro_asistentes: [0],
       metaEstado: ['nuevo' as EstadoSesion],
     });
@@ -111,11 +108,8 @@ export class Grid_sesionesComponent {
 
   eliminarSesion(index: number): void {
     if (this.soloLectura()) return;
-    //console.log("El array; ", this.formArray());
     const fg = this.formArray().at(index) as FormGroup;
     const sesion: SesionFormValue = fg.getRawValue() as SesionFormValue;
-    //console.log('sesion a eliminar:', sesion);
-    //console.log('asistentes sesión:', sesion.nro_asistentes);
 
     if (sesion.nro_asistentes && sesion.nro_asistentes > 0) {
       this.snack.error(
@@ -185,9 +179,7 @@ export class Grid_sesionesComponent {
       .filter((s) => (s.metaEstado as string) === 'modificado')
       .map((s) => this.mapSesionDTO(s, false));
     const eliminados: Eliminados[] = [...this.eliminadosBuffer] as Eliminados[];
-    //console.log('nuevos:', nuevos);
-    //console.log('modificados:', modificados);
-    //console.log('eliminados:', eliminados);
+
     return { nuevos, modificados, eliminados };
   }
 

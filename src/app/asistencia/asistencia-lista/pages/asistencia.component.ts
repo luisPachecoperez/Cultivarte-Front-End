@@ -1,4 +1,4 @@
-import { Component, input, output, OnInit } from '@angular/core';
+import { Component, input, output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Sesiones } from '../../../eventos/interfaces/sesiones.interface';
 import {
@@ -13,7 +13,7 @@ import { Asistente } from '../../interfaces/asistente.interface';
 import { AsistenciaService } from '../services/asistencia.service';
 import { v4 as uuidv4 } from 'uuid';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
-import { inject } from '@angular/core';
+
 import { PreAsistencia } from '../../interfaces/pre-asistencia.interface';
 import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.interface';
 import { Beneficiarios } from '../../../eventos/interfaces/lista-beneficiarios.interface';
@@ -42,10 +42,10 @@ export class AsistenciaComponent implements OnInit {
   sedes: Sede[] = []; // ✅ ahora las sedes vienen del servicio
   asistenciaForm: FormGroup;
 
-  private asistenciaService = inject(AsistenciaService);
-  private snack = inject(SnackbarService);
+  private readonly asistenciaService = inject(AsistenciaService);
+  private readonly snack = inject(SnackbarService);
 
-  constructor(private fb: FormBuilder) {
+  constructor(private readonly fb: FormBuilder) {
     /* eslint-disable @typescript-eslint/unbound-method */
     this.asistenciaForm = this.fb.group({
       id_sede: ['', Validators.required],
@@ -59,8 +59,6 @@ export class AsistenciaComponent implements OnInit {
     this.asistenciaService
       .obtenerDetalleAsistencia(ev.id_sesion)
       .then((data: PreAsistencia) => {
-        //console.log('📥 Llega desde Promise:', data);
-
         this.beneficiariosBD = (data.beneficiarios as Beneficiarios[]) || [];
         this.asistentes = (data.asistentes_sesiones || []).map(
           (asis: Asistente) => {
@@ -91,8 +89,7 @@ export class AsistenciaComponent implements OnInit {
   }
 
   get resultadosBusqueda() {
-    const texto: string =
-      (this.filtro.value as string)?.toLowerCase().trim() || ('' as string);
+    const texto: string = (this.filtro.value ?? '').toLowerCase().trim() || '';
 
     /* eslint-disable  @typescript-eslint/no-unsafe-member-access */
     const sedeSeleccionada: string = this.asistenciaForm.value
@@ -109,7 +106,6 @@ export class AsistenciaComponent implements OnInit {
       const coincideTexto =
         b.nombre_completo?.toLowerCase().startsWith(texto) ||
         b.identificacion?.toLowerCase().startsWith(texto);
-      //console.log('coincideTexto:', coincideTexto, b.nombre_completo, texto, b.identificacion);
       return coincideSede && coincideTexto;
     });
   }
@@ -118,8 +114,6 @@ export class AsistenciaComponent implements OnInit {
     if (
       !this.asistentes.find((a) => a.id_persona === beneficiario.id_persona)
     ) {
-      //console.log('Agregar asistente:', beneficiario);
-
       // al guardarlo en asistentes debemos "convertirlo" a Asistente
       const nuevoAsistente: Asistente = {
         id_persona: beneficiario.id_persona,
@@ -151,7 +145,6 @@ export class AsistenciaComponent implements OnInit {
     }
 
     const ev = this.evento();
-    //console.log("Asistentes:",this.asistentes);
     const payload: AsistenciaPayLoad = {
       id_actividad: ev?.id_actividad ?? '',
       id_sesion: ev?.id_sesion ?? '',
@@ -167,13 +160,9 @@ export class AsistenciaComponent implements OnInit {
         })),
     };
 
-    //console.log('📤 Enviando asistencia normal:', payload);
-
     // 🔹 Aquí conectamos con el servicio
     try {
       const resp = await this.asistenciaService.guardarAsistencia(payload);
-
-      //console.log('✅ Respuesta del back:', resp);
 
       if (resp.exitoso === 'S') {
         // éxito → cerramos modal

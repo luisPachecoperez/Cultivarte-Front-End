@@ -1,4 +1,4 @@
-export interface Parametros_generalesDB {
+export interface ParametrosGeneralesDB {
   id_parametro_general: string;
   nombre_parametro: string;
   descripcion: string;

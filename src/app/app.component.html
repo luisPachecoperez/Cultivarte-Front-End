@@ -1,3 +1,7 @@
-<h1>{{ title }}</h1>
-<app-loading *ngIf="loadingService.loading$ | async"></app-loading>
+<h1>{{title}}</h1>
+
+@if (loadingService.loading$|async){
+    <app-loading ></app-loading>
+}
+
 <router-outlet></router-outlet>

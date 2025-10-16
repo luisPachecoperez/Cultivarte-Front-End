@@ -52,10 +52,10 @@ export class AsistenciaFotograficaComponent implements OnInit {
   sedes: Sede[] = []; // ✅ lista de sedes que viene del back/mock
 
   // ✅ usamos inject() en lugar de constructor
-  private asistenciaService = inject(AsistenciaService);
-  private snack = inject(SnackbarService);
+  private readonly asistenciaService = inject(AsistenciaService);
+  private readonly snack = inject(SnackbarService);
 
-  constructor(private fb: FormBuilder) {
+  constructor(private readonly fb: FormBuilder) {
     /* eslint-disable @typescript-eslint/unbound-method */
     this.asistenciaForm = this.fb.group({
       numeroAsistentes: ['', [Validators.required, Validators.min(0)]],
@@ -71,8 +71,6 @@ export class AsistenciaFotograficaComponent implements OnInit {
     this.asistenciaService
       .obtenerDetalleAsistencia(ev.id_sesion ?? '')
       .then((data: PreAsistencia) => {
-        //console.log('📥 Detalle asistencia fotográfica:', data);
-
         // ✅ Guardamos sedes del backend/mock
         this.sedes = data.sedes || [];
 
@@ -132,7 +130,7 @@ export class AsistenciaFotograficaComponent implements OnInit {
       this.snack.warning('⚠️ Debes completar todos los campos obligatorios');
       return;
     }
-    const ev: Sesiones = <Sesiones>this.evento();
+    const ev: Sesiones = this.evento();
     if (!ev) return;
     const formValue: AsistenciaFormValue = this.asistenciaForm
       .value as AsistenciaFormValue;
@@ -146,13 +144,9 @@ export class AsistenciaFotograficaComponent implements OnInit {
       nuevos: [] as never[],
     };
 
-    //console.log('📤 Enviando asistencia fotográfica (payload JSON):', payload);
-
     try {
       const resp =
         await this.asistenciaService.guardarAsistenciaFotografica(sesion);
-
-      //console.log('✅ Respuesta del back (fotográfica):', resp);
 
       if (resp.exitoso === 'S') {
         this.asistenciaGuardada.emit(sesion); // avisamos al padre que se guardó

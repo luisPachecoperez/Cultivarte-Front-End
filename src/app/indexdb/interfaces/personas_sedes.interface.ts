@@ -1,4 +1,4 @@
-export interface Personas_sedesDB {
+export interface PersonasSedesDB {
   id_personas_sede: string;
   id_persona: string;
   id_sede: string;

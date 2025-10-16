@@ -1,4 +1,4 @@
-export interface Parametros_detalleDB {
+export interface ParametrosDetalleDB {
   id_parametro_detalle: string;
   id_parametro_general: string;
   nombre: string;

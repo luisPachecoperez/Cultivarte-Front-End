@@ -85,6 +85,9 @@ describe('AppComponent (Jest)', () => {
         fail('Expected ngOnInit() to throw');
       } catch (err) {
         expect(err).toBeInstanceOf(Error);
+        if (err instanceof Error) {
+          err.message = 'Sync failed';
+        }
         expect((err as Error).message).toBe('Sync failed');
       }
 

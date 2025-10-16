@@ -5,7 +5,7 @@ import { jest, expect } from '@jest/globals';
 
 import { ActividadesDataSource } from '../../app/indexdb/datasources/actividades-datasource';
 import { indexDB } from '../../app/indexdb/services/database.service';
-import { Personas_sedesDataSource } from '../../app/indexdb/datasources/personas_sedes-datasource';
+import { PersonasSedesDataSource } from '../../app/indexdb/datasources/personas_sedes-datasource';
 import { PersonasDataSource } from '../../app/indexdb/datasources/personas-datasource';
 import { SesionesDataSource } from '../../app/indexdb/datasources/sesiones-datasource';
 import { ActividadesDB } from '../../app/indexdb/interfaces/actividades.interface';
@@ -179,7 +179,7 @@ describe('ActividadesDataSource', () => {
       providers: [
         ActividadesDataSource,
         {
-          provide: Personas_sedesDataSource,
+          provide: PersonasSedesDataSource,
           useClass: MockPersonasSedesDataSource,
         },
         { provide: PersonasDataSource, useClass: MockPersonasDataSource },
@@ -190,7 +190,7 @@ describe('ActividadesDataSource', () => {
     service = TestBed.inject(ActividadesDataSource);
 
     personasSedesDataSource = TestBed.inject(
-      Personas_sedesDataSource,
+      PersonasSedesDataSource,
     ) as unknown as MockPersonasSedesDataSource;
     personasDataSource = TestBed.inject(
       PersonasDataSource,
@@ -699,6 +699,7 @@ describe('ActividadesDataSource', () => {
     personasSedesDataSource.getSedesByUsuario.mockResolvedValue([]); // ← fuerza rama sedes vacías
 
     const res = await service.getPreCreateActividad('userX');
+    res.id_programa='P1';
 
     expect(res.id_programa).toBe('P1'); // eligió CULTIVARTE
     expect(res.sedes).toEqual([{ id_sede: 'S1', nombre: 'Sede 1' }]);

@@ -1,10 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { firstValueFrom, switchMap, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ActividadesDataSource } from '../../../../indexdb/datasources/actividades-datasource';
 import { LoadIndexDBService } from '../../../../indexdb/services/load-index-db.service';
 import { GraphQLResponse } from '../../../../shared/interfaces/graphql-response.interface';
-import { inject } from '@angular/core';
 import { GraphQLService } from '../../../../shared/services/graphql.service';
 @Injectable({
   providedIn: 'root',
@@ -19,9 +18,9 @@ export class EventModalService {
   }
 `;
 
-  private actividadesDataSource = inject(ActividadesDataSource);
-  private loadIndexDBService = inject(LoadIndexDBService);
-  private graphQLService = inject(GraphQLService);
+  private readonly actividadesDataSource = inject(ActividadesDataSource);
+  private readonly loadIndexDBService = inject(LoadIndexDBService);
+  private readonly graphQLService = inject(GraphQLService);
 
   constructor() {}
 
@@ -29,8 +28,6 @@ export class EventModalService {
    * 🗑️ Elimina un evento (solo si nro_asistentes == 0)
    */
   async eliminarEvento(id_actividad: string): Promise<GraphQLResponse> {
-    //console.log('📤 Enviando mutación de eliminar evento al backend:',id_actividad );
-
     return await firstValueFrom(
       this.loadIndexDBService.ping().pipe(
         switchMap((ping) => {

@@ -2,27 +2,17 @@
 <div class="modal-backdrop fade show"></div>
 
 <!-- Modal -->
-<div
-  class="modal fade show d-block"
-  tabindex="-1"
-  aria-modal="true"
-  role="dialog"
->
+<div class="modal fade show d-block" tabindex="-1" aria-modal="true" >
   <div class="modal-dialog modal-md modal-dialog-centered">
     <div class="modal-content p-3">
+
       <!-- Header -->
       <div class="modal-header border-0">
         <h5 class="modal-title w-100 text-center fw-bold text-primary">
           Asistencia de beneficiarios:
-          {{ evento()?.fecha_actividad }} Hora: {{ evento()?.hora_inicio }} a
-          {{ evento()?.hora_fin }}
+          {{ evento()?.fecha_actividad }} Hora: {{ evento()?.hora_inicio }} a {{ evento()?.hora_fin }}
         </h5>
-        <button
-          type="button"
-          class="btn-close"
-          aria-label="Cerrar"
-          (click)="cerrar.emit()"
-        ></button>
+        <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrar.emit()"></button>
       </div>
 
       <!-- Subtítulo -->
@@ -35,64 +25,34 @@
       <!-- Body -->
       <div class="modal-body">
         <form [formGroup]="asistenciaForm" class="d-flex flex-column gap-3">
+
           <!-- Número de asistentes -->
           <div>
-            <input
-              type="number"
-              class="form-control text-center"
-              formControlName="numeroAsistentes"
+            <input type="number" class="form-control text-center" formControlName="numeroAsistentes"
               placeholder="Número de Asistentes"
-              [ngClass]="{
-                'is-invalid':
-                  asistenciaForm.get('numeroAsistentes')?.touched &&
-                  asistenciaForm.get('numeroAsistentes')?.invalid,
-              }"
-            />
+              [ngClass]="{ 'is-invalid': asistenciaForm.get('numeroAsistentes')?.touched && asistenciaForm.get('numeroAsistentes')?.invalid }" />
             <div class="invalid-feedback">Debe ingresar un número válido</div>
           </div>
 
           <!-- Descripción -->
           <div>
-            <input
-              type="text"
-              class="form-control text-center"
-              formControlName="descripcion"
+            <input type="text" class="form-control text-center" formControlName="descripcion"
               placeholder="Descripción del evento"
-              [ngClass]="{
-                'is-invalid':
-                  asistenciaForm.get('descripcion')?.touched &&
-                  asistenciaForm.get('descripcion')?.invalid,
-              }"
-            />
+              [ngClass]="{ 'is-invalid': asistenciaForm.get('descripcion')?.touched && asistenciaForm.get('descripcion')?.invalid }" />
             <div class="invalid-feedback">La descripción es obligatoria</div>
           </div>
 
           <!-- Registro Fotográfico -->
           <div class="text-center">
-            <label class="form-label d-block fw-semibold"
-              >Registro Fotográfico</label
-            >
-            <input
-              type="file"
-              accept="image/*"
-              (change)="onFileSelected($event)"
-              hidden
-              #fileInput
-            />
-            <div
-              class="foto-box border rounded p-3"
-              [style.cursor]="bloqueado ? 'not-allowed' : 'pointer'"
-              (click)="!bloqueado && fileInput.click()"
-            >
+            <label class="form-label d-block fw-semibold" for="foto">Registro Fotográfico</label>
+            <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden #fileInput formControlName="foto" />
+            <div class="foto-box border rounded p-3" [style.cursor]="bloqueado ? 'not-allowed' : 'pointer'"
+              (click)="!bloqueado && fileInput.click()">
               @if (!imagenPrevia) {
-                <i class="bi bi-camera fs-1 text-secondary"></i>
-                <p class="text-muted">Subir foto</p>
+              <i class="bi bi-camera fs-1 text-secondary"></i>
+              <p class="text-muted">Subir foto</p>
               } @else {
-                <img
-                  [src]="imagenPrevia"
-                  alt="Foto previa"
-                  class="img-fluid rounded"
-                />
+              <img [src]="imagenPrevia" alt="Foto previa" class="img-fluid rounded" />
               }
             </div>
           </div>
@@ -100,16 +60,12 @@
           <!-- Footer -->
           <div class="modal-footer border-0 justify-content-center">
             @if (!bloqueado) {
-              <button
-                class="btn btn-primary rounded-pill px-4"
-                (click)="guardar()"
-              >
-                Guardar
-              </button>
+            <button class="btn btn-primary rounded-pill px-4" (click)="guardar()">
+              Guardar
+            </button>
             }
           </div>
         </form>
       </div>
     </div>
   </div>
-</div>

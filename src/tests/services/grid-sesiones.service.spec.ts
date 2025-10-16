@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Grid_sesionesService } from '../../app/eventos/components/grid-sesiones.component/services/grid-sesiones.service';
+import { GridSesionesService } from '../../app/eventos/components/grid-sesiones.component/services/grid-sesiones.service';
 import { GraphQLService } from '../../app/shared/services/graphql.service';
 import { AuthService } from '../../app/shared/services/auth.service';
 import { LoadIndexDBService } from '../../app/indexdb/services/load-index-db.service';
@@ -23,8 +23,8 @@ class SesionesDataSourceMock {
   delete = jest.fn();
 }
 
-describe('🧩 Grid_sesionesService (Jest, Cobertura 95%)', () => {
-  let service: Grid_sesionesService;
+describe('🧩 GridSesionesService (Jest, Cobertura 95%)', () => {
+  let service: GridSesionesService;
   let graphQL: jest.Mocked<GraphQLServiceMock>;
   let auth: jest.Mocked<AuthServiceMock>;
   let loadIndexDB: jest.Mocked<LoadIndexDBServiceMock>;
@@ -33,7 +33,7 @@ describe('🧩 Grid_sesionesService (Jest, Cobertura 95%)', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        Grid_sesionesService,
+        GridSesionesService,
         { provide: GraphQLService, useClass: GraphQLServiceMock },
         { provide: AuthService, useClass: AuthServiceMock },
         { provide: LoadIndexDBService, useClass: LoadIndexDBServiceMock },
@@ -41,7 +41,7 @@ describe('🧩 Grid_sesionesService (Jest, Cobertura 95%)', () => {
       ],
     });
 
-    service = TestBed.inject(Grid_sesionesService);
+    service = TestBed.inject(GridSesionesService);
     graphQL = TestBed.inject(GraphQLService) as any;
     auth = TestBed.inject(AuthService) as any;
     loadIndexDB = TestBed.inject(LoadIndexDBService) as any;

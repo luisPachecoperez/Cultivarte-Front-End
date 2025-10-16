@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import Dexie, { Table } from 'dexie';
 import { ActividadesDB } from '../interfaces/actividades.interface';
 import { AsistenciasDB } from '../interfaces/asistencias.interface';
-import { Parametros_detalleDB } from '../interfaces/parametros_detalle.interface';
-import { Parametros_generalesDB } from '../interfaces/parametros_generales.interface';
+import { ParametrosDetalleDB } from '../interfaces/parametros_detalle.interface';
+import { ParametrosGeneralesDB } from '../interfaces/parametros_generales.interface';
 import { PersonasDB } from '../interfaces/personas.interface';
-import { Personas_grupo_interesDB } from '../interfaces/personas_grupo_interes.interface';
-import { Personas_programasDB } from '../interfaces/personas_programas.interface';
-import { Personas_sedesDB } from '../interfaces/personas_sedes.interface';
+import { PersonasGrupoInteresDB } from '../interfaces/personas_grupo_interes.interface';
+import { PersonasProgramasDB } from '../interfaces/personas_programas.interface';
+import { PersonasSedesDB } from '../interfaces/personas_sedes.interface';
 import { PoblacionesDB } from '../interfaces/poblaciones.interface';
 import { SedesDB } from '../interfaces/sedes.interface';
 import { SesionesDB } from '../interfaces/sesiones.interface';
@@ -18,19 +18,18 @@ import { SesionesDB } from '../interfaces/sesiones.interface';
 export class DatabaseService extends Dexie {
   actividades!: Table<ActividadesDB, string>;
   asistencias!: Table<AsistenciasDB, string>;
-  parametros_detalle!: Table<Parametros_detalleDB, string>;
-  parametros_generales!: Table<Parametros_generalesDB, string>;
+  parametros_detalle!: Table<ParametrosDetalleDB, string>;
+  parametros_generales!: Table<ParametrosGeneralesDB, string>;
   personas!: Table<PersonasDB, string>;
-  personas_grupo_interes!: Table<Personas_grupo_interesDB, string>;
-  personas_programas!: Table<Personas_programasDB, string>;
-  personas_sedes!: Table<Personas_sedesDB, string>;
+  personas_grupo_interes!: Table<PersonasGrupoInteresDB, string>;
+  personas_programas!: Table<PersonasProgramasDB, string>;
+  personas_sedes!: Table<PersonasSedesDB, string>;
   poblaciones!: Table<PoblacionesDB, string>;
   sedes!: Table<SedesDB, string>;
   sesiones!: Table<SesionesDB, string>;
 
   constructor() {
     super('CultivarteAppIndexDB');
-    //console.log('Crea base de datos si no existe');
     this.version(1).stores({
       actividades:
         'id_actividad, id_programa, id_tipo_actividad, id_responsable, id_aliado, id_sede, id_frecuencia, institucional, nombre_actividad, descripcion, fecha_actividad_desde, fecha_actividad_hasta, plazo_asistencia, estado, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
@@ -56,8 +55,6 @@ export class DatabaseService extends Dexie {
       sesiones:
         'id_sesion, id_actividad, fecha_actividad, hora_inicio, hora_fin,imagen,descripcion, nro_asistentes, id_creado_por, fecha_creacion, id_modificado_por, fecha_modificacion',
     });
-
-    //console.log('Base de datos lista para usarse');
   }
 }
 

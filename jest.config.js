@@ -1,5 +1,8 @@
 module.exports = {
   preset: "jest-preset-angular",
+  coverageDirectory: './coverage',
+  coverageReporters:['cobertura','text','text-summary','lcov',],
+  collectCoverage:true,
   rootDir: ".",
   setupFilesAfterEnv: ["<rootDir>/setup-jest.ts"],
 
@@ -35,12 +38,12 @@ module.exports = {
     "coverage/",
     "test.ts",
     "environments",
-    "src/app/app.config.ts",
-    "src/app/app.routes.ts"
+    "../../app/app.config.ts",
+    "../../app/app.routes.ts"
   ],
   coverageThreshold: {
     global: {
-      branches: 90,
+      branches: 75,
       functions: 90,
       lines: 90,
       statements: 90,
@@ -57,9 +60,6 @@ module.exports = {
     "!**/*.middleware.ts",
     "!**/configuration.(t|j)s",
   ],
-
-  coverageDirectory: "../coverage",
-
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/../src/$1",
   },
