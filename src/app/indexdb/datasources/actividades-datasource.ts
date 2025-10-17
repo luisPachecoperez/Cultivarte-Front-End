@@ -53,7 +53,68 @@ export class ActividadesDataSource {
       );
   }
 
+  // 🔧 Helper para eliminar duplicados de conversión de fechas
+  private normalizeDateFields(
+    obj: Record<string, any>,
+    fields: string[],
+  ): void {
+    for (const f of fields) {
+      const val = obj[f];
+      if (typeof val === 'string' && val.includes('-')) {
+        obj[f] = String(new Date(val).getTime());
+      }
+    }
+  }
+
+  // 🔧 Helper para eliminar duplicados en generación de nombres de actividad
+  private buildNombresDeActividad(
+    parametrosGenerales: ParametrosGeneralesDB[],
+    parametrosDetalle: ParametrosDetalleDB[],
+  ): { id_tipo_actividad: string; nombre: string }[] {
+    const resultado: { id_tipo_actividad: string; nombre: string }[] = [];
+    const generalTipoActividad = parametrosGenerales.find(
+      (pg) => pg.nombre_parametro === 'TIPO_ACTIVIDAD_CULTIVARTE',
+    );
+    if (generalTipoActividad) {
+      const detalles = parametrosDetalle.filter(
+        (pd) =>
+          pd.id_parametro_general === generalTipoActividad.id_parametro_general,
+      );
+      for (const det of detalles) {
+        if (det.valores) {
+          const valores = det.valores.split(',').map((v) => v.trim());
+          valores.forEach((val) => {
+            resultado.push({
+              id_tipo_actividad: det.id_parametro_detalle,
+              nombre: val,
+            });
+          });
+        }
+      }
+    }
+    return resultado;
+  }
+
+  // 🔧 Helper para eliminar duplicados al obtener sedes
+  private async getSedesFiltradas(
+    sedesUsuario: string[],
+  ): Promise<{ id_sede: string; nombre: string }[]> {
+    if (!sedesUsuario || sedesUsuario.length === 0) {
+      return (await indexDB.sedes.toArray()).map((s) => ({
+        id_sede: s.id_sede,
+        nombre: s.nombre,
+      }));
+    }
+    return (
+      await indexDB.sedes.where('id_sede').anyOf(sedesUsuario).toArray()
+    ).map((s) => ({
+      id_sede: s.id_sede,
+      nombre: s.nombre,
+    }));
+  }
+
   constructor() {}
+
   async getAll(): Promise<ActividadesDB[]> {
     return await indexDB.actividades.toArray();
   }
@@ -63,34 +124,16 @@ export class ActividadesDataSource {
   }
 
   async create(data: ActividadesDB): Promise<GraphQLResponse> {
-    if (
-      typeof data.fecha_actividad === 'string' &&
-      data.fecha_actividad.includes('-')
-    ) {
-      // ✅ Caso fecha tipo string con guiones → convertir a timestamp
-      data.fecha_actividad = String(new Date(data.fecha_actividad).getTime());
-    }
-    if (
-      typeof data.fecha_creacion === 'string' &&
-      data.fecha_creacion.includes('-')
-    ) {
-      // ✅ Caso fecha tipo string con guiones → convertir a timestamp
-      data.fecha_creacion = String(new Date(data.fecha_creacion).getTime());
-    }
-    if (
-      typeof data.fecha_modificacion === 'string' &&
-      data.fecha_modificacion.includes('-')
-    ) {
-      // ✅ Caso fecha tipo string con guiones → convertir a timestamp
-      data.fecha_modificacion = String(
-        new Date(data.fecha_modificacion).getTime(),
-      );
-    }
+    // 🔹 Normaliza campos de fecha (reduce duplicación)
+    this.normalizeDateFields(data, [
+      'fecha_actividad',
+      'fecha_creacion',
+      'fecha_modificacion',
+    ]);
 
     try {
       await indexDB.actividades.add(data).catch((error) => {
         console.error('Error explícito dentro de add():', error);
-        // puedes transformar el error aquí
       });
       return {
         exitoso: 'S',
@@ -132,18 +175,17 @@ export class ActividadesDataSource {
       };
     }
   }
+
   async delete(id: string, soft: boolean): Promise<GraphQLResponse> {
-    // 🔹 1. Obtener todas las sesiones ligadas a la actividad
     const sesiones = await indexDB.sesiones
       .where('id_actividad')
       .equals(id)
       .toArray();
     const actividad: ActividadesDB | undefined = await this.getById(id);
 
-    if (actividad && actividad.syncStatus === 'pending-create') soft = false; // Si la actividad no se ha sincronizado, hacer hard delete
+    if (actividad && actividad.syncStatus === 'pending-create') soft = false;
 
     if (soft) {
-      // 🔹 2a. Soft delete → marcar actividad y sesiones como eliminadas
       await indexDB.actividades.update(id, {
         deleted: true,
         syncStatus: 'pending-delete',
@@ -155,7 +197,6 @@ export class ActividadesDataSource {
         });
       }
     } else {
-      // 🔹 2b. Hard delete → borrar actividad y sesiones de indexDB
       await indexDB.actividades.delete(id);
       for (const ses of sesiones) {
         await indexDB.sesiones.delete(ses.id_sesion);
@@ -184,22 +225,20 @@ export class ActividadesDataSource {
 
   async getBySedes(sedes: string[]): Promise<ActividadesDB[]> {
     if (sedes.length === 0) {
-      // Superusuario: trae todas menos las eliminadas
       return await indexDB.actividades
-        .filter((a: ActividadesDB) => !a.deleted) // 👈 excluye eliminados
+        .filter((a: ActividadesDB) => !a.deleted)
         .toArray();
     }
-    // Normal: filtrar actividades en esas sedes y que no estén eliminadas
     return await indexDB.actividades
       .where('id_sede')
       .anyOf(sedes)
-      .filter((a: ActividadesDB) => !a.deleted) // 👈 excluye eliminados
+      .filter((a: ActividadesDB) => !a.deleted)
       .toArray();
   }
 
   async getPreCreateActividad(id_usuario: string): Promise<PreCreateActividad> {
     console.log('Obteniendo datos para PreCreateActividad IndexDB');
-    // 1. Obtener parámetros generales y detalle
+
     const parametrosGenerales = await indexDB.parametros_generales.toArray();
     const parametrosDetalle = await indexDB.parametros_detalle.toArray();
 
@@ -240,52 +279,20 @@ export class ActividadesDataSource {
 
     programa = programa ?? ' ';
 
-    // 3. nombresDeActividad (array plano con split de valores)
-    const nombresDeActividad: { id_tipo_actividad: string; nombre: string }[] =
-      [];
-    const generalTipoActividad = parametrosGenerales.find(
-      (pg) => pg.nombre_parametro === 'TIPO_ACTIVIDAD_CULTIVARTE',
+    // 🔹 Uso del helper para evitar duplicación
+    const nombresDeActividad = this.buildNombresDeActividad(
+      parametrosGenerales,
+      parametrosDetalle,
     );
-    if (generalTipoActividad) {
-      const detalles = parametrosDetalle.filter(
-        (pd) =>
-          pd.id_parametro_general === generalTipoActividad.id_parametro_general,
-      );
-      for (const det of detalles) {
-        if (det.valores) {
-          const valores = det.valores.split(',').map((v) => v.trim());
-          valores.forEach((val) => {
-            nombresDeActividad.push({
-              id_tipo_actividad: det.id_parametro_detalle,
-              nombre: val,
-            });
-          });
-        }
-      }
-    }
-    // 4. Sedes y Aliados filtrados por usuario
+
     const aliados: { id_aliado: string; nombre: string }[] =
       await this.personasDataSource.getAliados(id_usuario);
     console.log('PreCreateActividad Aliados:', aliados);
+
     const sedesUsuario =
       await this.personasSedesDataSource.getSedesByUsuario(id_usuario);
-    let sedes: { id_sede: string; nombre: string }[];
+    const sedes = await this.getSedesFiltradas(sedesUsuario);
 
-    // -- Buscar id_tipo_persona para "Natural"
-
-    if (!sedesUsuario || sedesUsuario.length === 0) {
-      sedes = (await indexDB.sedes.toArray()).map((s) => ({
-        id_sede: s.id_sede,
-        nombre: s.nombre,
-      }));
-    } else {
-      sedes = (
-        await indexDB.sedes.where('id_sede').anyOf(sedesUsuario).toArray()
-      ).map((s) => ({
-        id_sede: s.id_sede,
-        nombre: s.nombre,
-      }));
-    }
     const respuesta: PreCreateActividad = {
       id_programa: programa,
       sedes,
@@ -295,7 +302,6 @@ export class ActividadesDataSource {
       nombresDeActividad,
       frecuencias,
     };
-    // 5. Construir objeto final estilo GraphQL
     return respuesta;
   }
 
@@ -303,7 +309,6 @@ export class ActividadesDataSource {
     id_actividad: string,
     id_usuario: string,
   ): Promise<PreEditActividad> {
-    // 1. Obtener parámetros generales y detalle
     const parametrosGenerales = await indexDB.parametros_generales.toArray();
     const parametrosDetalle = await indexDB.parametros_detalle.toArray();
 
@@ -329,57 +334,23 @@ export class ActividadesDataSource {
       parametrosDetalle,
     );
 
-    // 2. Tipos de actividad, responsables y frecuencias, programa
-
-    // 3. nombresDeActividad (array plano con split de valores)
-    const nombresDeActividad: NombresDeActividad[] = [];
-    const generalTipoActividad = parametrosGenerales.find(
-      (pg) => pg.nombre_parametro === 'TIPO_ACTIVIDAD_CULTIVARTE',
+    // 🔹 Reutiliza helper para nombres de actividad
+    const nombresDeActividad = this.buildNombresDeActividad(
+      parametrosGenerales,
+      parametrosDetalle,
     );
-    if (generalTipoActividad) {
-      const detalles = parametrosDetalle.filter(
-        (pd) =>
-          pd.id_parametro_general === generalTipoActividad.id_parametro_general,
-      );
-      for (const det of detalles) {
-        if (det.valores) {
-          const valores = det.valores.split(',').map((v) => v.trim());
-          valores.forEach((val) => {
-            nombresDeActividad.push({
-              id_tipo_actividad: det.id_parametro_detalle,
-              nombre: val,
-            });
-          });
-        }
-      }
-    }
-    // 4. Sedes y Aliados filtrados por usuario
+
     const aliados: { id_aliado: string; nombre: string }[] =
       await this.personasDataSource.getAliados(id_usuario);
     const sedesUsuario =
       await this.personasSedesDataSource.getSedesByUsuario(id_usuario);
-    let sedes: Sedes[];
-
-    if (!sedesUsuario || sedesUsuario.length === 0) {
-      sedes = (await indexDB.sedes.toArray()).map((s) => ({
-        id_sede: s.id_sede,
-        nombre: s.nombre,
-      }));
-    } else {
-      sedes = (
-        await indexDB.sedes.where('id_sede').anyOf(sedesUsuario).toArray()
-      ).map((s) => ({
-        id_sede: s.id_sede,
-        nombre: s.nombre,
-      }));
-    }
+    const sedes = await this.getSedesFiltradas(sedesUsuario);
 
     const actividad: ActividadesDB | undefined =
       await this.getById(id_actividad);
     const sesiones = (
       await this.sesionesDataSource.sesionesPorActividad(id_actividad)
     )
-      // 🔹 Ordenamos por fecha antes de formatear
       .sort((a, b) => {
         if (
           a.fecha_actividad === undefined ||
@@ -390,16 +361,15 @@ export class ActividadesDataSource {
           return 1;
         const fechaA = new Date(+a.fecha_actividad).getTime();
         const fechaB = new Date(+b.fecha_actividad).getTime();
-        return fechaA - fechaB; // ascendente (más antigua primero)
+        return fechaA - fechaB;
       })
-      // 🔹 Luego mapeamos y formateamos
       .map((s) => ({
         ...s,
         fecha_actividad: new Date(
           s.fecha_actividad ? +s.fecha_actividad : Date.now(),
         )
           .toISOString()
-          .split('T')[0], // yyyy-MM-dd
+          .split('T')[0],
       }));
     const respuesta: PreEditActividad = {
       id_programa: actividad.id_programa || '',
@@ -412,22 +382,20 @@ export class ActividadesDataSource {
       actividad,
       sesiones,
     };
-    // 5. Construir objeto final estilo GraphQL
     return respuesta;
   }
+
   async consultarFechaCalendario(
     fechaInicio: Date,
     fechaFin: Date,
     idUsuario: string,
   ): Promise<any[]> {
-    // 1. Usar el método de actividades
     const sedesUsuario =
       await this.personasSedesDataSource.getSedesByUsuario(idUsuario);
     const actividades = await this.getBySedes(sedesUsuario);
     if (actividades.length === 0) return [];
 
     const idsActividades = new Set(actividades.map((a) => a.id_actividad));
-    // 3. Filtrar sesiones en esas actividades y en el rango de fechas
     const sesiones = await indexDB.sesiones
       .where('fecha_actividad')
       .between(
@@ -439,14 +407,12 @@ export class ActividadesDataSource {
       .filter((s: SesionesDB) => idsActividades.has(s.id_actividad))
       .toArray();
 
-    // 4. Para cada sesión, contar asistentes
     for (const sesion of sesiones) {
       const count = await indexDB.asistencias
         .where('id_sesion')
         .equals(sesion.id_sesion)
         .count();
       sesion.nro_asistentes = count;
-      // 2. Obtener el nombre de la actividad correspondiente
       const actividad = await this.getById(sesion.id_actividad ?? '');
       sesion.nombre_actividad = actividad?.nombre_actividad || '';
     }
@@ -466,7 +432,7 @@ export class ActividadesDataSource {
 
     const mappedSesiones = sesiones.map((s: SesionesDB) => {
       const fecha = new Date(Number(s.fecha_actividad));
-      const yyyyMMdd = fecha.toISOString().split('T')[0]; // yyyy-mm-dd
+      const yyyyMMdd = fecha.toISOString().split('T')[0];
       return {
         id: s.id_sesion,
         title: s.nombre_actividad || '',
@@ -571,12 +537,11 @@ export class ActividadesDataSource {
           id_persona: p.id_persona,
           nombre_completo: `${p.nombres} ${p.apellidos}`,
           id_sede: sedePersona?.id_sede ?? '',
-          identificacion: p.identificacion, // 👈 fallback vacío
+          identificacion: p.identificacion,
         };
       });
 
     // 5. Asistentes a sesiones anteriores
-
     const asistentes: AsistenciasDB[] = [];
 
     const asistenciasSesion = await indexDB.asistencias
