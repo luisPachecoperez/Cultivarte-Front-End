@@ -166,12 +166,30 @@ export class CalendarComponent {
   }
 
   // 🔧 Unifica la lógica de cierre + recarga
-  private resetAndReload(flag: keyof CalendarComponent) {
-    (this as any)[flag] = false;
+  private resetAndReload(
+    flag:
+      | 'mostrarFormulario'
+      | 'mostrarModalAcciones'
+      | 'mostrarAsistencia'
+      | 'mostrarAsistenciaFotografica',
+  ): void {
+    switch (flag) {
+      case 'mostrarFormulario':
+        this.mostrarFormulario = false;
+        this.eventoSeleccionado = null;
+        break;
 
-    // Si el flag es 'mostrarFormulario', también resetea el evento seleccionado
-    if (flag === 'mostrarFormulario') {
-      this.eventoSeleccionado = null;
+      case 'mostrarModalAcciones':
+        this.mostrarModalAcciones = false;
+        break;
+
+      case 'mostrarAsistencia':
+        this.mostrarAsistencia = false;
+        break;
+
+      case 'mostrarAsistenciaFotografica':
+        this.mostrarAsistenciaFotografica = false;
+        break;
     }
 
     this.cargarSesiones();
