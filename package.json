@@ -64,7 +64,7 @@
         "@angular/cli": "^20.3.4",
         "@angular/compiler-cli": "^20.3.3",
         "@angular/core": "^20.3.3",
-        "@angular/localize": "^20.2.4",
+        "@angular/localize": "^20.3.5",
         "@angular/platform-browser-dynamic": "^20.3.3",
         "@commitlint/cli": "~19.8.0",
         "@commitlint/config-conventional": "~19.8.0",
