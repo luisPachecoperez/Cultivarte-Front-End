@@ -1,31 +1,195 @@
 /* You can add global styles to this file, and also import other style files */
 .success-snackbar {
-  background-color: #4caf50 !important;
+  background-color: #176417 !important;
   color: white !important;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
   font-size: 18px !important;
 }
 
 .warning-snackbar {
-  background-color: #ff9800 !important;
-  color: white !important;
+  background-color: #fdbc3d !important;
+  border-radius: 5px;
+  color: black !important;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
   font-size: 18px !important;
 }
 
 .error-snackbar {
-  background-color: #f44336 !important;
+  background-color: #AD0000!important;
   color: white !important;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
   font-size: 18px !important;
 }
 
-/* Forzar que el overlay de Angular Material quede siempre por encima de los modales */
-.cdk-overlay-container {
-  z-index: 2000 !important; /* mayor que 1050 de Bootstrap */
+
+
+.cdk-overlay-pane {
+  margin-top: 50vh !important;
+  transform: translateY(-50%);
+}
+.cdk-overlay-container{
+  z-index: 120000 !important;
+}
+.confirm-snackbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.actions {
+  background: transparent;
+  margin-top:10px;
+  display: flex;
+  gap: 40px;
+}
+.button-mat{
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  padding: 6px 18px;
+  border-radius: 8px; /* bordes redondeados */
+  border: 0px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* sombra mínima */
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  background-color: beige;
+}
+.button-mat:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Aseguramos que los snackbars respeten su prioridad */
-.mat-snack-bar-container {
-  z-index: 2001 !important;
+.mdc-snackbar__surface mat-mdc-snackbar-surface{
+  background-color: #176417!important;
+}
+.dropdown-caret{
+  background-color: #176417;
+  position: absolute;
+  right: .75rem;      /* separa del borde derecho */
+  top: 0;
+  bottom: 0;          /* estira la altura del span */
+  display: flex;      /* permite centrar vertical */
+  align-items: center;/* centra verticalmente */
+  pointer-events: none;
+  color: #FFFFFF;     /* gris (Bootstrap secondary) */
+  line-height: 1;     /* evita desalineación por altura de línea */
+  z-index: 1;         /* por si hay bordes/overlays encima */
+}
+
+.form-control-select{
+  background: url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'><path fill=\'%23FFFFFF\' d=\'M1 5l7 7 7-7\'/></svg>') no-repeat right 0.75rem center;
+  background-size: 15px;
+}
+input[type="date"].is-invalid,
+input[type="time"].is-invalid {
+  background-image: none !important;
+  padding-right: 3rem; /* ajusta espacio si hace falta */
+}
+.input-invalid {
+  border: 2px solid red !important;
+  background-image: none !important;
+}
+
+.is-invalid {
+  border: 2px solid red !important;
+}
+
+
+.btn-cerrar {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+}
+
+.btn-cerrar::before,
+.btn-cerrar::after {
+  content: "o";
+  position: absolute;
+  top: 0px;
+  left: 50%;
+  width: 16px;
+  height: 2px;
+  background-color: #000; /* color de la X */
+  transform-origin: center;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled,
+input[readonly],
+textarea[readonly] {
+  background-color: #d3d3d3 !important; /* gris clarito */
+  color: #50585e;                      /* opcional: texto gris */
+  cursor: not-allowed;                 /* opcional */
+}
+.fc-col-header-cell-cushion {
+  color: #4CC1BB !important;   /* azul bootstrap */
+  font-weight: bold;           /* opcional */
+  text-decoration: none;       /* Quitar subrayado */
+
+}
+
+.fc-col-header-cell-cushion::first-letter {
+  text-transform: uppercase;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: #4CC1BB!important; /* azul Bootstrap */
+}
+
+.fc-toolbar-title {
+  font-size: 1.75em;
+  margin: 0px;
+  color:#AD0000!important;
+
+}
+
+.fc-toolbar-title::first-letter {
+  text-transform: uppercase;
+}
+
+.fc-dayGridMonth-button,
+.fc-timeGridWeek-button,
+.fc-timeGridDay-button,
+.fc-today-button,
+.fc-next-button,
+.fc-prev-button{
+  background-color: #4CC1BB!important;
+  border: none!important;
+}
+
+.modal-dialog{
+  max-width: 800px; /* Ajusta el valor según tus necesidades */
+  width: 60%
+}
+.modal-title {
+  background-color: #AD0000!important;
+  border-radius: 10px!important;  
+}
+.text-muted{
+  color: white!important;
+}
+.modal-header{
+  border-bottom: none!important;
+  border-radius: 10px!important;
+}
+.btn{
+  border-radius: 10px!important;
+
+}
+.btn-danger {
+  background-color: #AD0000; /* rojo por defecto, cámbialo al tuyo */
+  border-color:none!important;
+}
+.fc-daygrid-day::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 5%!important;
+  width: 90%!important;
+  height: 1px!important;
+  background-color: #00A669!important; /* Cambiado de black a green */
+  border-radius: 2px;
 }

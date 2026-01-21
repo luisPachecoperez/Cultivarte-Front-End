@@ -7,74 +7,83 @@
   <div class="modal-header">
     <h5>
       Asistencia beneficiarios:
-      <strong>{{ evento()?.fecha }}</strong>
+      <strong>{{ evento()?.fecha_actividad }}</strong>
       Hora:
-      <strong>{{ evento()?.fecha + 'T' + evento()?.horaInicio | date: 'hh:mm a' }}</strong>
+      <strong>{{ evento()?.fecha_actividad + 'T' + evento()?.hora_inicio | date: 'hh:mm a' }}</strong>
       a
-      <strong>{{ evento()?.fecha + 'T' + evento()?.horaFin | date: 'hh:mm a' }}</strong>
+      <strong>{{ evento()?.fecha_actividad + 'T' + evento()?.hora_fin | date: 'hh:mm a' }}</strong>
     </h5>
-    <button class="btn-close" (click)="cerrar.emit()">×</button>
+    <button class="btn-close" (click)="cerrar.emit()"></button>
   </div>
 
   <!-- Subtítulo -->
   <div class="modal-subtitle">
-    Contenido: <strong>{{ evento()?.nombreSesion }}</strong>
+    Contenido: <strong>{{ evento()?.nombre_actividad }}</strong>
   </div>
 
   <!-- Selección de sede -->
   <div class="mb-3">
-    <label class="form-label">Sede</label>
-    <select class="form-select" formControlName="id_sede"
-      [ngClass]="{ 'is-invalid': asistenciaForm.get('id_sede')?.touched && asistenciaForm.get('id_sede')?.invalid }">
+    <label class="form-label" for ="id_sede">Sede</label>
+    <select
+      class="form-select"
+      formControlName="id_sede"
+      [ngClass]="{ 'is-invalid': asistenciaForm.get('id_sede')?.touched && asistenciaForm.get('id_sede')?.invalid }"
+    >
       <option value="">Seleccione una sede</option>
       @for (sede of sedes; track sede.id_sede) {
-      <option [value]="sede.id_sede">{{ sede.nombre }}</option>
+        <option [value]="sede.id_sede">{{ sede.nombre }}</option>
       }
     </select>
     <div class="invalid-feedback">Debe seleccionar una sede</div>
   </div>
 
   <!-- Campo de búsqueda -->
-  <input type="text" [formControl]="filtro" placeholder="Busca al beneficiario por nombre o ID"
-    class="input-busqueda" />
+  <input
+    type="text"
+    [formControl]="filtro"
+    placeholder="Busca al beneficiario por nombre o ID"
+    class="input-busqueda"
+  />
 
   <!-- Lista sugerida -->
   @if (resultadosBusqueda.length) {
-  <ul class="lista-sugerencias">
-    @for (b of resultadosBusqueda; track b.id_persona) {
-    <li (click)="agregarAsistente(b)">
-      {{ b.nombre_completo }} - {{ b.id_persona }}
-    </li>
-    }
-  </ul>
+    <ul class="lista-sugerencias">
+      @for (b of resultadosBusqueda; track b.identificacion) {
+        <li (click)="agregarAsistente(b)">
+          {{ b.nombre_completo }} - {{ b.identificacion }}
+        </li>
+      }
+    </ul>
   }
 
   <!-- Tabla de asistentes -->
   @if (asistentes.length) {
-  <table class="tabla-asistentes">
-    <thead>
-      <tr>
-        <th>Beneficiario</th>
-        <th>ID</th>
-        <th>Eliminar</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (a of asistentes; track a.id_persona) {
-      <tr>
-        <td>{{ a.nombre_completo }}</td>
-        <td>{{ a.id_persona }}</td>
-        <td>
-          @if (a.eliminar === 'S' ||a.eliminar === undefined) {
-          <button class="btn-eliminar" (click)="eliminarAsistente(a.id_persona)">
-            🗑️
-          </button>
-          }
-        </td>
-      </tr>
-      }
-    </tbody>
-  </table>
+    <table class="tabla-asistentes">
+      <thead>
+        <tr>
+          <th>Beneficiario</th>
+          <th>ID</th>
+          <th>Eliminar</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of asistentes; track a.id_persona) {
+          <tr>
+            <td>{{ a.nombre_completo }}</td>
+            <td>{{ a.id_persona }}</td>
+            <td>
+              @if (a.eliminar === 'S' ||a.eliminar === undefined) {
+                <button
+                  class="btn-eliminar"
+                  (click)="eliminarAsistente(a.id_persona)">
+                  🗑️
+                </button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
   }
 
   <!-- Botón de guardar -->

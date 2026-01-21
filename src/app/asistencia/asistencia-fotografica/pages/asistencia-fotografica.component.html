@@ -2,7 +2,7 @@
 <div class="modal-backdrop fade show"></div>
 
 <!-- Modal -->
-<div class="modal fade show d-block" tabindex="-1" aria-modal="true" role="dialog">
+<div class="modal fade show d-block" tabindex="-1" aria-modal="true" >
   <div class="modal-dialog modal-md modal-dialog-centered">
     <div class="modal-content p-3">
 
@@ -10,7 +10,7 @@
       <div class="modal-header border-0">
         <h5 class="modal-title w-100 text-center fw-bold text-primary">
           Asistencia de beneficiarios:
-          {{ evento()?.fecha }} Hora: {{ evento()?.horaInicio }} a {{ evento()?.horaFin }}
+          {{ evento()?.fecha_actividad }} Hora: {{ evento()?.hora_inicio }} a {{ evento()?.hora_fin }}
         </h5>
         <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrar.emit()"></button>
       </div>
@@ -18,7 +18,7 @@
       <!-- Subtítulo -->
       <div class="text-center mb-3">
         <span class="badge bg-danger rounded-pill px-3 py-2 fs-6">
-          {{ evento()?.nombreSesion }}
+          {{ evento()?.nombre_actividad }}
         </span>
       </div>
 
@@ -44,8 +44,8 @@
 
           <!-- Registro Fotográfico -->
           <div class="text-center">
-            <label class="form-label d-block fw-semibold">Registro Fotográfico</label>
-            <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden #fileInput />
+            <label class="form-label d-block fw-semibold" for="foto">Registro Fotográfico</label>
+            <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden #fileInput formControlName="foto" />
             <div class="foto-box border rounded p-3" [style.cursor]="bloqueado ? 'not-allowed' : 'pointer'"
               (click)="!bloqueado && fileInput.click()">
               @if (!imagenPrevia) {

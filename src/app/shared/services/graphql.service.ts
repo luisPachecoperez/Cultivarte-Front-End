@@ -1,32 +1,37 @@
 import { Injectable, Inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHeaders,
+} from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { DOCUMENT } from '@angular/common';
-
-
+import { CookieInterface } from '../interfaces/cookie-interface';
+import { CookieService } from './cookie.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GraphQLService {
-  private apiUrl = 'http://localhost:4000/graphql';
-  //private apiUrl = 'http://localhost:8083/graphql';
+  private readonly cookieName = '__SESSION_AUTH__';
+  private readonly cookieService = new CookieService();
+  private readonly apiUrl = this.cookieService.getCookieWithParam(
+    'url_graphql_cultivarte',
+  );
 
   constructor(
-    private http: HttpClient,
-    @Inject(DOCUMENT) private document: Document
-  ) { }
+    private readonly http: HttpClient,
+    @Inject(DOCUMENT) private readonly document: Document,
+  ) {}
 
   private getCookie(name: string): string | null {
-    console.log("Buscando cookie: " + name);
     const match = this.document.cookie
       ?.split(';')
-      .map(c => c.trim())
-      .find(c => c.startsWith(name + '='));
+      .map((c) => c.trim())
+      .find((c) => c.startsWith(name + '='));
     if (!match) return null;
     try {
-     // console.log("Encontrada cookie: " + decodeURIComponent(match.split('=')[1]));
       return decodeURIComponent(match.split('=')[1]);
     } catch {
       return match.split('=')[1] ?? null;
@@ -39,61 +44,76 @@ export class GraphQLService {
 
     // Intento JSON directo
     try {
-      const obj = JSON.parse(raw);
+      const obj: CookieInterface = JSON.parse(raw) as CookieInterface;
       return obj.token || obj.access_token || obj.jwt || null;
-    } catch { /* no es JSON plano */ }
+    } catch {
+      /* no es JSON plano */
+    }
 
     // Intento base64->JSON
     try {
-      const decoded = (globalThis as any).atob?.(raw);
+      const decoded: string = (
+        globalThis as { atob: (data: string) => string }
+      ).atob?.(raw);
       if (decoded) {
-        const obj = JSON.parse(decoded);
+        const obj: CookieInterface = JSON.parse(decoded) as CookieInterface;
         return obj.token || obj.access_token || obj.jwt || null;
       }
-    } catch { /* no es base64 JSON */ }
+    } catch {
+      /* no es base64 JSON */
+    }
 
     // Asumir que el valor es el token
     return raw;
   }
   private authHeaders(): HttpHeaders {
-    const token = this.getBearerFromCookie('session_auth');
-  //  console.log("El token: " + token);
-    const base = { 'Content-Type': 'application/json' } as Record<string, string>;
+    const token = this.getBearerFromCookie(this.cookieName);
+    const base = { 'Content-Type': 'application/json' } as Record<
+      string,
+      string
+    >;
     if (token) base['Authorization'] = `Bearer ${token}`;
     return new HttpHeaders(base);
   }
 
-  query<T>(query: string, variables?: any): Observable<T> {
+  query<T>(query: string, variables?: Record<string, unknown>): Observable<T> {
     const headers = this.authHeaders();
 
     const body = JSON.stringify({
       query,
-      variables
+      variables,
     });
 
     return this.http.post<{ data: T }>(this.apiUrl, body, { headers }).pipe(
-      map(response => response.data),
-      catchError(error => {
-        console.log('Error en GraphQL:', error);
-        return throwError(() => error);
-      })
+      map((response) => response.data),
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => ({
+          exitoso: 'N',
+          mensaje: new Error(error.message),
+        }));
+      }),
     );
   }
 
-  mutation<T>(mutation: string, variables?: any): Observable<T> {
+  mutation<T>(
+    mutation: string,
+    variables?: Record<string, unknown>,
+  ): Observable<T> {
     const headers = this.authHeaders();
 
     const body = JSON.stringify({
-      query: mutation,   // en GraphQL las mutaciones también van en "query"
-      variables
+      query: mutation, // en GraphQL las mutaciones también van en "query"
+      variables,
     });
 
     return this.http.post<{ data: T }>(this.apiUrl, body, { headers }).pipe(
-      map(response => response.data),
-      catchError(error => {
-        console.error('Error en GraphQL Mutation:', error);
-        return throwError(() => error);
-      })
+      map((response) => response.data),
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => ({
+          exitoso: 'N',
+          mensaje: new Error(error.message),
+        }));
+      }),
     );
   }
 }

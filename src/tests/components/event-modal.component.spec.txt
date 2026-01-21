@@ -1,0 +1,94 @@
+import { EventModalComponent } from '../../app/eventos/components/event-modal.component/pages/event-modal.component';
+
+import { Actividades } from '../../app/eventos/interfaces/actividades.interface';
+import { Sesiones } from '../../app/eventos/interfaces/sesiones.interface';
+
+describe('EventModalComponent', () => {
+  let component: EventModalComponent;
+  let mockEventModalService: any;
+  let mockSnackbarService: any;
+  let mockLoadingService: any;
+
+  beforeEach(() => {
+    mockEventModalService = {
+      eliminarEvento: jest.fn(),
+    };
+    mockSnackbarService = {
+      confirm: jest.fn(),
+      success: jest.fn(),
+      error: jest.fn(),
+    };
+    mockLoadingService = {
+      show: jest.fn(),
+      hide: jest.fn(),
+    };
+
+    // @ts-ignore
+    component = new EventModalComponent();
+    // @ts-ignore
+    component['eventModalService'] = mockEventModalService;
+    // @ts-ignore
+    component['snack'] = mockSnackbarService;
+    // @ts-ignore
+    component['loadingService'] = mockLoadingService;
+    // Outputs
+    component.accionSeleccionada = { emit: jest.fn() } as any;
+    component.cerrar = { emit: jest.fn() } as any;
+    // Evento input
+    component.evento = jest.fn();
+  });
+
+  it('should emit accionSeleccionada and cerrar on seleccionarAccion', () => {
+    component.seleccionarAccion('editar');
+    expect(component.accionSeleccionada.emit).toHaveBeenCalledWith('editar');
+    expect(component.cerrar.emit).toHaveBeenCalled();
+  });
+
+  it('should not delete if evento is null', async () => {
+    component.evento = jest.fn().mockReturnValue(null);
+    await component.eliminarEvento();
+    expect(mockSnackbarService.confirm).not.toHaveBeenCalled();
+  });
+
+  it('should not delete if confirm is false', async () => {
+    const actividad: Actividades = { id_actividad: 1, nombre_actividad: 'Test' } as any;
+    component.evento = jest.fn().mockReturnValue(actividad);
+    mockSnackbarService.confirm.mockReturnValue(Promise.resolve(false));
+    await component.eliminarEvento();
+    expect(mockSnackbarService.confirm).toHaveBeenCalled();
+    expect(mockLoadingService.show).not.toHaveBeenCalled();
+  });
+
+  it('should delete and show success if eliminarEvento is exitoso', async () => {
+    const actividad: Actividades = { id_actividad: 1, nombre_actividad: 'Test' } as any;
+    component.evento = jest.fn().mockReturnValue(actividad);
+    mockSnackbarService.confirm.mockReturnValue(Promise.resolve(true));
+    mockEventModalService.eliminarEvento.mockResolvedValue({ exitoso: 'S', mensaje: 'OK' });
+    await component.eliminarEvento();
+    expect(mockLoadingService.show).toHaveBeenCalled();
+    expect(mockSnackbarService.success).toHaveBeenCalledWith('OK');
+    expect(mockLoadingService.hide).toHaveBeenCalled();
+    expect(component.cerrar.emit).toHaveBeenCalled();
+  });
+
+  it('should show error if eliminarEvento is not exitoso', async () => {
+    const actividad: Actividades = { id_actividad: 1, nombre_actividad: 'Test' } as any;
+    component.evento = jest.fn().mockReturnValue(actividad);
+    mockSnackbarService.confirm.mockReturnValue(Promise.resolve(true));
+    mockEventModalService.eliminarEvento.mockResolvedValue({ exitoso: 'N', mensaje: 'Error' });
+    await component.eliminarEvento();
+    expect(mockSnackbarService.error).toHaveBeenCalledWith('Error');
+    expect(mockLoadingService.hide).toHaveBeenCalled();
+    expect(component.cerrar.emit).not.toHaveBeenCalled();
+  });
+
+  it('should handle error in eliminarEvento', async () => {
+    const actividad: Actividades = { id_actividad: 1, nombre_actividad: 'Test' } as any;
+    component.evento = jest.fn().mockReturnValue(actividad);
+    mockSnackbarService.confirm.mockReturnValue(Promise.resolve(true));
+    mockEventModalService.eliminarEvento.mockRejectedValue('Error eliminando');
+    await component.eliminarEvento();
+    expect(mockSnackbarService.error).toHaveBeenCalledWith('Error eliminando');
+    expect(mockLoadingService.hide).toHaveBeenCalled();
+  });
+});

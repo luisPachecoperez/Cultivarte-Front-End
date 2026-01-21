@@ -1,9 +1,26 @@
 <full-calendar [options]="calendarOptions"></full-calendar>
 
+<div class="d-flex gap-2 my-3">
+  <button
+    type="button"
+    class="btn btn-primary"
+    (click)="irARegistroBeneficiario()"
+  >
+    Beneficiarios
+  </button>
+  <button
+    type="button"
+    class="btn btn-danger"
+    (click)="irAExcepciones()"
+  >
+    Excepciones
+  </button>
+</div>
+
 @if (mostrarFormulario) {
   <app-event
     [fechaPreseleccionada]="fechaSeleccionada"
-    [eventoSeleccionado]="eventoSeleccionado"
+    [eventoSeleccionado]="eventoSeleccionado!"
     (eventoGuardado)="agregarOActualizarEvento($event)"
     (eventoEditado)="agregarOActualizarEvento($event)"
     (cerrarFormulario)="cerrarFormulario()"

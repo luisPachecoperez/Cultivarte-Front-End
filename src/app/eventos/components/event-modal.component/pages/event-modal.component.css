@@ -26,7 +26,7 @@
 }
 
 .modal-title {
-  background-color: #d84875;
+  background-color: #AD0000;
   color: white;
   padding: 0.5rem 1.2rem;
   border-radius: 2rem;
@@ -35,17 +35,6 @@
   display: inline-block;
   text-align: center;
   width: 100%;
-}
-
-.btn-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: #666;
 }
 
 /* Contenedor de botones */

@@ -1,0 +1,36 @@
+name: Deploy Integration
+on:
+  push:
+    branches: [integration]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+   
+  deploy:
+    name: Deploy Integration
+    uses: davivienda-colombia/davi-coe-gcp-common-reusable-pipeline/.github/workflows/deploy_cloud_run.yml@v3.0.2  
+    
+    with:     
+      service_name: o3p-fbol-culti-d01
+      project_id: fundacion-cultivarte-des
+      region: us-central1
+      folder_artifact: artifact-culti-mngr-d01
+      environment: integration
+      vpc_subnet: o3i-cultivartecloudrun-d01
+      vpc_network: o3i-secvpcserviciosfb-d01
+      build_command: npm run prebuild:dev && ng build
+      vpc_connector: direct
+      egress_settings: all-traffic
+      host_project: security-host-fb-des
+      acronym_project: cr
+      dt_enabled: false
+    secrets:
+      DAVI_READER_GITHUB_ACCESS_TOKEN: ${{ secrets.DAVI_READER_GITHUB_ACCESS_TOKEN }}
+      GCP_IDENTITY_PROVIDER: ${{ secrets.GCP_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      DT_API_TOKEN: ${{ secrets.DT_API_TOKEN }}
+      DT_API_URL: ${{ secrets.DT_API_URL }}
+    

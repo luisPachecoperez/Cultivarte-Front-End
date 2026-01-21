@@ -1,59 +1,60 @@
 import { Injectable } from '@angular/core';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Observable, race } from 'rxjs';
-import { filter, map, take } from 'rxjs/operators';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Observable, Subject } from 'rxjs';
+import { take } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class SnackbarService {
-  constructor(private snack: MatSnackBar) {}
+  private readonly confirmResult$ = new Subject<boolean>();
 
-  success(message: string, duration = 4000) {
+  constructor(private readonly snack: MatSnackBar) {}
+
+  success(message: string, duration = 3000) {
     this.snack.open(message, 'Cerrar', {
       duration,
       panelClass: ['success-snackbar'],
-      horizontalPosition: 'right',
+      horizontalPosition: 'center',
       verticalPosition: 'top',
     });
   }
 
-  warning(message: string, duration = 5000) {
+  warning(message: string, duration = 3000) {
     this.snack.open(message, 'Cerrar', {
       duration,
       panelClass: ['warning-snackbar'],
-      horizontalPosition: 'right',
+      horizontalPosition: 'center',
       verticalPosition: 'top',
     });
   }
 
-  error(message: string, duration = 6000) {
+  error(message: string, duration = 300000) {
     this.snack.open(message, 'Cerrar', {
       duration,
       panelClass: ['error-snackbar'],
-      horizontalPosition: 'right',
+      horizontalPosition: 'center',
       verticalPosition: 'top',
     });
   }
 
-  /**
-   * Confirmación con snackbar:
-   * - Devuelve true si el usuario hace click en la acción (p.ej. "Sí, eliminar")
-   * - Devuelve false si deja expirar o cierra el snackbar
-   */
-  confirm(message: string, actionLabel = 'Sí, eliminar', duration = 7000): Observable<boolean> {
-    const ref = this.snack.open(message, actionLabel, {
-      duration,
-      panelClass: ['warning-snackbar'],
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-    });
-
-    const yes$ = ref.onAction().pipe(map(() => true), take(1));
-    const no$  = ref.afterDismissed().pipe(
-      filter(info => !info.dismissedByAction),
-      map(() => false),
-      take(1)
+  // ✅ corregido para romper el ciclo circular
+  confirm(message: string): Observable<boolean> {
+    // Importación dinámica — solo carga el componente cuando se usa
+    import('../components/confirm-snackbar/confirm-snackbar.component').then(
+      ({ ConfirmSnackbarComponent }) => {
+        this.snack.openFromComponent(ConfirmSnackbarComponent, {
+          data: { message },
+          panelClass: ['warning-snackbar'],
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+        });
+      },
     );
 
-    return race(yes$, no$).pipe(take(1));
+    // devuelve el observable con el resultado de confirmación
+    return this.confirmResult$.asObservable().pipe(take(1));
+  }
+
+  resolveConfirm(result: boolean) {
+    this.confirmResult$.next(result);
   }
 }

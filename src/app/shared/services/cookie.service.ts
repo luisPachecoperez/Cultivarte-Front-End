@@ -1,30 +1,32 @@
 // src/app/services/cookie.service.ts
 import { Injectable } from '@angular/core';
-import * as CryptoJS from 'crypto-js';
-import { environment } from '../../../environments/environment';
+import { jwtDecode } from 'jwt-decode';
+interface GoogleJwtPayload {
+  iss: string;
+  nbf: number;
+  aud: string;
+  sub: string;
+  email: string;
+  email_verified: boolean;
+  name: string;
+  picture: string;
+  given_name: string;
+  family_name: string;
+  iat: number;
+  exp: number;
+  jti: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class CookieService {
-  private secret = environment.COOKIE_SECRET;
-
-  setCookie(name: string,  value: string, hours: number): void {
-    // 🔒 Cifrar valor con AES
-    const encrypted = CryptoJS.AES.encrypt(value, this.secret).toString();
-
-    const date = new Date();
-    date.setTime(date.getTime() + hours * 60 * 60 * 1000);
-    const expires = "; expires=" + date.toUTCString();
-
-    document.cookie = `${name}=${encrypted}${expires}; path=/; Secure; SameSite=Strict`;
-  }
+  private readonly userCookieName = '__USER_COOKIE__';
 
   getCookie(name: string): string | null {
-
     const cookies = document.cookie.split(';');
-    for (let c of cookies) {
-      c = c.trim();
-      if (c.startsWith(name + '=')) {
-        const data = decodeURIComponent(c.substring(name.length + 1));
+    for (const c of cookies) {
+      const trimmed = c.trim();
+      if (trimmed.startsWith(name + '=')) {
+        const data = decodeURIComponent(trimmed.substring(name.length + 1));
         return data;
       }
     }
@@ -33,5 +35,30 @@ export class CookieService {
 
   deleteCookie(name: string): void {
     document.cookie = `${name}=; Max-Age=-99999999; path=/;`;
+  }
+
+  getCookieWithParam(param: string): string {
+    const cookie = this.getCookie(this.userCookieName);
+    if (!cookie) {
+      return '';
+    }
+    const decodedToken = jwtDecode<GoogleJwtPayload>(cookie);
+
+    const obj = decodedToken as unknown as Record<string, unknown>;
+
+    if (Object.hasOwn(obj, param)) {
+      const value = obj[param];
+
+      if (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean'
+      ) {
+        console.log('dato: ', String(value));
+        return String(value);
+      }
+    }
+    console.log('no lo encontro');
+    return '';
   }
 }

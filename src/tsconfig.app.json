@@ -6,6 +6,12 @@
     "outDir": "./out-tsc/app",
     "types": []
   },
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/jest.config.ts",
+    "src/tests/**"
+  ],
   "angularCompilerOptions": {
     "strictTemplates": true,
     "strictInjectionParameters": true,

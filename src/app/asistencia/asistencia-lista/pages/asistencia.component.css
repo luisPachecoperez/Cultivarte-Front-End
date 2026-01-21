@@ -38,17 +38,9 @@
   font-size: 1rem;
 }
 
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #444;
-}
-
 /* Subtítulo */
 .modal-subtitle {
-  background-color: #d84875;
+  background-color: #AD0000 ;
   color: #fff;
   font-weight: bold;
   padding: 0.5rem;
@@ -113,7 +105,7 @@
   background: none;
   border: none;
   font-size: 1.2rem;
-  color: #d84875;
+  color: #AD0000;
   cursor: pointer;
 }
 
@@ -124,7 +116,7 @@
 }
 
 .btn-guardar {
-  background-color: #d84875;
+  background-color: #AD0000;
   color: white;
   border: none;
   padding: 0.6rem 1.5rem;

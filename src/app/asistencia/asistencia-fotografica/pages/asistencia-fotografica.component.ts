@@ -1,29 +1,27 @@
 import { Component, input, output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AsistenciaService } from '../../asistencia-lista/services/asistencia.service';
-import { SnackbarService } from '../../../shared/services/snackbar.service';
 import {
-  EventoAsistencia,
-  DetalleAsistencia,
-  PayloadAsistencia,
-  AsistenciaResponse
-} from './interfaces/asistencia-fotografica.interface';
-
-
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { AsistenciaService } from '../../asistencia-lista/services/asistencia.service';
+import { PreAsistencia } from '../../interfaces/pre-asistencia.interface';
+import { GraphQLResponse } from '../../../shared/interfaces/graphql-response.interface';
+import { SnackbarService } from '../../../shared/services/snackbar.service';
+import { Sesiones } from '../../../eventos/interfaces/sesiones.interface';
 // 🔹 Definimos tipos explícitos
-interface EventoSeleccionado {
-  id_actividad: string;
-  id_sesion: string;
-  nombreSesion: string;
-  fecha: string;
-  horaInicio: string;
-  horaFin: string;
-}
 
 interface Sede {
   id_sede: string;
   nombre: string;
+}
+
+interface AsistenciaFormValue {
+  numeroAsistentes: number | null;
+  descripcion: string;
+  foto: File | null;
 }
 
 @Component({
@@ -31,30 +29,38 @@ interface Sede {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './asistencia-fotografica.component.html',
-  styleUrls: ['./asistencia-fotografica.component.css']
+  styleUrls: ['./asistencia-fotografica.component.css'],
 })
 export class AsistenciaFotograficaComponent implements OnInit {
   // 🔹 Datos que vienen del calendario al abrir el modal
-  evento = input<EventoAsistencia | null>(null);
+  evento = input<Sesiones | null | undefined>(undefined);
   cerrar = output<void>();
-  asistenciaGuardada = output<PayloadAsistencia>();
+
+  asistenciaGuardada = output<{
+    id_actividad: string;
+    id_sesion: string;
+    imagen?: string | null;
+    nro_asistentes?: number | null;
+    descripcion?: string | null;
+    nuevos?: never[];
+  }>();
   bloqueado = false;
 
   asistenciaForm: FormGroup;
   imagenPrevia: string | null = null;
   imagenBase64: string | null = null; // ✅ para almacenar la foto en Base64
-  sedes: { id_sede: string; nombre: string }[] = []; // ✅ lista de sedes que viene del back/mock
+  sedes: Sede[] = []; // ✅ lista de sedes que viene del back/mock
 
-  // ✅ usar inject()
-  private fb = inject(FormBuilder);
-  private asistenciaService = inject(AsistenciaService);
-  private snack = inject(SnackbarService);
+  // ✅ usamos inject() en lugar de constructor
+  private readonly asistenciaService = inject(AsistenciaService);
+  private readonly snack = inject(SnackbarService);
 
-  constructor() {
+  constructor(private readonly fb: FormBuilder) {
+    /* eslint-disable @typescript-eslint/unbound-method */
     this.asistenciaForm = this.fb.group({
-      numeroAsistentes: ['', [Validators.required, Validators.min(1)]],
+      numeroAsistentes: ['', [Validators.required, Validators.min(0)]],
       descripcion: ['', Validators.required],
-      foto: [null]
+      foto: [null],
     });
   }
 
@@ -62,37 +68,48 @@ export class AsistenciaFotograficaComponent implements OnInit {
     const ev = this.evento();
     if (!ev) return;
 
-    // 🚀 Llamamos al servicio para obtener detalle de asistencia
-    this.asistenciaService.obtenerDetalleAsistencia(ev.id_sesion).subscribe((data:DetalleAsistencia) => {
-      console.log('📥 Detalle asistencia fotográfica:', data);
+    this.asistenciaService
+      .obtenerDetalleAsistencia(ev.id_sesion ?? '')
+      .then((data: PreAsistencia) => {
+        // ✅ Guardamos sedes del backend/mock
+        this.sedes = data.sedes || [];
 
-      this.sedes = data.sedes || [];
+        // ✅ Precargar imagen si viene del backend
+        if (data.imagen) {
+          this.imagenPrevia = data.imagen;
+          this.imagenBase64 = data.imagen; // si ya viene en base64 o URL
+        }
 
-      if (data.imagen) {
-        this.imagenPrevia = data.imagen;
-        this.imagenBase64 = data.imagen;
-      }
+        // ✅ Precargar descripción
+        if (data.descripcion) {
+          this.asistenciaForm.patchValue({
+            descripcion: data.descripcion,
+          });
+        }
 
-      if (data.descripcion) {
-        this.asistenciaForm.patchValue({
-          descripcion: data.descripcion
-        });
-      }
+        // ✅ Precargar número de asistentes
+        if (data.numero_asistentes && data.numero_asistentes > 0) {
+          this.asistenciaForm.patchValue({
+            numeroAsistentes: data.numero_asistentes,
+          });
+        }
 
-      if (data.numero_asistentes && data.numero_asistentes > 0) {
-        this.asistenciaForm.patchValue({
-          numeroAsistentes: data.numero_asistentes
-        });
-      }
-
-      // 🔒 Si hay cualquier dato, bloqueamos el formulario completo
-      if ((data.numero_asistentes ?? 0) > 0 || data.descripcion || data.imagen) {
-        this.bloqueado = true;
-        this.asistenciaForm.disable();
-      }
-    });
+        // 🔒 Si hay cualquier dato, bloqueamos el formulario completo
+        if (data.numero_asistentes > 0 || data.descripcion || data.imagen) {
+          this.bloqueado = true;
+          this.asistenciaForm.disable();
+        }
+      })
+      .catch((err) => {
+        console.error(
+          '❌ Error al cargar detalle asistencia fotográfica:',
+          err,
+        );
+        // Opcional: this.snackBar.open('Error al cargar asistencia', 'Cerrar', { duration: 3000 });
+      });
   }
 
+  // ✅ tipamos el evento correctamente
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -107,42 +124,41 @@ export class AsistenciaFotograficaComponent implements OnInit {
     }
   }
 
-  guardar(): void {
+  async guardar(): Promise<GraphQLResponse | void> {
     if (this.asistenciaForm.invalid) {
       this.asistenciaForm.markAllAsTouched();
       this.snack.warning('⚠️ Debes completar todos los campos obligatorios');
       return;
     }
-
     const ev = this.evento();
     if (!ev) return;
+    const formValue: AsistenciaFormValue = this.asistenciaForm
+      .value as AsistenciaFormValue;
 
-    const payload = {
+    const sesion: Sesiones = {
       id_actividad: ev.id_actividad,
       id_sesion: ev.id_sesion,
-      imagen: this.imagenBase64 || '',
-      numero_asistentes: this.asistenciaForm.value.numeroAsistentes,
-      descripcion: this.asistenciaForm.value.descripcion,
-      nuevos: [] as never[]
+      imagen: this.imagenBase64 ?? '',
+      nro_asistentes: formValue.numeroAsistentes ?? 0,
+      descripcion: formValue.descripcion,
+      nuevos: [] as never[],
     };
 
-    console.log('📤 Enviando asistencia fotográfica (payload JSON):', payload);
+    try {
+      const resp =
+        await this.asistenciaService.guardarAsistenciaFotografica(sesion);
 
-    this.asistenciaService.guardarAsistenciaFotografica(payload).subscribe({
-      next: (resp:AsistenciaResponse) => {
-        console.log('✅ Respuesta del back (fotográfica):', resp);
-        if (resp.exitoso === 'S') {
-          this.asistenciaGuardada.emit(payload);
-          this.cerrar.emit();
-        } else {
-          console.error('❌ Error al guardar asistencia fotográfica:', resp.mensaje);
-          this.snack.error('❌ Error al guardar asistencia fotográfica');
-        }
-      },
-      error: (err) => {
-        console.error('❌ Error HTTP al guardar asistencia fotográfica:', err);
-        this.snack.error('❌ Error al guardar asistencia fotográfica');
+      if (resp.exitoso === 'S') {
+        this.asistenciaGuardada.emit(sesion); // avisamos al padre que se guardó
+        this.cerrar.emit();
+      } else {
+        console.error(
+          '❌ Error al guardar asistencia fotográfica:',
+          resp.mensaje,
+        );
       }
-    });
+    } catch (err) {
+      console.error('❌ Error HTTP al guardar asistencia fotográfica:', err);
+    }
   }
 }

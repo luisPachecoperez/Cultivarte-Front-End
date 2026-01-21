@@ -1,18 +1,28 @@
 import { Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { v4 as uuidv4 } from 'uuid';
 import { SnackbarService } from '../../../../shared/services/snackbar.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { SesionFormValue, SesionDTOGrid, EstadoSesion } from '../interfaces/grid-sesiones.interface';
+import { SesionFormValue } from '../../../interfaces/sesion-form-value.interface';
+type EstadoSesion = 'original' | 'nuevo' | 'modificado';
 
-
+export interface Eliminados {
+  id_sesion: string;
+}
 
 @Component({
   selector: 'app-grid-sesiones',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatSnackBarModule],
-  templateUrl: './grid-sesiones.component.html'
+  templateUrl: './grid-sesiones.component.html',
 })
 export class GridSesionesComponent {
   /** 📥 FormArray del padre */
@@ -25,8 +35,11 @@ export class GridSesionesComponent {
   soloLectura = input<boolean>(false);
 
   /** 📤 Emite snapshot de cambios acumulados al padre */
-  cambios = output<{ nuevos: SesionDTOGrid[]; modificados: SesionDTOGrid[]; eliminados: Pick<SesionDTOGrid, 'id_sesion'>[] }>();
-
+  cambios = output<{
+    nuevos: SesionFormValue[];
+    modificados: SesionFormValue[];
+    eliminados: { id_sesion: string }[];
+  }>();
 
   /** (compat) */
   sesionModificada = output<void>();
@@ -34,17 +47,18 @@ export class GridSesionesComponent {
   nuevaSesionForm: FormGroup;
 
   /** buffer de eliminados */
-  private eliminadosBuffer: Pick<SesionDTOGrid, 'id_sesion'>[] = [];
+  private eliminadosBuffer: Eliminados[] = [];
 
-  private fb = inject(FormBuilder);
-  private snack = inject(SnackbarService);
+  private readonly fb = inject(FormBuilder);
+  private readonly snack = inject(SnackbarService);
 
   constructor() {
+    /* eslint-disable @typescript-eslint/unbound-method */
     this.nuevaSesionForm = this.fb.group({
-      fecha: ['', Validators.required],
-      horaInicio: ['', Validators.required],
-      horaFin: ['', Validators.required],
-    });
+      fecha_actividad: ['', Validators.required],
+      hora_inicio: ['', Validators.required],
+      hora_fin: ['', Validators.required],
+    }) as FormGroup;
   }
 
   get sesiones(): FormGroup[] {
@@ -57,8 +71,8 @@ export class GridSesionesComponent {
       if (!fg.contains('metaEstado')) {
         fg.addControl('metaEstado', new FormControl<EstadoSesion>('original'));
       }
-      if (!fg.contains('asistentes_sesion')) {
-        fg.addControl('asistentes_sesion', new FormControl(0));
+      if (!fg.contains('nro_asistentes')) {
+        fg.addControl('nro_asistentes', new FormControl(0));
       }
       if (!fg.contains('id_sesion')) {
         fg.addControl('id_sesion', new FormControl(uuidv4()));
@@ -72,14 +86,17 @@ export class GridSesionesComponent {
   agregarSesion(): void {
     if (this.nuevaSesionForm.invalid || this.soloLectura()) return;
 
-    const nueva = this.fb.group({
+    const formValue: SesionFormValue = this.nuevaSesionForm
+      .value as SesionFormValue;
+
+    const nueva: FormGroup = this.fb.group({
       id_actividad: [this.idEvento()],
       id_sesion: [uuidv4()],
-      fecha: [this.nuevaSesionForm.value.fecha, Validators.required],
-      horaInicio: [this.nuevaSesionForm.value.horaInicio, Validators.required],
-      horaFin: [this.nuevaSesionForm.value.horaFin, Validators.required],
-      asistentes_sesion: [0],
-      metaEstado: ['nuevo' as EstadoSesion]
+      fecha_actividad: [formValue.fecha_actividad, Validators.required],
+      hora_inicio: [formValue.hora_inicio, Validators.required],
+      hora_fin: [formValue.hora_fin, Validators.required],
+      nro_asistentes: [0],
+      metaEstado: ['nuevo' as EstadoSesion],
     });
 
     this.formArray().push(nueva);
@@ -90,16 +107,14 @@ export class GridSesionesComponent {
   }
 
   eliminarSesion(index: number): void {
-
     if (this.soloLectura()) return;
-    console.log("El array; ", this.formArray());
     const fg = this.formArray().at(index) as FormGroup;
-    const sesion = fg.getRawValue();
-    console.log('sesion a eliminar:', sesion);
-    console.log('asistentes sesión:', sesion.asistentes_sesion);
+    const sesion: SesionFormValue = fg.getRawValue() as SesionFormValue;
 
-    if (sesion.asistentes_sesion && sesion.asistentes_sesion > 0) {
-      this.snack.error(`No se puede eliminar: ${sesion.asistentes_sesion} asistentes`);
+    if (sesion.nro_asistentes && sesion.nro_asistentes > 0) {
+      this.snack.error(
+        `No se puede eliminar: ${sesion.nro_asistentes} asistentes`,
+      );
       return;
     }
 
@@ -112,13 +127,12 @@ export class GridSesionesComponent {
 
     if (sesion.metaEstado !== 'nuevo') {
       // solo id_sesion en eliminados
-      this.eliminadosBuffer.push({ id_sesion: sesion.id_sesion });
+      this.eliminadosBuffer.push({ id_sesion: sesion.id_sesion ?? '' });
     }
 
     this.formArray().removeAt(index);
     this.emitirCambios();
     this.sesionModificada.emit();
-    this.snack.success('Sesión eliminada correctamente');
   }
 
   notificarCambio(): void {
@@ -126,12 +140,14 @@ export class GridSesionesComponent {
 
     // 🔎 Validación y marcado por sesión (no global)
     this.sesiones.forEach((fg, idx) => {
-      const asistentes = Number(fg.get('asistentes_sesion')?.value) || 0;
+      const asistentes = Number(fg.get('nro_asistentes')?.value) || 0;
 
       if (asistentes > 0) {
         // Esta sesión tiene asistentes: no permitir modificarla
         if (fg.dirty) {
-          console.warn(`❌ La sesión ${idx + 1} tiene asistentes; se ignoran cambios en esa fila`);
+          console.warn(
+            `❌ La sesión ${idx + 1} tiene asistentes; se ignoran cambios en esa fila`,
+          );
           // Opcional: dejar la fila como no-editada para que no se envíe como "modificada"
           fg.markAsPristine({ onlySelf: true });
         }
@@ -152,13 +168,18 @@ export class GridSesionesComponent {
 
   /** 👉 snapshot para el padre (lo llamará al hacer "Actualizar") */
   getCambios() {
-    const todos = (this.formArray().controls as FormGroup[]).map(fg => fg.getRawValue());
-    const nuevos = todos.filter(s => s.metaEstado === 'nuevo').map(s => this.mapSesionDTO(s, true));
-    const modificados = todos.filter(s => s.metaEstado === 'modificado').map(s => this.mapSesionDTO(s, false));
-    const eliminados = [...this.eliminadosBuffer];
-    console.log('nuevos:', nuevos);
-    console.log('modificados:', modificados);
-    console.log('eliminados:', eliminados);
+    const todos: SesionFormValue[] = (
+      this.formArray().controls as FormGroup[]
+    ).map((fg: FormGroup) => fg.getRawValue() as SesionFormValue);
+
+    const nuevos: SesionFormValue[] = todos
+      .filter((s) => (s.metaEstado as string) === 'nuevo')
+      .map((s) => this.mapSesionDTO(s, true));
+    const modificados: SesionFormValue[] = todos
+      .filter((s) => (s.metaEstado as string) === 'modificado')
+      .map((s) => this.mapSesionDTO(s, false));
+    const eliminados: Eliminados[] = [...this.eliminadosBuffer] as Eliminados[];
+
     return { nuevos, modificados, eliminados };
   }
 
@@ -168,13 +189,14 @@ export class GridSesionesComponent {
   }
 
   /** normaliza nombres al formato del back */
-  private mapSesionDTO(s: SesionFormValue, esNueva: boolean) {
-    const dto: SesionDTOGrid = {
+  private mapSesionDTO(s: SesionFormValue, esNueva: boolean): SesionFormValue {
+    const dto: SesionFormValue = {
       // para NUEVOS y MODIFICADOS debe ir id_actividad
       id_actividad: s.id_actividad ?? this.idEvento(),
-      fecha_sesion: s.fecha,
-      hora_inicio: s.horaInicio,
-      hora_fin: s.horaFin
+      id_sesion: s.id_sesion,
+      fecha_actividad: s.fecha_actividad,
+      hora_inicio: s.hora_inicio,
+      hora_fin: s.hora_fin,
     };
     if (!esNueva) {
       dto.id_sesion = s.id_sesion;
@@ -186,7 +208,7 @@ export class GridSesionesComponent {
   resetCambios() {
     this.eliminadosBuffer = [];
     // resetea banderas modificado a original
-    (this.formArray().controls as FormGroup[]).forEach(fg => {
+    (this.formArray().controls as FormGroup[]).forEach((fg) => {
       if (fg.get('metaEstado')?.value !== 'nuevo') {
         fg.get('metaEstado')?.setValue('original', { emitEvent: false });
         fg.markAsPristine();

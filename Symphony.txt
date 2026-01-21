@@ -1,0 +1,12 @@
+- SYMPHONY_NAME_PROJECT: Nombre del proyecto
+- SYMPHONY_PREFIX_TEAM: Prefijo del equipo
+- SYMPHONY_NAME_PROJECT_JIRA: Variable que contiene el identificador del proyecto para asociar los commits
+- SYMPHONY_AWS_REGION: AWS region.
+- SYMPHONY_AWS_ECS_CLUSTER: AWS Cluster name
+- SYMPHONY_AWS_LOAD_BALANCER: AWS Load balancer name
+- SYMPHONY_AWS_TASK_ROLE_ARN_DEV: AWS Task role arn en Integration
+- SYMPHONY_AWS_EXECUTION_ROLE_ARN_DEV: AWS Execution role arn Integration
+- SYMPHONY_AWS_TASK_ROLE_ARN_LAB: AWS Task role arn en Laboratory
+- SYMPHONY_AWS_EXECUTION_ROLE_ARN_LAB: AWS Execution role arn en Laboratory
+- SYMPHONY_AWS_TASK_ROLE_ARN_PROD: AWS Task role arn en Production
+- SYMPHONY_AWS_EXECUTION_ROLE_ARN_PROD: AWS Execution role arn en Production

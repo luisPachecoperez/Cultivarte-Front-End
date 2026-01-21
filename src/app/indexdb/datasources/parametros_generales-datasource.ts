@@ -1,20 +1,27 @@
 import { indexDB } from '../services/database.service';
-import { Parametros_generales } from '../interfaces/parametros_generales';
+import { ParametrosGeneralesDB } from '../interfaces/parametros_generales.interface';
+import { Injectable } from '@angular/core';
 
-export class Parametros_generalesDataSource {
-  async getAll(): Promise<Parametros_generales[]> {
+@Injectable({
+  providedIn: 'root',
+})
+export class ParametrosGeneralesDataSource {
+  async getAll(): Promise<ParametrosGeneralesDB[]> {
     return await indexDB.parametros_generales.toArray();
   }
 
-  async getById(id: string): Promise<Parametros_generales | undefined> {
+  async getById(id: string): Promise<ParametrosGeneralesDB | undefined> {
     return await indexDB.parametros_generales.get(id);
   }
 
-  async create(data: Parametros_generales): Promise<string> {
+  async create(data: ParametrosGeneralesDB): Promise<string> {
     return await indexDB.parametros_generales.add(data);
   }
 
-  async update(id: string, changes: Partial<Parametros_generales>): Promise<number> {
+  async update(
+    id: string,
+    changes: Partial<ParametrosGeneralesDB>,
+  ): Promise<number> {
     return await indexDB.parametros_generales.update(id, changes);
   }
 
@@ -22,11 +29,11 @@ export class Parametros_generalesDataSource {
     await indexDB.parametros_generales.delete(id);
   }
 
-  async bulkAdd(data: Parametros_generales[]): Promise<void> {
-    this.deleteFull();
-    const withSyncStatus = data.map(item => ({
+  async bulkAdd(data: ParametrosGeneralesDB[]): Promise<void> {
+    await this.deleteFull();
+    const withSyncStatus = data.map((item) => ({
       ...item,
-      syncStatus: item.syncStatus ?? 'synced'
+      syncStatus: item.syncStatus ?? 'synced',
     }));
     await indexDB.parametros_generales.bulkAdd(withSyncStatus);
   }

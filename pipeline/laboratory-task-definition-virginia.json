@@ -1,0 +1,56 @@
+{
+  "family": "SYMPHONY_NAME_PROJECT",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "networkMode": "awsvpc",
+  "taskRoleArn": "arn:aws:iam::SYMPHONY_AWS_TASK_ROLE_ARN_LAB:role/ecs-SYMPHONY_NAME_PROJECT",
+  "executionRoleArn": "arn:aws:iam::SYMPHONY_AWS_EXECUTION_ROLE_ARN_LAB:role/ecs-SYMPHONY_NAME_PROJECT",
+  "containerDefinitions": [
+    {
+      "portMappings": [
+        {
+          "protocol": "tcp",
+          "containerPort": 3000
+        }
+      ],
+      "cpu": 256,
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "laboratory"
+        },
+        {
+          "name": "PORT",
+          "value": "3000"
+        },
+        {
+          "name": "LOGGER_CLOUD_ENV",
+          "value": "true"
+        },
+        {
+          "name": "LOGGER_LEVEL",
+          "value": "info"
+        },
+        {
+          "name": "LOGGER_NAME",
+          "value": "SYMPHONY_NAME_PROJECT"
+        }
+      ],
+      "essential": true,
+      "image": "${image_url}",
+      "memory": 512,
+      "memoryReservation": 256,
+      "name": "SYMPHONY_NAME_PROJECT",
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-region": "SYMPHONY_AWS_REGION",
+          "awslogs-group": "/aws/ecs/SYMPHONY_NAME_PROJECT",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "secrets": []
+    }
+  ]
+}

@@ -1,0 +1,349 @@
+<div class="beneficiario-fullpage">
+  <div class="card shadow-sm border-0 beneficiario-card-full">
+    <div class="card-header bg-transparent border-0 text-center">
+      <div class="mb-3 text-start d-flex align-items-center gap-3">
+        <!-- Elimina la sección de usuario y nombre -->
+        <span>
+          <strong>Sede:</strong>
+          <select class="form-select d-inline w-auto" [ngModel]="sedeSeleccionada?.id_sede"
+            (ngModelChange)="onSeleccionarSede($event)">
+            <option value="" disabled selected>Seleccione una sede</option>
+            @for (s of sedesLigadas ?? []; track s.id_sede) {
+              <option [value]="s.id_sede">{{ s.nombre }}</option>
+            }
+          </select>
+        </span>
+      </div>
+      <!-- Barra de búsqueda arriba del letrero -->
+      <div class="d-flex justify-content-end mb-2">
+        <div class="input-group w-auto" style="max-width: 300px;">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Buscar beneficiario..."
+            [(ngModel)]="busquedaBeneficiario"
+            (ngModelChange)="onBuscarBeneficiario($event)"
+          />
+          <!-- Botón con icono de lupa -->
+          <button class="btn btn-outline-secondary" type="button" tabindex="-1" disabled>
+            🔍
+          </button>
+        </div>
+      </div>
+      <span class="modal-title d-inline-block px-4 py-2 rounded-pill text-white" style="background-color:#AD0000;">
+        <strong class="text-uppercase fs-5">Datos del Beneficiario</strong>
+      </span>
+    </div>
+    <div class="card-body">
+      <div style="overflow-x: auto;">
+        <table class="table table-bordered align-middle mb-0" style="min-width: 1200px;">
+          <thead class="table-light">
+            <tr>
+              <th rowspan="2" class="sticky-col bg-white" style="left:0; z-index:2;" id="acciones-header" scope="col">Acciones</th>
+              <th rowspan="2" id="sede-header" scope="col">Sede</th>
+              <th rowspan="2" id="tipo-identificacion-header" scope="col">Tipo de Identificación</th>
+              <th rowspan="2" id="tipo-persona-header" scope="col">Tipo de Persona</th>
+              <th rowspan="2" id="identificacion-header" scope="col">Identificación</th>
+              <th rowspan="2" id="nombres-header" scope="col">Nombres</th>
+              <th rowspan="2" id="apellidos-header" scope="col">Apellidos</th>
+              <th rowspan="2" id="fecha-nacimiento-header" scope="col">Fecha de Nacimiento</th>
+              <th rowspan="2" id="sexo-header" scope="col">Sexo</th>
+              <th rowspan="2" id="ubicacion-header" scope="col">Ubicación</th>
+              <th rowspan="2" id="discapacidad-header" scope="col">Persona con discapacidad</th>
+              <th rowspan="2" id="habeas-header" scope="col">Habeas</th>
+              <th rowspan="2" id="fecha-habeas-header" scope="col">Fecha Habeas</th>
+              <th colspan="6" scope="colgroup" class="text-center bg-light text-danger" style="font-weight: bold;">
+                DATOS ACUDIENTE
+              </th>
+            </tr>
+            <tr>
+              <th scope="col">Tipo de Identificación</th>
+              <th scope="col">Identificación</th>
+              <th scope="col">Nombres</th>
+              <th scope="col">Apellidos</th>
+              <th scope="col">Correo contacto</th>
+              <th scope="col">Celular</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Fila de formulario para agregar -->
+            <tr [formGroup]="beneficiarioForm">
+              <td class="sticky-col bg-white text-center d-flex flex-column gap-2" style="left:0; z-index:2;">
+                <button class="btn btn-outline-success" type="button" (click)="agregarBeneficiario()"
+                  [hidden]="editandoNino">Agregar</button>
+              </td>
+              <!-- ...campos beneficiario... -->
+              <td>
+                <select class="form-control" formControlName="sede">
+                  @for (s of sedesUsuario; track s.id_sede) {
+                  <option [value]="s.id_sede">{{ s.nombre }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <select class="form-control" formControlName="tipoIdentificacion">
+                  @for (t of tiposIdentificacion; track t.id_tipo_identificacion) {
+                  <option [value]="t.id_tipo_identificacion">{{ t.nombre }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <input type="hidden" formControlName="tipoPersona" />
+                <input class="form-control" [value]="tipoPersonaLabel" readonly />
+              </td>
+              <td>
+                <input class="form-control" formControlName="identificacion" maxlength="20"
+                  (input)="soloNumeros($event)"
+                  pattern="[0-9]*"
+                  inputmode="numeric"
+                />
+              </td>
+              <td>
+                <input class="form-control" formControlName="nombres" maxlength="30" style="text-transform:uppercase" />
+              </td>
+              <td>
+                <input class="form-control" formControlName="apellidos" maxlength="30"
+                  style="text-transform:uppercase" />
+              </td>
+              <td>
+                <input type="date" class="form-control" formControlName="fechaNacimiento" />
+              </td>
+              <td>
+                <select class="form-control" formControlName="sexo">
+                  @for (s of sexos; track s.id_sexo) {
+                  <option [value]="s.id_sexo">{{ s.nombre }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <select class="form-control" formControlName="ubicacion">
+                  @for (u of ubicaciones; track u.id_ubicacion) {
+                  <option [value]="u.id_ubicacion">{{ u.nombre }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <select class="form-control" formControlName="discapacidad">
+                  <option value="">No</option>
+                  <option value="SI">Sí</option>
+                </select>
+              </td>
+              <td>
+                <!-- Emoji de bandeja de salida (subir archivo) -->
+                <span
+                  style="font-size: 2rem, cursor pointer;"
+                  (click)="habeasInput.click()"
+                  [hidden]="editandoNino"
+                  title="Subir PDF"
+                  >📤</span>
+                <input #habeasInput type="file" accept="application/pdf" style="display:none" (change)="onHabeasFileChange($event)" />
+                @if (beneficiarioForm.value.habeasArchivo) {
+                  <span class="badge bg-success ms-2">PDF cargado</span>
+                }
+              </td>
+              <td>
+                <input class="form-control" formControlName="fechaHabeas" type="date" disabled />
+              </td>
+              <!-- DATOS ACUDIENTE -->
+              <td>
+                <select class="form-control" formControlName="acudienteTipoIdentificacion">
+                  @for (t of tiposIdentificacion; track t.id_tipo_identificacion) {
+                  <option [value]="t.id_tipo_identificacion">{{ t.nombre }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <input class="form-control" formControlName="acudienteIdentificacion" maxlength="20"
+                  (input)="soloNumeros($event)"
+                  pattern="[0-9]*"
+                  inputmode="numeric"
+                />
+              </td>
+              <td>
+                <input class="form-control" formControlName="acudienteNombres" maxlength="30"
+                  style="text-transform:uppercase" />
+              </td>
+              <td>
+                <input class="form-control" formControlName="acudienteApellidos" maxlength="30"
+                  style="text-transform:uppercase" />
+              </td>
+              <td>
+                <input class="form-control" formControlName="acudienteCorreo" maxlength="50" />
+              </td>
+              <td>
+                <input class="form-control" formControlName="acudienteCelular" maxlength="15"
+                  (input)="soloNumeros($event)"
+                  pattern="[0-9]*"
+                  inputmode="numeric"
+                />
+              </td>
+            </tr>
+            <!-- Grid de niños como filas debajo del formulario -->
+            @if (sedeSeleccionada && ninosFiltrados.length > 0) {
+            @for (nino of ninosFiltrados; track nino.identificacion) {
+            <tr>
+              @if (editandoNino && nino.identificacion === ninoEditando?._originalId) {
+              <!-- Fila en modo edición: usa solo ngModel -->
+              <td class="sticky-col bg-white text-center d-flex flex-column gap-2" style="left:0; z-index:2;">
+                <button class="btn btn-outline-primary" type="button" (click)="actualizarNino()">Actualizar</button>
+                <button class="btn btn-outline-secondary" type="button" (click)="cancelarEdicion()">Cancelar</button>
+              </td>
+              <!-- ...campos de edición... -->
+              <td>
+                <select class="form-control" [(ngModel)]="ninoEditando.id_sede" [ngModelOptions]="{standalone: true}">
+                  @for (s of sedesUsuario; track s.id_sede) {
+                  <option [value]="s.id_sede">{{ s.nombre }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <select class="form-control" [(ngModel)]="ninoEditando.id_tipo_identificacion"
+                  [ngModelOptions]="{standalone: true}">
+                  @for (t of tiposIdentificacion; track t.id_tipo_identificacion) {
+                  <option [value]="t.id_tipo_identificacion">{{ t.nombre }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <input type="hidden" [(ngModel)]="ninoEditando.id_tipo_persona" [ngModelOptions]="{standalone: true}" />
+                <input class="form-control"
+                  [value]="nombreTipoPersona(ninoEditando.id_tipo_persona, ninoEditando.tipoPersona)" readonly />
+              </td>
+              <td>
+                <input class="form-control" [(ngModel)]="ninoEditando.identificacion"
+                  [ngModelOptions]="{standalone: true}" maxlength="20" autocomplete="off"
+                  (input)="soloNumeros($event)"
+                  pattern="[0-9]*"
+                  inputmode="numeric"
+                  (keydown.enter)="$event.preventDefault(); $event.stopPropagation()"
+                  (keydown)="onKeydownIdentificacion($event)" (input)="onEditarIdentificacion($event)" />
+              </td>
+              <td>
+                <input class="form-control" [(ngModel)]="ninoEditando.nombres" [ngModelOptions]="{standalone: true}"
+                  maxlength="30" style="text-transform:uppercase" />
+              </td>
+              <td>
+                <input class="form-control" [(ngModel)]="ninoEditando.apellidos" [ngModelOptions]="{standalone: true}"
+                  maxlength="30" style="text-transform:uppercase" />
+              </td>
+              <td>
+                <input type="date" class="form-control" [(ngModel)]="ninoEditando.fechaNacimiento"
+                  [ngModelOptions]="{standalone: true}" />
+              </td>
+              <td>
+                <select class="form-control" [(ngModel)]="ninoEditando.id_sexo" [ngModelOptions]="{standalone: true}">
+                  @for (s of sexos; track s.id_sexo) {
+                  <option [value]="s.id_sexo">{{ s.nombre }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <select class="form-control" [(ngModel)]="ninoEditando.id_ubicacion" [ngModelOptions]="{standalone: true}">
+                  @for (u of ubicaciones; track u.id_ubicacion) {
+                  <option [value]="u.id_ubicacion">{{ u.nombre }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <select class="form-control" [(ngModel)]="ninoEditando.discapacitado"
+                  [ngModelOptions]="{standalone: true}">
+                  <option value="NO">No</option>
+                  <option value="SI">Sí</option>
+                </select>
+              </td>
+              <td>
+                <select class="form-control" [(ngModel)]="ninoEditando.id_tipo_identificacion_acudiente"
+                  [ngModelOptions]="{standalone: true}">
+                  @for (t of tiposIdentificacion; track t.id_tipo_identificacion) {
+                  <option [value]="t.id_tipo_identificacion">{{ t.nombre }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <input class="form-control" [(ngModel)]="ninoEditando.identificacion_acudiente"
+                  [ngModelOptions]="{standalone: true}" maxlength="20"
+                  (input)="soloNumeros($event)"
+                  pattern="[0-9]*"
+                  inputmode="numeric"
+                />
+              </td>
+              <td>
+                <input class="form-control" [(ngModel)]="ninoEditando.acudienteNombres"
+                  [ngModelOptions]="{standalone: true}" maxlength="30" style="text-transform:uppercase" />
+              </td>
+              <td>
+                <input class="form-control" [(ngModel)]="ninoEditando.acudienteApellidos"
+                  [ngModelOptions]="{standalone: true}" maxlength="30" style="text-transform:uppercase" />
+              </td>
+              <td>
+                <input class="form-control" [(ngModel)]="ninoEditando.acudienteCorreo"
+                  [ngModelOptions]="{standalone: true}" maxlength="50" />
+              </td>
+              <td>
+                <input class="form-control" [(ngModel)]="ninoEditando.acudienteCelular"
+                  [ngModelOptions]="{standalone: true}" maxlength="15"
+                  (input)="soloNumeros($event)"
+                  pattern="[0-9]*"
+                  inputmode="numeric"
+                />
+              </td>
+              }
+              @else {
+              <!-- Fila en modo visualización: muestra los datos del niño -->
+              <td class="sticky-col bg-white text-center" style="left:0; z-index:2;">
+                <div class="btn-group">
+                  <button class="btn btn-outline-primary btn-sm" type="button" (click)="editarNino(nino)">Editar</button>
+                  <button class="btn btn-outline-danger btn-sm" type="button" (click)="eliminarBeneficiarioPorPersona(nino)" [hidden]="true">Eliminar</button>
+                </div>
+              </td>
+              <td>{{ nino.sede }}</td>
+              <td>{{ nino.tipoIdentificacion }}</td>
+              <td>{{ nino.tipoPersona }}</td>
+              <td>{{ nino.identificacion }}</td>
+              <td>{{ nino.nombres }}</td>
+              <td>{{ nino.apellidos }}</td>
+              <td>{{ nino.fechaNacimiento }}</td>
+              <td>{{ nino.sexo }}</td>
+              <td>{{ nino.ubicacion }}</td>
+              <td>{{ nino.discapacidad }}</td>
+              <td>
+                @if (nino.habeasArchivo) {
+                  <span class="badge bg-success">PDF cargado</span>
+                } @else {
+                  <span class="badge bg-secondary">Sin PDF</span>
+                }
+              </td>
+              <td>
+                <input class="form-control" [value]="nino.fechaHabeas" type="date" disabled />
+              </td>
+              <td>{{ nino.acudienteTipoIdentificacion }}</td>
+              <td>{{ nino.acudienteIdentificacion }}</td>
+              <td>{{ nino.acudienteNombres }}</td>
+              <td>{{ nino.acudienteApellidos }}</td>
+              <td>{{ nino.acudienteCorreo }}</td>
+              <td>{{ nino.acudienteCelular }}</td>
+              }
+            </tr>
+            }
+            }
+          </tbody>
+        </table>
+      </div>
+      <!-- Botón Guardar al final, debajo de la tabla -->
+      <div class="mt-4 text-end">
+        <button class="btn btn-primary" type="button" (click)="guardarCambiosBeneficiarios()">
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+/* Puedes poner esto en tu CSS global/component si prefieres */
+.sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
+}
+</style>

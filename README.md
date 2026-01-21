@@ -1,59 +1,63 @@
-# AmisFrontEnd
+![Logo](https://vectorseek.com/wp-content/uploads/2023/09/Davivienda-Logo-Vector.svg-.png)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.12.
+# SYMPHONY_NAME_PROJECT
 
-## Development server
+A brief description of what SYMPHONY_NAME_PROJECT does and who it's for
 
-To start a local development server, run:
+## Environment Variables
 
-```bash
-ng serve
-```
+To run this project, you will need to add the following environment variables to your .env file
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+`PORT`
 
-## Code scaffolding
+`NODE_ENV`
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+`PROJECT_JIRA`
 
-```bash
-ng generate component component-name
-```
+`LOGGER_LEVEL`
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+`LOGGER_CLOUD_ENV`
 
-```bash
-ng generate --help
-```
+`LOGGER_NAME`
 
-## Building
+## Run Locally
 
-To build the project run:
+Clone the project
 
 ```bash
-ng build
+  git clone https://github.com/davivienda-colombia/davi-SYMPHONY_NAME_PROJECT
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+Go to the project directory
 
 ```bash
-ng test
+  cd davi-SYMPHONY_NAME_PROJECT
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+Install dependencies
 
 ```bash
-ng e2e
+  npm install
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Start the server
 
-## Additional Resources
+```bash
+  npm run start:dev
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Running Tests
+
+To run tests, run the following command
+
+```bash
+  npm run test:cov
+```
+
+## Documentation
+
+[Documentation](https://davivienda-jira.atlassian.net/wiki/spaces/Arquitectu/pages/214401054/BackEnd)
+
+## Authors
+
+- [Brayan Andrés Sanjuan Guerrero](https://github.com/brayan-sanjuan_davicode)

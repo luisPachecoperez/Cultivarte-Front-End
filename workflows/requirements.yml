@@ -1,0 +1,21 @@
+name: Requirements
+
+on:
+  pull_request:
+    branches: [integration, laboratory, main]
+
+jobs:
+  requirements-backend:
+    permissions:
+      id-token: write
+      contents: read
+    uses: davivienda-colombia/davi-coe-requirements-reusable-pipeline/.github/workflows/requirements_nodejs_backend.yml@v1.5.4
+    with:
+      # run-veracode: true
+      # filepath: 'davi-SYMPHONY_NAME_PROJECT-1.0.0.tgz'
+      path-environments-variables: 'pipeline/integration-task-definition-virginia.json pipeline/laboratory-task-definition-virginia.json pipeline/production-task-definition-virginia.json'
+      sonar-project-properties-file: ./sonar-project-custom.properties
+      node-version: 20.x
+      veracode_upload: 'true'
+      test-command: npm run test && npm run test:cov
+    secrets: inherit

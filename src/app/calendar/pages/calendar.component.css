@@ -33,7 +33,7 @@
 }
 
 :host ::ng-deep .fc-event {
-  background-color: #36ba75 !important;
+  background-color: #AD0000 !important;
   color: white !important;
   border: none;
   font-weight: bold;
@@ -63,4 +63,10 @@
 
 :host ::ng-deep .fc-daygrid-day-frame {
   padding: 0 !important;
+}
+
+:host ::ng-deep .fc-event,
+:host ::ng-deep .fc-daygrid-event,
+:host ::ng-deep .fc-timegrid-event {
+  cursor: pointer;
 }

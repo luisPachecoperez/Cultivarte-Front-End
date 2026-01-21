@@ -1,42 +1,37 @@
 import { Component, input, output, AfterViewInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EventModalService } from '../services/event-modal.services';
+import { EventModalService } from '../services/event-modal.service';
 import { Tooltip } from 'bootstrap';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { SnackbarService } from '../../../../shared/services/snackbar.service'; // ajusta la ruta
-import { EventoModal } from '../interfaces/event-modal.interface';
-
-export interface EventoModalData {
-  id_actividad: string;
-  nombreSesion: string;
-  fecha?: string;
-  horaInicio?: string;
-  horaFin?: string;
-  asistentes_evento?: number;
-}
-
+import { SnackbarService } from '../../../../shared/services/snackbar.service'; // ajusta la ruta}
+import { firstValueFrom } from 'rxjs';
+import { LoadingService } from '../../../../shared/services/loading.service';
+import { Actividades } from '../../../interfaces/actividades.interface';
+import { Sesiones } from '../../../interfaces/sesiones.interface';
 @Component({
   selector: 'app-event-modal',
   templateUrl: './event-modal.component.html',
   styleUrls: ['./event-modal.component.css'],
   standalone: true,
-  imports: [CommonModule, MatSnackBarModule]
+  imports: [CommonModule, MatSnackBarModule],
 })
 export class EventModalComponent implements AfterViewInit {
-  evento = input<EventoModal | null>(null);
+  evento = input<Actividades | Sesiones | null | undefined>(undefined);
   accionSeleccionada = output<'editar' | 'asistencia'>();
   cerrar = output<void>();
 
   mensajeResultado: string | null = null;
   exitoAccion = false;
 
-  // ✅ inject() en lugar de constructor
-  private eventModalService = inject(EventModalService);
-  private snack = inject(SnackbarService);
+  private readonly eventModalService = inject(EventModalService);
+  private readonly snack = inject(SnackbarService);
+  private readonly loadingService = inject(LoadingService);
 
   ngAfterViewInit(): void {
-    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(el => new Tooltip(el));
+    const tooltipTriggerList = Array.from(
+      document.querySelectorAll('[data-bs-toggle="tooltip"]'),
+    );
+    tooltipTriggerList.forEach((el) => new Tooltip(el));
   }
 
   seleccionarAccion(tipo: 'editar' | 'asistencia') {
@@ -44,31 +39,37 @@ export class EventModalComponent implements AfterViewInit {
     this.cerrar.emit();
   }
 
-  eliminarEvento() {
+  async eliminarEvento() {
     const e = this.evento();
     if (!e) return;
+    const ok = await firstValueFrom(
+      this.snack.confirm(
+        `¿Deseas eliminar el Evento "${e?.nombre_actividad ?? 'sin nombre'}"?`,
+      ),
+    );
+    if (!ok) return;
+    this.loadingService.show();
+    try {
+      const res = await this.eventModalService.eliminarEvento(e.id_actividad);
+      const success = res.exitoso === 'S';
+      if (success) {
+        const mensaje =
+          res.mensaje && res.mensaje.trim() !== ''
+            ? res.mensaje
+            : 'Eliminado correctamente';
+        this.snack.success(mensaje);
+        this.loadingService.hide();
 
-    this.snack
-      .confirm(`¿Deseas eliminar el evento "${e?.nombreSesion ?? 'sin nombre'}"?`)
-      .subscribe((ok) => {
-        if (!ok) return;
-
-        this.eventModalService.eliminarEvento(e.id_actividad).subscribe({
-          next: (res) => {
-            const success = res.exitoso === 'S';
-            if (success) {
-              this.snack.success(res.mensaje ?? 'Eliminado correctamente');
-              this.cerrar.emit();
-            } else {
-              this.snack.error(res.mensaje ?? 'No se pudo eliminar');
-            }
-          },
-
-          error: (err) => {
-            this.snack.error(err?.mensaje ?? 'Error eliminando el evento');
-          }
-        });
-      });
+        this.cerrar.emit();
+      } else {
+        this.snack.error(res.mensaje ?? 'No se pudo eliminar');
+        this.loadingService.hide();
+      }
+    } catch (err: unknown) {
+      const mensajeError =
+        err instanceof Error ? err.message : 'Error eliminando el evento';
+      this.snack.error(mensajeError);
+      this.loadingService.hide();
+    }
   }
-
 }

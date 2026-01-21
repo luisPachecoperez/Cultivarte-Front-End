@@ -1,20 +1,27 @@
 import { indexDB } from '../services/database.service';
-import { Personas_programas } from '../interfaces/personas_programas';
+import { PersonasProgramasDB } from '../interfaces/personas_programas.interface';
+import { Injectable } from '@angular/core';
 
-export class Personas_programasDataSource {
-  async getAll(): Promise<Personas_programas[]> {
+@Injectable({
+  providedIn: 'root',
+})
+export class PersonasProgramasDataSource {
+  async getAll(): Promise<PersonasProgramasDB[]> {
     return await indexDB.personas_programas.toArray();
   }
 
-  async getById(id: string): Promise<Personas_programas | undefined> {
+  async getById(id: string): Promise<PersonasProgramasDB | undefined> {
     return await indexDB.personas_programas.get(id);
   }
 
-  async create(data: Personas_programas): Promise<string> {
+  async create(data: PersonasProgramasDB): Promise<string> {
     return await indexDB.personas_programas.add(data);
   }
 
-  async update(id: string, changes: Partial<Personas_programas>): Promise<number> {
+  async update(
+    id: string,
+    changes: Partial<PersonasProgramasDB>,
+  ): Promise<number> {
     return await indexDB.personas_programas.update(id, changes);
   }
 
@@ -22,11 +29,10 @@ export class Personas_programasDataSource {
     await indexDB.personas_programas.delete(id);
   }
 
-  async bulkAdd(data: Personas_programas[]): Promise<void> {
-    this.deleteFull();
-    const withSyncStatus = data.map(item => ({
+  async bulkAdd(data: PersonasProgramasDB[]): Promise<void> {
+    const withSyncStatus = data.map((item) => ({
       ...item,
-      syncStatus: item.syncStatus ?? 'synced'
+      syncStatus: item.syncStatus ?? 'synced',
     }));
     await indexDB.personas_programas.bulkAdd(withSyncStatus);
   }

@@ -1,0 +1,38 @@
+name: Deploy Production
+on:
+  push:
+    branches: [production]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy Production
+    uses: davivienda-colombia/davi-coe-aws-common-cd-reusable-pipeline/.github/workflows/deploy_nodejs_backend.yml@v1.2.0
+    with:
+      node-version: '20.x'
+      image: 'SYMPHONY_NAME_PROJECT'
+      version: ${{ github.sha }}
+      dockerfile-path: 'docker/Dockerfile'
+      aws-region: SYMPHONY_AWS_REGION
+      service: 'SYMPHONY_NAME_PROJECT'
+      task-definition-path: 'pipeline/production-task-definition-virginia.json'
+      stop-tasks: true
+      check-health: true
+      deploy-new-task: true
+      desired-task-count: 2
+      cluster: 'SYMPHONY_AWS_ECS_CLUSTER'
+      load-balancer-name: 'SYMPHONY_AWS_LOAD_BALANCER'
+      target-group-name: 'SYMPHONY_NAME_PROJECT-tg'
+      path-environments-variables: 'pipeline/production-task-definition-virginia.json'
+      environment: production
+      scan: false
+      service-type: ecs
+    secrets:
+      DAVI_READER_GITHUB_ACCESS_TOKEN: ${{ secrets.DAVI_READER_GITHUB_ACCESS_TOKEN }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      AWS_ROLE_DEPLOY_BACKEND: ${{ secrets.AWS_ROLE_DEPLOY }}
+      ARTIFACTORY_READER_USER: ${{ secrets.ARTIFACTORY_READER_USER }}
+      ARTIFACTORY_READER_API_KEY: ${{ secrets.ARTIFACTORY_READER_API_KEY }}

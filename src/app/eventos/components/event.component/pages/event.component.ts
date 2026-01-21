@@ -1,4 +1,10 @@
 import { GridSesionesComponent } from './../../grid-sesiones.component/pages/grid-sesiones.component';
+import { PreEditActividad } from '../../../interfaces/pre-edit-actividad.interface';
+import { v4 as uuidv4 } from 'uuid';
+import { SesionFormValue } from '../../../interfaces/sesion-form-value.interface';
+import { CambiosSesionesPayload } from '../../../../interfaces/cambios-sesiones-payload.interface';
+import { Observable, firstValueFrom } from 'rxjs';
+
 import {
   Component,
   input,
@@ -8,72 +14,89 @@ import {
   OnChanges,
   effect,
   inject,
-  HostListener
+  HostListener,
 } from '@angular/core';
+import { Aliados } from '../../../interfaces/lista-aliados.interface';
 import { CommonModule } from '@angular/common';
+import { Sesiones } from '../../../interfaces/sesiones.interface';
 import {
   FormBuilder,
   FormGroup,
   Validators,
   ReactiveFormsModule,
-  AbstractControl,
-  ValidatorFn,
-  ValidationErrors,
-  FormArray
+  FormArray,
 } from '@angular/forms';
-import { EventService } from '../services/event.services';
-import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.services';
+import { EventService } from '../services/event.service';
+import { GridSesionesService } from '../../grid-sesiones.component/services/grid-sesiones.service';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SnackbarService } from '../../../../shared/services/snackbar.service';
-import { EventoFormulario, CambiosSesionesSnapshot, CambiosSesionesPayload, Sede, TipoActividad, Aliado, NombreEvento, Frecuencia, EventoFiltrado, Responsable, AliadoFiltrado, ConfiguracionEvento, EventoBackendResponse, SesionBackend, SesionFormulario, EventoPrecargado, EventoFormValue, SesionBasica, CambiosSesiones} from '../interfaces/event.interface';
+import { LoadingService } from '../../../../shared/services/loading.service';
+import { Actividades } from '../../../interfaces/actividades.interface';
+import { EventoSeleccionado } from '../../../interfaces/evento-seleccionado.interface';
+import { Sedes } from '../../../interfaces/lista-sedes.interface';
+import { Frecuencias } from '../../../interfaces/lista-frecuencias-interface';
+import { NombresDeActividad } from '../../../interfaces/lista-nombres-actividades.interface';
+import { TiposDeActividad } from '../../../interfaces/lista-tipos-actividades-interface';
+import { Responsables } from '../../../interfaces/lista-responsables-interface';
+import { PreCreateActividad } from '../../../interfaces/pre-create-actividad.interface';
 
 @Component({
   selector: 'app-event',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, GridSesionesComponent, MatSnackBarModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    GridSesionesComponent,
+    MatSnackBarModule,
+  ],
   templateUrl: './events.component.html',
-  styleUrls: ['./events.component.css']
+  styleUrls: ['./events.component.css'],
 })
 export class EventComponent implements OnInit, OnChanges {
   // Inputs convertidos a señales
-  eventoSeleccionado = input<EventoFormulario | null>(null);
+  eventoSeleccionado = input<EventoSeleccionado>();
   fechaPreseleccionada = input<string | null>(null);
   mostrarFormulario = input<boolean>(false);
-
-  private _fechaPreseleccionada: string | null = null;
-  actualizarSesionEnCalendario!: (evento: EventoFormulario) => void;
+  id_programa: string | null = null;
+  private readonly _fechaPreseleccionada: string | null = null;
+  actualizarSesionEnCalendario: any;
 
   /** 🔹 Guardamos el snapshot del grid */
-  private cambiosSesionesSnapshot: CambiosSesionesSnapshot = {
+  private cambiosSesionesSnapshot: {
+    nuevos: Sesiones[];
+    modificados: Sesiones[];
+    eliminados: Sesiones[];
+  } = {
     nuevos: [],
     modificados: [],
-    eliminados: []
+    eliminados: [],
   };
 
   // Inyectamos con funciones
-private fb = inject(FormBuilder);
-private eventService = inject(EventService);
-private gridSesionesService = inject(GridSesionesService);
-private authService = inject(AuthService);
-private snack = inject(SnackbarService);
+  private readonly fb = inject(FormBuilder);
+  private readonly eventService = inject(EventService);
+  private readonly grid_sesionesService = inject(GridSesionesService);
+  private readonly authService = inject(AuthService);
+  private readonly snack = inject(SnackbarService);
+  private readonly loadingService = inject(LoadingService);
+
+  tieneCambiosPendientes = false;
 
   constructor() {
     // Effect: cambios en fecha preseleccionada
     effect(() => {
       const fecha = this.fechaPreseleccionada();
       if (fecha && this.eventoForm) {
-        this.eventoForm.patchValue({ fecha });
+        this.eventoForm.patchValue({ fecha_actividad: fecha });
       }
     });
 
     // Effect: cambios en evento seleccionado
     effect(() => {
       const evento = this.eventoSeleccionado();
-      console.log('📦 evento seleccionado3:', evento);
-      console.log('📦 eventoForm efect:', this.eventoForm);
+
       if (evento && this.eventoForm) {
-        console.log('entro');
         // 🔴 ANTES: precargábamos directo con lo que venía del calendario (incompleto)
         // ✅ AHORA: si viene id_actividad, consultamos al "backend" mock y luego precargamos
         if (evento.id_actividad) {
@@ -90,7 +113,11 @@ private snack = inject(SnackbarService);
   }
 
   get modoSoloLectura(): boolean {
-    return this.estaEditando && this.eventoParaEditar?.idSesion;
+    return (
+      this.estaEditando &&
+      this.eventoParaEditar?.id_sesion != null &&
+      this.eventoParaEditar?.id_sesion != ''
+    );
   }
 
   // Outputs con la nueva API
@@ -101,30 +128,31 @@ private snack = inject(SnackbarService);
   sesionEliminada = output<string>();
 
   eventoForm!: FormGroup;
-  eventoParaEditar: any = null;
+  eventoParaEditar: EventoSeleccionado | undefined | null = null;
 
   // 🔹 Listas desde el servicio
-  sedes: Sede[] = [];
-  tiposDeActividad: TipoActividad[] = [];
-  aliados: Aliado[] = [];
-  responsables: Responsable[] = [];
-  nombreDeEventos: NombreEvento[] = [];
-  frecuencias: Frecuencia[] = [];
-  eventosFiltrados: EventoFiltrado[] = [];
+  sedes: Sedes[] = [];
+  tiposDeActividad: TiposDeActividad[] = [];
+  aliados: Aliados[] = [];
+  responsables: Responsables[] = [];
+  nombreDeEventos: NombresDeActividad[] = [];
+  frecuencias: Frecuencias[] = [];
+  nombresDeEventosFiltrados: NombresDeActividad[] = [];
 
   // Variables para el autocomplete de aliados
   aliadoTexto: string = '';
-  aliadosFiltrados: AliadoFiltrado[] = [];
+  aliadosFiltrados: Aliados[] = [];
   mostrarSugerencias: boolean = false;
+  mostrarGridSesiones: boolean = false;
 
   // Filtra aliados cada vez que el usuario escribe
   onAliadoInput(event: Event) {
-    const texto = (event.target as HTMLInputElement).value.toLowerCase();
+    const input = event.target as HTMLInputElement;
+    const texto: string = input.value?.toLowerCase();
     this.aliadoTexto = texto;
-
     // Filtra por coincidencia en nombre
-    this.aliadosFiltrados = this.aliados.filter(a =>
-      a.nombre.toLowerCase().includes(texto)
+    this.aliadosFiltrados = this.aliados.filter((a) =>
+      a.nombre.toLowerCase().includes(texto),
     );
 
     // Mostrar lista si hay coincidencias
@@ -132,9 +160,9 @@ private snack = inject(SnackbarService);
   }
 
   // Selecciona un aliado de la lista
-  seleccionarAliado(aliado: Aliado) {
+  seleccionarAliado(aliado: Aliados) {
     this.aliadoTexto = aliado.nombre;
-    this.eventoForm.patchValue({ aliado: aliado.id_aliado });
+    this.eventoForm.patchValue({ id_aliado: aliado.id_aliado });
     this.mostrarSugerencias = false;
   }
 
@@ -147,37 +175,103 @@ private snack = inject(SnackbarService);
     }
   }
 
-
   ngOnInit(): void {
+    console.log('Se lanza el oninit');
+    /* eslint-disable @typescript-eslint/unbound-method */
     this.eventoForm = this.fb.group({
-      id_programa: [{ value: this.id_programa, disabled: this.modoSoloLectura }, Validators.required],
-      institucional: [{ value: null, disabled: this.modoSoloLectura }, Validators.required],
-      sede: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      tipoEvento: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      responsable: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      aliado: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      nombreEvento: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      descripcionGrupo: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      fecha: [{ value: this._fechaPreseleccionada ?? '', disabled: this.modoSoloLectura }, Validators.required],
-      horaInicio: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      horaFin: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      frecuencia: [{ value: '', disabled: this.modoSoloLectura }, Validators.required],
-      sesiones: this.fb.array([])
+      id_programa: [
+        { value: this.id_programa, disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      institucional: [
+        { value: null, disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      id_sede: [
+        { value: '', disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      id_tipo_actividad: [
+        { value: '', disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      id_responsable: [
+        { value: '', disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      id_aliado: [
+        { value: '', disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      nombre_actividad: [
+        { value: '', disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      descripcion: [
+        { value: '', disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      fecha_actividad: [
+        {
+          value: this._fechaPreseleccionada ?? '',
+          disabled: this.modoSoloLectura,
+        },
+        Validators.required,
+      ],
+      hora_inicio: [
+        { value: '', disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      hora_fin: [
+        { value: '', disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      id_frecuencia: [
+        { value: '', disabled: this.modoSoloLectura },
+        Validators.required,
+      ],
+      // Quitar Validators.required de sesiones
+      sesiones: this.fb.array([]),
     });
-    console.log('📦 eventoForm ngOnInit:', this.eventoForm);
 
     // 🔹 Cargar datos desde el backend simulado
     this.cargarConfiguracionFormulario();
 
+    // Suscribir cambios en id_tipo_actividad para mantener la lista filtrada
+    this.eventoForm
+      .get('id_tipo_actividad')
+      ?.valueChanges.subscribe((tipoId: string) => {
+        this.filtrarEventosPorTipo(tipoId);
+      });
 
-    // Suscribir cambios en tipoEvento para mantener la lista filtrada
-    this.eventoForm.get('tipoEvento')?.valueChanges.subscribe(tipoId => {
-      this.filtrarEventosPorTipo(tipoId);
-    });
+    // Suscribir cambios en id_frecuencia para mostrar el grid en tiempo real
+    this.eventoForm
+      .get('id_frecuencia')
+      ?.valueChanges.subscribe((id_frecuencia: string) => {
+        const nombreFrecuencia =
+          this.frecuencias
+            .find((f) => f.id_frecuencia === id_frecuencia)
+            ?.nombre?.toLowerCase() ?? '';
+        if (nombreFrecuencia === 'manual') {
+          this.mostrarGridSesiones = true;
+          // Deshabilitar campos de ¿Cuándo?
+          this.eventoForm.get('fecha_actividad')?.disable({ emitEvent: false });
+          this.eventoForm.get('hora_inicio')?.disable({ emitEvent: false });
+          this.eventoForm.get('hora_fin')?.disable({ emitEvent: false });
+          console.log(
+            'Suscripción: mostrando grid de sesiones (manual) y deshabilitando ¿Cuándo?',
+          );
+        } else {
+          this.mostrarGridSesiones = false;
+          // Habilitar campos de ¿Cuándo?
+          this.eventoForm.get('fecha_actividad')?.enable({ emitEvent: false });
+          this.eventoForm.get('hora_inicio')?.enable({ emitEvent: false });
+          this.eventoForm.get('hora_fin')?.enable({ emitEvent: false });
+        }
+      });
 
     // Pre-cargar si es edición (si llega algo ya en el primer render)
     const evento = this.eventoSeleccionado();
-    console.log('📦 evento seleccionado:', evento);
     if (evento) {
       this.eventoParaEditar = evento;
       if (evento.id_actividad) {
@@ -190,7 +284,6 @@ private snack = inject(SnackbarService);
       this.eventoForm.enable(); // 👈 si no es edición, dejamos el form editable
     }
   }
-
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['eventoSeleccionado']) {
@@ -213,86 +306,126 @@ private snack = inject(SnackbarService);
     }
   }
 
-  get nombresFiltrados(): NombreEvento[] {
-    const tipoId = this.eventoForm.get('tipoEvento')?.value;
-    if (!tipoId) return [];
-
-    // Retorna sólo los nombres cuyo id_parametro_detalle coincide con el tipo seleccionado
-    return this.nombreDeEventos.filter(
-      n => n.id_parametro_detalle === tipoId
-    );
-  }
-
   private filtrarEventosPorTipo(tipoId: string | null | undefined): void {
-    console.log('📦 tipoId filtrarEventosPorTipo:', tipoId);
     if (!tipoId) {
-      this.eventosFiltrados = [];
+      this.nombresDeEventosFiltrados = [];
       return;
     }
     // nombreDeEventos viene del mock; filtramos por id_parametro_detalle (padre)
-    console.log('📦 nombreDeEventos:', this.nombreDeEventos);
-    this.eventosFiltrados = (this.nombreDeEventos || []).filter(
-      n => n.id_tipo_actividad === tipoId
+    this.nombresDeEventosFiltrados = (this.nombreDeEventos || []).filter(
+      (n) => n.id_tipo_actividad === tipoId,
     );
   }
 
-
-  // 🔹 Lógica para saber si nombreEvento es select o input
+  // 🔹 Lógica para saber si nombre_actividad es select o input
   esListaNombreEvento(): boolean {
-    const tipoId = this.eventoForm.get('tipoEvento')?.value;
-    // console.log('📦 tipoId:', tipoId);
-    const tipo = this.tiposDeActividad.find(t => t.id_tipo_actividad === tipoId)?.nombre.toUpperCase();
-    return tipo === 'Contenido del ciclo'.toUpperCase() || tipo === 'Actividad General'.toUpperCase();
+    const tipoId: string = this.eventoForm.get('id_tipo_actividad')
+      ?.value as string;
+
+    if (tipoId === null || tipoId === undefined) {
+      return false;
+    }
+    const tipoActividad = this.tiposDeActividad?.find(
+      (t: TiposDeActividad) => t.id_tipo_actividad === tipoId,
+    );
+
+    if (!tipoActividad?.nombre) {
+      return false;
+    }
+
+    const tipo = tipoActividad.nombre.toUpperCase();
+
+    return (
+      tipo === 'Contenido del ciclo'.toUpperCase() ||
+      tipo === 'Actividad General'.toUpperCase()
+    );
   }
 
-  cargarConfiguracionFormulario(parametros?: ConfiguracionEvento): void {
+  cargarConfiguracionFormulario(parametros?: PreEditActividad): void {
     const idUsuario = this.authService.getUserUuid(); // por ahora fijo
 
+    // 👇 Si ya vienen parámetros desde la consulta de edición, úsalos
     if (parametros) {
-      console.log('📦 viene con parametros:', parametros);
       this.sedes = parametros.sedes || [];
       this.tiposDeActividad = parametros.tiposDeActividad || [];
       this.aliados = parametros.aliados || [];
       this.responsables = parametros.responsables || [];
       this.nombreDeEventos = parametros.nombresDeActividad || [];
       this.frecuencias = parametros.frecuencias || [];
-      this.filtrarEventosPorTipo(this.eventoForm?.get('tipoEvento')?.value);
+      // si ya hay un tipo seleccionado, actualizamos la lista filtrada
+      this.filtrarEventosPorTipo(
+        this.eventoForm?.get('id_tipo_actividad')?.value as string,
+      );
+
       return;
     }
 
-    // Si no, carga los "globales" mock
-    this.eventService.obtenerConfiguracionEvento(idUsuario).subscribe((data: ConfiguracionEvento & { id_programa: string }) => {
-      console.log('📦 datos de configuración:', data);
-      this.id_programa = data.id_programa;
-      this.eventoForm.get('id_programa')?.setValue(this.id_programa);
+    this.eventService
+      .obtenerConfiguracionEvento(idUsuario)
+      .subscribe((data: PreCreateActividad) => {
+        this.id_programa = data.id_programa;
+        this.eventoForm.get('id_programa')?.setValue(this.id_programa);
+        this.sedes = data.sedes;
+        this.sedes.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-      this.sedes = data.sedes;
-      this.tiposDeActividad = data.tiposDeActividad;
-      this.aliados = data.aliados;
-      this.responsables = data.responsables;
-      this.nombreDeEventos = data.nombresDeActividad;
-      this.frecuencias = data.frecuencias;
+        this.tiposDeActividad = data.tiposDeActividad;
+        this.tiposDeActividad.sort((a, b) => {
+          const nombreA = a.nombre ?? '';
+          const nombreB = b.nombre ?? '';
+          return nombreA.localeCompare(nombreB);
+        });
+        this.aliados = data.aliados;
+        this.aliados.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
+        this.responsables = data.responsables;
+        this.responsables.sort((a, b) => {
+          const nombreA = a.nombre ?? '';
+          const nombreB = b.nombre ?? '';
+          return nombreA.localeCompare(nombreB);
+        });
+        this.nombreDeEventos = data.nombresDeActividad;
+        this.nombreDeEventos.sort((a, b) => {
+          const nombreA = a.nombre;
+          const nombreB = b.nombre;
+          return nombreA.localeCompare(nombreB);
+        });
+        this.frecuencias = data.frecuencias;
+        this.frecuencias.sort((a, b) => {
+          const nombreA = a.nombre ?? '';
+          const nombreB = b.nombre ?? '';
+          return nombreA.localeCompare(nombreB);
+        });
 
-      // ✅ Si hay exactamente una sede y estamos creando (no editando)
-      if (!this.estaEditando && this.sedes.length === 1) {
-        this.eventoForm.get('sede')?.enable({ emitEvent: false });
-        this.eventoForm.get('sede')?.setValue(this.sedes[0].id_sede, { emitEvent: false });
-        this.eventoForm.get('sede')?.disable({ emitEvent: false });
-        console.log('✅ Sede única asignada:', this.eventoForm.get('sede')?.value);
-      } else {
-        this.eventoForm.get('sede')?.enable({ emitEvent: false });
-      }
+        // actualizar eventos filtrados si ya hay un tipo seleccionado
 
-      this.filtrarEventosPorTipo(this.eventoForm?.get('tipoEvento')?.value);
-    });
+        // ✅ Lógica de sede
+        if (this.estaEditando) {
+          this.eventoForm.get('id_sede')?.disable({ emitEvent: false });
+        } else if (this.sedes.length === 1) {
+          this.eventoForm.get('id_sede')?.enable({ emitEvent: false });
+          this.eventoForm
+            .get('id_sede')
+            ?.setValue(this.sedes[0].id_sede, { emitEvent: false });
+          this.eventoForm.get('id_sede')?.disable({ emitEvent: false });
+        } else {
+          this.eventoForm.get('id_sede')?.enable({ emitEvent: false });
+        }
 
-    console.log('📦 configuración cargada:', this.sedes, this.tiposDeActividad, this.aliados, this.responsables, this.nombreDeEventos, this.frecuencias);
+        this.filtrarEventosPorTipo(
+          this.eventoForm?.get('id_tipo_actividad')?.value as string,
+        );
+        this.loadingService.hide(); // 🔄 ocultar
+        console.log(
+          '📦 configuración cargada:',
+          this.sedes,
+          this.tiposDeActividad,
+          this.aliados,
+          this.responsables,
+          this.nombreDeEventos,
+          this.frecuencias,
+        );
+      });
   }
-
-
-
-  id_programa: string | null = null;
 
   get sesiones(): FormArray {
     return this.eventoForm?.get('sesiones') as FormArray;
@@ -306,374 +439,553 @@ private snack = inject(SnackbarService);
   }
 
   onAccionSeleccionado(accion: 'editar' | 'asistencia') {
-    console.log('🎯 Accion seleccionada:', accion);
     if (accion === 'editar') {
-      this.eventoParaEditar = this.eventoSeleccionado;
-      console.log('Editar evento', this.eventoParaEditar);
+      // Usar correctamente la signal como función
+      this.eventoParaEditar = this.eventoSeleccionado();
       if (this.eventoParaEditar?.id_actividad) {
         this.cargarEdicionDesdeBackend(this.eventoParaEditar.id_actividad);
       } else {
-        this.precargarFormulario(this.eventoParaEditar);
+        this.precargarFormulario(this.eventoParaEditar ?? null);
       }
-    }
-
-    if (accion === 'asistencia') {
-      console.log('Tomar asistencia aún no implementado');
     }
 
     this.limpiarEventoSeleccionado.emit();
   }
 
-  // ⬇️⬇️⬇️ CAMBIO CLAVE: cuando hay id_actividad, traemos TODO del mock y recién precargamos
   cargarEdicionDesdeBackend(id_actividad: string): void {
-    this.eventService.obtenerEventoPorId(id_actividad).subscribe((resp: EventoBackendResponse) => {
-      // 1) listas / parámetros
-      console.log('📦 respuesta del backend:', resp);
-      this.cargarConfiguracionFormulario(resp);
+    this.eventService
+      .obtenerEventoPorId(id_actividad)
+      .then((resp: PreEditActividad) => {
+        this.cargarConfiguracionFormulario(resp);
+        this.limpiarCambiosSesionesSnapshot();
 
-      // 2) armar objeto "eventoParaEditar" con ids del backend (y boolean institucional)
-      console.log('📦 id_actividad:', resp.actividad.id_actividad);
-
-      const eventoAdaptado = {
-        id: resp.actividad.id_actividad,
-        institucional: resp.actividad.institucional === 'S',
-        id_sede: resp.actividad.id_sede,
-        id_tipo_actividad: resp.actividad.id_tipo_actividad,
-        id_responsable: resp.actividad.id_responsable,
-        id_aliado: resp.actividad.id_aliado,
-        nombre_actividad: resp.actividad.nombre_actividad,
-        descripcion: resp.actividad.descripcion,
-        id_frecuencia: resp.actividad.id_frecuencia,
-        fecha_actividad: resp.actividad.fecha_actividad,
-        hora_inicio: resp.actividad.hora_inicio,
-        hora_fin: resp.actividad.hora_fin,
-        sesiones: resp.sesiones.map((s: SesionBackend) => ({
-          id_sesion: s.id_sesion,
+        const eventoAdaptado: EventoSeleccionado = {
           id_actividad: resp.actividad.id_actividad,
-          fecha: s.fecha_actividad,
-          horaInicio: s.hora_inicio,
-          horaFin: s.hora_fin,
-          asistentes_sesion: s.nro_asistentes
-        }))
-      };
+          institucional: resp.actividad.institucional === 'S',
+          id_sede: resp.actividad.id_sede,
+          id_tipo_actividad: resp.actividad.id_tipo_actividad,
+          id_responsable: resp.actividad.id_responsable,
+          id_aliado: resp.actividad.id_aliado,
+          nombre_actividad: resp.actividad.nombre_actividad,
+          descripcion: resp.actividad.descripcion,
+          id_frecuencia: resp.actividad.id_frecuencia,
+          fecha_actividad: resp.actividad.fecha_actividad,
+          hora_inicio: resp.actividad.hora_inicio ?? '',
+          hora_fin: resp.actividad.hora_fin ?? '',
+          sesiones:
+            resp.sesiones.map((s: Sesiones) => ({
+              id_sesion: s.id_sesion ?? '',
+              id_actividad: resp.actividad.id_actividad ?? '',
+              fecha_actividad: s.fecha_actividad ?? '',
+              hora_inicio: s.hora_inicio ?? '',
+              hora_fin: s.hora_fin ?? '',
+              nro_asistentes: s.nro_asistentes,
+            })) ?? [],
+        };
 
-      this.eventoParaEditar = eventoAdaptado;
+        this.eventoParaEditar = eventoAdaptado;
 
-      // 3) pintar formulario
-      this.precargarFormulario(eventoAdaptado);
+        // 3) pintar formulario
+        this.precargarFormulario(eventoAdaptado);
 
-      // 4) poner el texto visible del autocomplete de aliado (solo para mostrar nombre)
-      const aliado = this.aliados.find(a => a.id_aliado === resp.actividad.id_aliado);
-      this.aliadoTexto = aliado?.nombre || '';
-    });
+        // 4) poner el texto visible del autocomplete de aliado (solo para mostrar nombre)
+        const aliado = this.aliados.find(
+          (a) => a.id_aliado === resp.actividad.id_aliado,
+        );
+        this.aliadoTexto = aliado?.nombre || '';
+      })
+      .catch((err) => {
+        console.error('❌ Error al obtener evento:', err);
+        this.snack.error('No fue posible cargar el evento');
+      });
   }
-
 
   // ✅ Ajustado para aceptar tanto campos "id_*" del backend como los antiguos del mock
-  precargarFormulario(evento: EventoPrecargado): void {
-    console.log('📦 evento para precargar:', evento);
-    if (!this.eventoForm) return;
-
-    this.eventoForm.patchValue({
-      institucional: typeof evento.institucional === 'string'
-        ? evento.institucional === 'S'
-        : !!evento.institucional,
-      sede: evento.id_sede || evento.sede,
-      tipoEvento: evento.id_tipo_actividad || evento.tipoEvento,
-      responsable: evento.id_responsable || evento.responsable,
-      aliado: evento.id_aliado || evento.aliado,
-      nombreEvento: evento.nombre_actividad || evento.nombreEvento,
-      descripcionGrupo: evento.descripcion || evento.descripcionGrupo,
-      fecha: evento.fecha_actividad || evento.fecha,
-      horaInicio: evento.hora_inicio || evento.horaInicio,
-      horaFin: evento.hora_fin || evento.horaFin,
-      frecuencia: evento.id_frecuencia || evento.frecuencia || 'no'
-    });
-
-    if (this.estaEditando) {
-      this.eventoForm.disable();
-      this.eventoForm.get('aliado')?.disable({ emitEvent: false });
-    } else {
-      this.eventoForm.get('aliado')?.enable({ emitEvent: false });
-    }
-
-    this.sesiones.clear();
-    console.log("Justo antes de cargar las sesiones:", evento.sesiones);
-
-    if (evento.sesiones && Array.isArray(evento.sesiones)) {
-      evento.sesiones.forEach((s: SesionFormulario) => {
-        this.sesiones.push(this.fb.group({
-          fecha: [s.fecha],
-          horaInicio: [s.horaInicio],
-          horaFin: [s.horaFin],
-          id_sesion: [s.id_sesion],
-          id_actividad: [s.id_actividad],
-          asistentes_sesion: [s.asistentes_sesion ?? 0]
-        }));
+  precargarFormulario(evento: EventoSeleccionado | null): void {
+    if (evento !== null) {
+      if (!this.eventoForm) return;
+      this.eventoForm.patchValue({
+        institucional:
+          typeof evento.institucional === 'string'
+            ? evento.institucional === 'S'
+            : !!evento.institucional,
+        id_sede: evento.id_sede,
+        id_tipo_actividad: evento.id_tipo_actividad,
+        id_responsable: evento.id_responsable,
+        id_aliado: evento.id_aliado,
+        nombre_actividad: evento.nombre_actividad,
+        descripcion: evento.descripcion,
+        fecha_actividad: evento.fecha_actividad,
+        hora_inicio: evento.hora_inicio,
+        hora_fin: evento.hora_fin,
+        id_frecuencia: evento.id_frecuencia,
       });
-    }
 
-    console.log("Justo despues de cargar las sesiones:", this.sesiones);
+      // Corrige: deshabilita el form si eventoParaEditar tiene id_actividad (no solo evento)
+      if (this.eventoParaEditar?.id_actividad) {
+        this.eventoForm.disable();
+      } else {
+        this.eventoForm.enable();
+      }
+
+      // FORZAR bloqueo del control 'aliado' cuando estamos en modo edición
+      if (this.eventoParaEditar?.id_actividad) {
+        this.eventoForm.get('aliado')?.disable({ emitEvent: false });
+      } else {
+        this.eventoForm.get('aliado')?.enable({ emitEvent: false });
+      }
+
+      this.sesiones.clear();
+      if (evento.sesiones && Array.isArray(evento.sesiones)) {
+        evento.sesiones.forEach((s: Sesiones) => {
+          this.sesiones.push(
+            this.fb.group({
+              fecha_actividad: [s.fecha_actividad],
+              hora_inicio: [s.hora_inicio],
+              hora_fin: [s.hora_fin],
+              id_sesion: [s.id_sesion],
+              id_actividad: [s.id_actividad],
+              nro_asistentes: [s.nro_asistentes ?? 0],
+            }),
+          );
+        });
+      }
+    }
   }
 
-  guardarEvento(): void {
-    console.log('📦 eventoFormguardar:', this.eventoForm);
-    if (this.eventoForm.invalid) {
+  guardarEvento() {
+    // Tipar id_frecuencia como string
+    const id_frecuencia: string = this.eventoForm.get('id_frecuencia')
+      ?.value as string;
+    const frecuenciaSeleccionada = this.frecuencias.find(
+      (f) => f.id_frecuencia === id_frecuencia,
+    );
+    const esManual = frecuenciaSeleccionada?.nombre?.toLowerCase() === 'manual';
+
+    if (this.eventoForm.invalid && !esManual) {
       this.eventoForm.markAllAsTouched();
-      this.snack.error('Formulario inválido. Revisa los campos obligatorios.');
+      // Mostrar los campos inválidos en consola
+      const invalidControls = Object.keys(this.eventoForm.controls).filter(
+        (key) => {
+          const control = this.eventoForm.get(key);
+          return control?.invalid;
+        },
+      );
+      console.log('Campos inválidos:', invalidControls);
+      this.snack.error(
+        'Formulario no válido. Todos los campos son obligatorios.',
+      );
       return;
     }
-    console.log('📦 esta editando:', this.estaEditando);
-    console.log('📦 evento para editar:', this.eventoParaEditar?.id);
 
-    if (this.estaEditando && this.eventoParaEditar?.id) {
+    if (this.estaEditando && this.eventoParaEditar?.id_actividad) {
       this.actualizarSesion();
     } else {
       this.crearEvento();
     }
   }
+  private getFinDeMes(fechaStr: string | null): Date {
+    // Partir el string en partes
+    if (fechaStr != null) {
+      const [y, m, d] = fechaStr.split('-').map(Number);
 
+      // Crear la fecha base de manera local (evita el bug de UTC)
+      const fechaBase = new Date(y, m - 1, d);
+
+      // Último día del mes = día 0 del siguiente mes
+      return new Date(fechaBase.getFullYear(), fechaBase.getMonth() + 1, 0);
+    } else {
+      return new Date();
+    }
+  }
   private crearEvento(): void {
-    const evento = this.eventoForm.getRawValue();
-    let sesiones: any[] = [];
+    this.loadingService.show();
+    const evento: EventoSeleccionado =
+      this.eventoForm.getRawValue() as EventoSeleccionado;
+    let sesiones: Sesiones[] = [];
+    const fechaBase: Date = new Date(evento.fecha_actividad ?? Date.now());
 
-    console.log('📋 Evento base:', evento);
+    let finMes: Date = new Date();
+    if (
+      evento.fecha_actividad !== null &&
+      evento.fecha_actividad !== undefined
+    ) {
+      finMes = this.getFinDeMes(evento.fecha_actividad);
+    }
 
-    const fechaBase = new Date(evento.fecha);
-    const finMes = new Date(fechaBase.getFullYear(), fechaBase.getMonth() + 1, 0);
-    const [year, month, day] = evento.fecha.split("-").map(Number);
-    const actual = new Date(year, month - 1, day);
-    console.log('📋 actual:', actual);
+    let year: number | undefined;
+    let month: number | undefined;
+    let day: number | undefined;
+    let actual: Date | undefined;
 
-    const nombreFrecuencia = this.frecuencias.find(f => f.id_frecuencia === evento.frecuencia)?.nombre || '';
+    if (evento.fecha_actividad) {
+      [year, month, day] = evento.fecha_actividad.split('-').map(Number);
+      actual = new Date(year, month - 1, day);
+    }
+
+    const nombreFrecuencia =
+      this.frecuencias
+        .find((f) => f.id_frecuencia === evento.id_frecuencia)
+        ?.nombre?.toLowerCase() ?? '';
 
     // Frecuencias
-    console.log('📋 nombreFrecuencia:', nombreFrecuencia.toLowerCase());
-    if (nombreFrecuencia.toLowerCase() === 'a diario') {
-      while (actual <= finMes) {
+
+    if (nombreFrecuencia === 'a diario') {
+      while (actual != null && actual <= finMes) {
         if (actual.getDay() >= 1 && actual.getDay() <= 6) {
-          sesiones.push(this.crearSesion(this.formatearFechaLocal(actual), evento.horaInicio, evento.horaFin, evento));
+          sesiones.push(
+            this.crearSesion(
+              this.formatearFechaLocal(actual),
+              evento.hora_inicio ?? '',
+              evento.hora_fin ?? '',
+              evento,
+            ),
+          );
         }
         actual.setDate(actual.getDate() + 1);
       }
     }
 
-    if (nombreFrecuencia.toLowerCase() === 'todos los días de la semana') {
-      while (actual <= finMes) {
+    if (nombreFrecuencia === 'todos los días de la semana') {
+      while (actual != null && actual <= finMes) {
         if (actual.getDay() >= 1 && actual.getDay() <= 5) {
-          sesiones.push(this.crearSesion(this.formatearFechaLocal(actual), evento.horaInicio, evento.horaFin, evento));
+          sesiones.push(
+            this.crearSesion(
+              this.formatearFechaLocal(actual),
+              evento.hora_inicio ?? '',
+              evento.hora_fin ?? '',
+              evento,
+            ),
+          );
         }
         actual.setDate(actual.getDate() + 1);
       }
     }
 
-    if (nombreFrecuencia.toLowerCase() === 'semanalmente') {
-      console.log('📋 entro a semanalmente:');
-      while (actual <= finMes) {
-        console.log('📋 fecha formateada:', this.formatearFechaLocal(actual));
-        sesiones.push(this.crearSesion(this.formatearFechaLocal(actual), evento.horaInicio, evento.horaFin, evento));
+    if (nombreFrecuencia === 'semanalmente') {
+      while (actual != null && actual <= finMes) {
+        sesiones.push(
+          this.crearSesion(
+            this.formatearFechaLocal(actual),
+            evento.hora_inicio ?? '',
+            evento.hora_fin ?? '',
+            evento,
+          ),
+        );
 
         actual.setDate(actual.getDate() + 7);
-        console.log('📋 fecha actual:', actual);
-        console.log('📋 fecha fin de mes:', finMes);
       }
     }
 
-    if (nombreFrecuencia.toLowerCase() === 'mensualmente') {
-      for (let mes = fechaBase.getMonth(); mes <= 11; mes++) {
-        const [year, month, day] = evento.fecha.split("-").map(Number);
-        console.log('📋 dia:', day);
-        console.log('📋 mes:', month);
-        console.log('📋 año:', year);
-        const nuevaFecha = new Date(year, month - 1, day); // clonamos la fecha base
-        nuevaFecha.setMonth(mes); // solo cambiamos el mes
+    if (nombreFrecuencia === 'mensualmente') {
+      for (let mes: number = fechaBase.getUTCMonth(); mes <= 11; mes++) {
+        let nuevaFecha: Date = new Date(
+          Date.UTC(
+            fechaBase.getUTCFullYear(), // año fijo
+            mes, // mes iterado (0–11)
+            fechaBase.getUTCDate(), // día original
+          ),
+        );
+        if (nuevaFecha.getUTCMonth() !== mes) {
+          // Entonces ponemos el último día del mes correcto
+          nuevaFecha = new Date(Date.UTC(year ?? 0, mes + 1, 0));
+        }
         sesiones.push(
           this.crearSesion(
             this.formatearFechaLocal(nuevaFecha),
-            evento.horaInicio,
-            evento.horaFin,
-            evento
-          )
+            evento.hora_inicio ?? '',
+            evento.hora_fin ?? '',
+            evento,
+          ),
         );
       }
     }
 
-    // Evitar duplicados y solapamientos
-    this.sesiones.controls.forEach(control => {
-      const s = control.value;
-      const nueva = this.crearSesion(s.fecha, s.horaInicio, s.horaFin, evento);
+    if (nombreFrecuencia === 'manual') {
+      this.mostrarGridSesiones = true;
+      // Tomar las sesiones agregadas manualmente en el grid
+      sesiones = (this.sesiones.value as SesionFormValue[]).map((s) => ({
+        id_sesion: s.id_sesion ?? uuidv4(),
+        id_actividad: '', // Se asignará después con el id de la actividad creada
+        fecha_actividad: s.fecha_actividad,
+        // Si no hay hora en la sesión, usa la del formulario principal
+        hora_inicio: s.hora_inicio || evento.hora_inicio || '',
+        hora_fin: s.hora_fin || evento.hora_fin || '',
+        nro_asistentes: s.nro_asistentes ?? 0,
+        id_creado_por: this.authService.getUserUuid(),
+      }));
+      console.log('Sesiones manuales tomadas del grid:', sesiones);
 
-      // const yaExiste = sesiones.some(ev =>
-      //   ev.fecha === nueva.fecha && ev.horaInicio === nueva.horaInicio && ev.horaFin === nueva.horaFin
-      // );
+      // Si hay al menos una sesión, tomar la hora_inicio y hora_fin de la primera sesión para el evento
+      if (sesiones.length > 0) {
+        evento.hora_inicio = sesiones[0].hora_inicio;
+        evento.hora_fin = sesiones[0].hora_fin;
+      }
 
-      // const haySolape = this.haySuperposicion(sesiones, nueva);
-
-      // if (!yaExiste && !haySolape) {
-      //   sesiones.push(nueva);
-      // }
-    });
-
-    console.log('📦 Sesiones creadas:', sesiones);
+      // Validar que todas las sesiones tengan hora_inicio y hora_fin válidas
+      const sesionInvalida = sesiones.find(
+        (s) => !s.hora_inicio || !s.hora_fin,
+      );
+      if (sesionInvalida) {
+        this.loadingService.hide();
+        this.snack.error(
+          'Todas las sesiones deben tener hora de inicio y fin.',
+        );
+        return;
+      }
+    } else if (!evento.hora_inicio || !evento.hora_fin) {
+      this.loadingService.hide();
+      this.snack.error('Debe ingresar hora de inicio y fin.');
+      return;
+    }
 
     // 📤 Construir payload para el back
-    console.log('📦 Evento basessssss:', evento);
-    // traducir nombreEvento si vino como id desde la lista
-    let nombreActividad = evento.nombreEvento;
+    // traducir nombre_actividad si vino como id desde la lista
+    let nombreActividad = evento.nombre_actividad;
 
     // Si estamos en modo lista (esListaNombreEvento) y el valor es un id,
     // buscar el objeto en eventosFiltrados por id_parametro_detalle y usar su nombre.
     if (this.esListaNombreEvento()) {
-      const seleccionado = this.eventosFiltrados.find(n => n.id_parametro_detalle === evento.nombreEvento);
+      const seleccionado = this.nombresDeEventosFiltrados.find(
+        (n) => n.nombre === evento.nombre_actividad,
+      );
       if (seleccionado) {
         nombreActividad = seleccionado.nombre;
       } else {
         // fallback: si no está en eventosFiltrados intentar buscar en nombreDeEventos
-        const buscado = (this.nombreDeEventos || []).find(n => n.id_parametro_detalle === evento.nombreEvento);
-        nombreActividad = buscado?.nombre ?? evento.nombreEvento;
+        const buscado = (this.nombreDeEventos || []).find(
+          (n) => n.nombre === evento.nombre_actividad,
+        );
+        nombreActividad = buscado?.nombre ?? evento.nombre_actividad;
       }
     }
 
-    const payload = {
-      id_programa: evento.id_programa, // esto vendrá del back en producción
+    const actividad: Actividades = {
+      id_actividad: uuidv4(),
+      id_programa: evento.id_programa,
       institucional: evento.institucional ? 'S' : 'N',
-      id_tipo_actividad: evento.tipoEvento,
-      id_responsable: evento.responsable,
-      id_aliado: evento.aliado,
-      id_sede: evento.sede,
-      id_frecuencia: evento.frecuencia,
+      id_tipo_actividad: evento.id_tipo_actividad,
+      id_responsable: evento.id_responsable,
+      id_aliado: evento.id_aliado,
+      id_sede: evento.id_sede,
+      id_frecuencia: evento.id_frecuencia,
       nombre_actividad: nombreActividad,
-      descripcion: evento.descripcionGrupo,
-      fecha_actividad: evento.fecha,
-      hora_inicio: evento.horaInicio,
-      hora_fin: evento.horaFin,
-      id_usuario: '550e8400-e29b-41d4-a716-446655440006'
+      descripcion: evento.descripcion,
+      fecha_actividad: evento.fecha_actividad,
+      hora_inicio: evento.hora_inicio,
+      hora_fin: evento.hora_fin,
+      estado: 'A',
+      id_creado_por: this.authService.getUserUuid(),
+      fecha_creacion: new Date().toISOString().split('T')[0],
+      id_modificado_por: null,
+      fecha_modificacion: null,
     };
+    console.log('📤 Payload para crear evento:', { actividad, sesiones });
 
-    console.log('📤 Enviando payload al back:', payload);
+    const payloadFinal = {
+      sesiones: {
+        nuevos: sesiones.map((s) => ({
+          id_actividad: s.id_actividad,
+          fecha_sesion: s.fecha_actividad,
+          hora_inicio: s.hora_inicio,
+          hora_fin: s.hora_fin,
+        })),
+        modificados: [],
+        eliminados: [],
+      },
+    };
+    console.log(
+      '📤 Payload final emitido después de crear evento:',
+      payloadFinal,
+    );
 
-    this.eventService.crearEvento(payload, sesiones).subscribe(resp => {
-      console.log('📥 Respuesta del back:', resp);
-      if (resp.exitoso === 'S') {
-        console.log('✅ Evento creado correctamente');
-        this.snack.success('Evento creado correctamente');
-        this.eventoGuardado.emit({ sesiones, editarUna: false, idSesionOriginal: null });
-        this.resetearFormulario();
-      } else {
-        console.error('❌ Error al crear evento:', resp.mensaje);
-        this.snack.error('Error al crear evento');
-      }
-    });
+    this.eventService
+      .crearEvento(actividad, sesiones)
+      .then((resp) => {
+        if (resp.exitoso === 'S') {
+          this.snack.success('Evento creado correctamente');
+          const payloadFinal = {
+            sesiones: {
+              nuevos: sesiones.map((s) => ({
+                id_actividad: s.id_actividad,
+                fecha_sesion: s.fecha_actividad,
+                hora_inicio: s.hora_inicio,
+                hora_fin: s.hora_fin,
+              })),
+              modificados: [],
+              eliminados: [],
+            },
+          };
+          console.log(
+            '📤 Payload final emitido después de crear evento:',
+            payloadFinal,
+          );
+          this.eventoGuardado.emit({
+            ...payloadFinal,
+            editarUna: false,
+            id_sesionOriginal: null,
+          });
+          this.loadingService.hide();
+          this.resetearFormulario();
+        } else {
+          this.loadingService.hide();
+          // Agrega el log de error para coincidir con el test
+          console.error('❌ Error al crear evento:', resp.mensaje);
+          this.snack.error(
+            resp.mensaje ?? 'Error desconocido al crear el evento',
+          );
+        }
+      })
+      .catch((err) => {
+        this.loadingService.hide();
+        console.error('❌ Excepción al crear evento:', err);
+        this.snack.error('Error inesperado al crear evento');
+      });
   }
 
   async actualizarSesion() {
-    const payloadFinal: CambiosSesionesPayload = {
-      nuevos: this.cambiosSesionesSnapshot.nuevos.map(s => ({
-        id_sesion: s.id_sesion,
-        id_actividad: s.id_actividad,
-        fecha_sesion: s.fecha_sesion,
-        hora_inicio: s.hora_inicio,
-        hora_fin: s.hora_fin
-      })),
-      modificados: this.cambiosSesionesSnapshot.modificados.map(s => ({
-        id_sesion: s.id_sesion,
-        id_actividad: s.id_actividad,
-        fecha_sesion: s.fecha_sesion,
-        hora_inicio: s.hora_inicio,
-        hora_fin: s.hora_fin
-      })),
-      eliminados: this.cambiosSesionesSnapshot.eliminados.map(s => ({
-        id_sesion: s.id_sesion
-      }))
+    // 🚨 Ahora usamos el snapshot del grid
+    this.loadingService.show();
+
+    // El backend espera { sesiones: { nuevos, modificados, eliminados } }
+    const payloadFinal = {
+      sesiones: {
+        nuevos: this.cambiosSesionesSnapshot.nuevos.map((s) => ({
+          id_sesion: s.id_sesion,
+          id_actividad: s.id_actividad,
+          fecha_actividad: s.fecha_actividad,
+          hora_inicio: s.hora_inicio,
+          hora_fin: s.hora_fin,
+          // ...otros campos si son requeridos por el back...
+        })),
+        modificados: this.cambiosSesionesSnapshot.modificados.map((s) => ({
+          id_sesion: s.id_sesion,
+          id_actividad: s.id_actividad,
+          fecha_actividad: s.fecha_actividad,
+          hora_inicio: s.hora_inicio,
+          hora_fin: s.hora_fin,
+          // ...otros campos si son requeridos por el back...
+        })),
+        eliminados: this.cambiosSesionesSnapshot.eliminados.map((s) => ({
+          id_sesion: s.id_sesion,
+        })),
+      },
     };
 
-    console.log('📦 Payload final a enviar al back:', payloadFinal);
-
     try {
-      const resp = await this.gridSesionesService.guardarCambiosSesiones(payloadFinal);
+      const resp =
+        await this.grid_sesionesService.guardarCambiosSesiones(payloadFinal);
       if (resp.exitoso === 'S') {
         this.snack.success(resp.mensaje ?? 'Sesiones actualizadas');
-        this.eventoEditado.emit(payloadFinal); // ✅ ahora tipado correctamente
-        this.cerrarFormulario.emit();
+        this.eventoEditado.emit(payloadFinal);
+        this.loadingService.hide();
+
+        void this.solicitarCerrarModal(true);
       } else {
-        this.snack.error(resp.mensaje ?? 'No se pudieron actualizar las sesiones');
+        this.loadingService.hide();
+
+        this.snack.error(
+          resp.mensaje ?? 'No se pudieron actualizar las sesiones',
+        );
       }
     } catch (err) {
+      this.loadingService.hide();
+
       console.error('❌ Error al guardar sesiones:', err);
       this.snack.error('Error al guardar sesiones');
     }
   }
 
-
   private resetearFormulario(): void {
     this.eventoForm.reset();
     this.sesiones.clear();
     this.eventoParaEditar = null;
-    this.cerrarFormulario.emit();
+    void this.solicitarCerrarModal(true);
     this.limpiarEventoSeleccionado.emit();
 
-    // 👇 Aseguramos que todo quede habilitado para la próxima creación
     this.eventoForm.enable({ emitEvent: false });
-
   }
 
-  private crearSesion(fecha: string, horaInicio: string, horaFin: string, base: EventoFormValue) {
+  private crearSesion(
+    fecha: string,
+    hora_inicio: string,
+    hora_fin: string,
+    base: EventoSeleccionado,
+  ): Sesiones {
     const idGenerado = crypto.randomUUID();
-    const sesion = {
+    const sesion: Sesiones = {
       id_sesion: idGenerado,
-      id_actividad: base.id_actividad,
+      id_actividad: base.id_actividad ?? '',
       fecha_actividad: fecha,
-      hora_inicio: horaInicio,
-      hora_fin: horaFin,
-      id_creado_por: this.authService.getUserUuid()
+      hora_inicio: hora_inicio,
+      hora_fin: hora_fin,
+      id_creado_por: this.authService.getUserUuid(),
     };
 
-    console.log(`🆕 Crear sesión `, sesion);
     return sesion;
   }
 
-  private haySuperposicion(sesiones: SesionBasica[], nuevaSesion: SesionBasica): boolean {
-    const nuevaInicio = new Date(`${nuevaSesion.fecha}T${nuevaSesion.horaInicio}`);
-    const nuevaFin = new Date(`${nuevaSesion.fecha}T${nuevaSesion.horaFin}`);
-
-    return sesiones.some(ev => {
-      const evInicio = new Date(`${ev.fecha}T${ev.horaInicio}`);
-      const evFin = new Date(`${ev.fecha}T${ev.horaFin}`);
-
-      return (
-        nuevaSesion.fecha === ev.fecha &&
-        (
-          (nuevaInicio >= evInicio && nuevaInicio < evFin) ||
-          (nuevaFin > evInicio && nuevaFin <= evFin) ||
-          (nuevaInicio <= evInicio && nuevaFin >= evFin)
-        )
-      );
-    });
-  }
-
   /** 🔹 Recibe cambios en tiempo real desde el grid */
-  onCambiosSesiones(payload: { nuevos: any[]; modificados: any[]; eliminados: any[] }) {
-    console.log('🧩 Cambios recibidos del grid (snapshot actualizado):', payload);
-    this.cambiosSesionesSnapshot = payload;
+  onCambiosSesiones(payload: CambiosSesionesPayload) {
+    this.cambiosSesionesSnapshot = {
+      nuevos: payload.nuevos,
+      modificados: payload.modificados,
+      eliminados: payload.eliminados,
+    };
+    this.actualizarBanderaCambiosPendientes();
   }
 
-  private uppercaseMaxLengthValidator(maxLength: number): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value;
-      if (typeof value !== 'string') return null;
-
-      const isUppercase = value === value.toUpperCase();
-      const isWithinLimit = value.length <= maxLength;
-
-      return !isUppercase || !isWithinLimit
-        ? {
-          uppercaseMaxLength: {
-            requiredUppercase: true,
-            requiredMaxLength: maxLength,
-            actualLength: value.length
-          }
+  async solicitarCerrarModal(forzar = false): Promise<void> {
+    if (!forzar && this.tieneCambiosPendientes) {
+      this.mostrarAlertaCambiosPendientes();
+      const snack = this.snack as SnackbarService & {
+        confirm?: (msg: string) => Observable<boolean>;
+      };
+      if (typeof snack.confirm === 'function') {
+        const confirmar = await firstValueFrom(
+          snack.confirm(
+            'Tienes cambios sin guardar en las sesiones. Si cierras ahora se perderán. ¿Deseas salir de todos modos?',
+          ),
+        );
+        if (!confirmar) {
+          return;
         }
-        : null;
+      } else {
+        return;
+      }
+    }
+    this.limpiarCambiosSesionesSnapshot();
+    this.cerrarFormulario.emit();
+  }
+
+  private mostrarAlertaCambiosPendientes(): void {
+    const mensaje =
+      'Tienes cambios sin guardar. Presiona "Actualizar" para conservarlos.';
+    const snack = this.snack as SnackbarService & {
+      warning?: (msg: string) => void;
+      info?: (msg: string) => void;
     };
+    if (typeof snack.warning === 'function') {
+      snack.warning(mensaje);
+    } else if (typeof snack.info === 'function') {
+      snack.info(mensaje);
+    } else {
+      this.snack.error(mensaje);
+    }
+  }
+
+  private limpiarCambiosSesionesSnapshot(): void {
+    this.cambiosSesionesSnapshot = {
+      nuevos: [],
+      modificados: [],
+      eliminados: [],
+    };
+    this.tieneCambiosPendientes = false;
+  }
+
+  private actualizarBanderaCambiosPendientes(): void {
+    const { nuevos, modificados, eliminados } = this.cambiosSesionesSnapshot;
+    this.tieneCambiosPendientes =
+      nuevos.length > 0 || modificados.length > 0 || eliminados.length > 0;
   }
 }
